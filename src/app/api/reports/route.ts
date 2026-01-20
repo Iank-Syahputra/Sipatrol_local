@@ -1,51 +1,100 @@
+import { createClient } from '@supabase/supabase-js';
+import { auth } from '@clerk/nextjs/server';
 import { NextRequest } from 'next/server';
-import { createSupabaseServerClient } from '@/lib/supabase';
-import { getCurrentUser } from '@/lib/user';
-import { getCurrentUserAssignedUnit } from '@/lib/sipatrol-db';
-import { createReport } from '@/lib/sipatrol-db';
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    // Get current user
-    const user = await getCurrentUser();
-    if (!user) {
+    // Verify the user is authenticated
+    const { userId } = await auth();
+
+    if (!userId) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify user is a security officer
-    const assignedUnit = await getCurrentUserAssignedUnit();
-    if (!assignedUnit) {
-      return Response.json({ error: 'User not assigned to any unit' }, { status: 403 });
-    }
-
-    // Parse request body
-    const body = await req.json();
-    const { imageData, notes, latitude, longitude, capturedAt } = body;
+    // Parse form data
+    const formData = await request.formData();
+    const image = formData.get('image') as File;
+    const notes = formData.get('notes') as string;
+    const latitude = parseFloat(formData.get('latitude') as string);
+    const longitude = parseFloat(formData.get('longitude') as string);
+    const unitId = formData.get('unitId') as string;
+    const userIdFromForm = formData.get('userId') as string;
 
     // Validate required fields
-    if (!imageData || !latitude || !longitude || !capturedAt) {
+    if (!image || !latitude || !longitude || !unitId || !userIdFromForm) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Upload image to Supabase storage (in a real implementation)
-    // For now, we'll just store the image data as a placeholder
-    // In a production app, you'd upload to Supabase storage and get a URL
-    
-    // Create the report in the database
-    const report = await createReport({
-      user_id: user.id,
-      unit_id: assignedUnit.id,
-      image_path: imageData, // In production, this would be the URL from Supabase storage
-      notes,
-      latitude,
-      longitude,
-      captured_at: capturedAt,
-      is_offline_submission: false
-    });
+    // Verify the user ID matches the authenticated user
+    if (userId !== userIdFromForm) {
+      return Response.json({ error: 'Unauthorized: User ID mismatch' }, { status: 401 });
+    }
 
-    return Response.json({ success: true, report });
+    // Get Supabase client with service role key to bypass RLS
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    // Generate unique filename
+    const fileName = `evidence/${userId}/${Date.now()}_${image.name}`;
+
+    // Convert File to ArrayBuffer for upload
+    const buffer = await image.arrayBuffer();
+
+    // Upload image to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabaseAdmin
+      .storage
+      .from('evidence')
+      .upload(fileName, buffer, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: image.type
+      });
+
+    if (uploadError) {
+      console.error('Error uploading image:', uploadError);
+      return Response.json({ error: uploadError.message }, { status: 500 });
+    }
+
+    // Get public URL for the uploaded image
+    const { data: publicUrlData } = supabaseAdmin
+      .storage
+      .from('evidence')
+      .getPublicUrl(fileName);
+
+    // Insert the report into the database
+    const { data, error } = await supabaseAdmin
+      .from('reports')
+      .insert([
+        {
+          user_id: userId,
+          unit_id: unitId,
+          image_path: publicUrlData?.publicUrl, // This will be the public URL of the image in storage
+          notes,
+          latitude,
+          longitude,
+          captured_at: new Date().toISOString(),
+          is_offline_submission: false
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating report:', error);
+
+      // Clean up the uploaded image if DB insertion fails
+      if (uploadData) {
+        await supabaseAdmin.storage.from('evidence').remove([fileName]);
+      }
+
+      return Response.json({ error: error.message }, { status: 500 });
+    }
+
+    return Response.json({ success: true, data });
   } catch (error) {
-    console.error('Error creating report:', error);
+    console.error('Unexpected error in report creation:', error);
     return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
