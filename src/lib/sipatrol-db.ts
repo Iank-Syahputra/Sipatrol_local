@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { createSupabaseServerClient } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/user';
 
 // Types for SiPatrol application
@@ -36,8 +35,11 @@ export interface Report {
 
 // Unit operations
 export async function getAllUnits(): Promise<Unit[]> {
-  const supabase = await createSupabaseServerClient();
-  
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   const { data, error } = await supabase
     .from('units')
     .select('*')
@@ -52,8 +54,11 @@ export async function getAllUnits(): Promise<Unit[]> {
 }
 
 export async function createUnit(unitData: Omit<Unit, 'id' | 'created_at'>): Promise<Unit> {
-  const supabase = await createSupabaseServerClient();
-  
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   const { data, error } = await supabase
     .from('units')
     .insert([unitData])
@@ -69,8 +74,11 @@ export async function createUnit(unitData: Omit<Unit, 'id' | 'created_at'>): Pro
 }
 
 export async function updateUnit(id: string, unitData: Partial<Omit<Unit, 'id' | 'created_at'>>): Promise<Unit> {
-  const supabase = await createSupabaseServerClient();
-  
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   const { data, error } = await supabase
     .from('units')
     .update(unitData)
@@ -87,8 +95,11 @@ export async function updateUnit(id: string, unitData: Partial<Omit<Unit, 'id' |
 }
 
 export async function deleteUnit(id: string): Promise<void> {
-  const supabase = await createSupabaseServerClient();
-  
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   const { error } = await supabase
     .from('units')
     .delete()
