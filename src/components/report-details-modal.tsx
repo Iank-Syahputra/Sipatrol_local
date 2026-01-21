@@ -98,29 +98,62 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
               </div>
 
               <div>
-                <h4 className="font-semibold text-white mb-2">Location</h4>
-                <div className="bg-zinc-800/50 rounded-lg p-3 flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-blue-400 mt-0.5" />
-                  <div>
-                    {latitude && longitude ? (
-                      <>
-                        <p className="text-sm text-zinc-300">
-                          {latitude.toFixed(6)}, {longitude.toFixed(6)}
-                        </p>
-                        <a
-                          href={`https://www.google.com/maps?q=${latitude},${longitude}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 mt-1"
+                <h4 className="font-semibold text-white mb-2">Category & Location</h4>
+                <div className="space-y-3">
+                  {/* Category */}
+                  {report.report_categories?.name && (
+                    <div className="bg-zinc-800/50 rounded-lg p-3">
+                      <p className="text-sm text-zinc-400">Category</p>
+                      <div className="mt-1">
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                            report.report_categories.color === 'green' || report.report_categories.name.toLowerCase().includes('aman') || report.report_categories.name.toLowerCase().includes('safe')
+                              ? 'bg-green-500/20 text-green-400'
+                              : report.report_categories.color === 'red' || report.report_categories.name.toLowerCase().includes('unsafe')
+                                ? 'bg-red-500/20 text-red-400'
+                                : report.report_categories.color === 'yellow' || report.report_categories.name.toLowerCase().includes('maintenance')
+                                  ? 'bg-yellow-500/20 text-yellow-400'
+                                  : 'bg-blue-500/20 text-blue-400'
+                          }`}
                         >
-                          Open in Maps <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </>
-                    ) : (
-                      <p className="text-sm text-zinc-300">
-                        Location not available
-                      </p>
-                    )}
+                          {report.report_categories.name}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Specific Location */}
+                  {report.unit_locations?.name && (
+                    <div className="bg-zinc-800/50 rounded-lg p-3">
+                      <p className="text-sm text-zinc-400">Specific Location</p>
+                      <p className="text-sm text-zinc-300 mt-1">{report.unit_locations.name}</p>
+                    </div>
+                  )}
+
+                  {/* GPS Location */}
+                  <div className="bg-zinc-800/50 rounded-lg p-3 flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-blue-400 mt-0.5" />
+                    <div>
+                      {latitude && longitude ? (
+                        <>
+                          <p className="text-sm text-zinc-300">
+                            {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                          </p>
+                          <a
+                            href={`https://www.google.com/maps?q=${latitude},${longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 mt-1"
+                          >
+                            Open in Maps <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </>
+                      ) : (
+                        <p className="text-sm text-zinc-300">
+                          Location not available
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

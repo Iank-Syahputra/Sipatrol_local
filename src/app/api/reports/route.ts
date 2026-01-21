@@ -19,9 +19,11 @@ export async function POST(request: NextRequest) {
     const longitude = parseFloat(formData.get('longitude') as string);
     const unitId = formData.get('unitId') as string;
     const userIdFromForm = formData.get('userId') as string;
+    const categoryId = formData.get('categoryId') as string;
+    const locationId = formData.get('locationId') as string;
 
     // Validate required fields
-    if (!image || !latitude || !longitude || !unitId || !userIdFromForm) {
+    if (!image || !latitude || !longitude || !unitId || !userIdFromForm || !categoryId || !locationId) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -74,6 +76,8 @@ export async function POST(request: NextRequest) {
           notes,
           latitude,
           longitude,
+          category_id: categoryId,
+          location_id: locationId,
           captured_at: new Date().toISOString(),
           is_offline_submission: false
         }

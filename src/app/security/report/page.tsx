@@ -11,6 +11,8 @@ import { Camera, MapPin, Wifi, WifiOff, Loader2, CheckCircle, RotateCcw, ImageUp
 import { useOfflineReports } from '@/hooks/use-offline-reports';
 import { useUser } from '@clerk/nextjs';
 import { createClient } from '@supabase/supabase-js';
+import { Combobox } from '@/components/ui/combobox';
+import { getReportCategories, getUnitLocations } from '@/actions/report-actions';
 
 // Create Supabase client with public keys (safe for client-side)
 const supabase = createClient(
@@ -34,6 +36,10 @@ export default function CreateReportPage() {
   const [assignedUnit, setAssignedUnit] = useState<any>(null);
   const [unitError, setUnitError] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [category, setCategory] = useState<string>('');
+  const [locationRoom, setLocationRoom] = useState<string>('');
+  const [categories, setCategories] = useState<{ value: string; label: string }[]>([]);
+  const [locations, setLocations] = useState<{ value: string; label: string }[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -52,6 +58,30 @@ export default function CreateReportPage() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // Fetch categories and locations on component mount using server actions
+  useEffect(() => {
+    const fetchData = async () => {
+      if (user) {
+        try {
+          // Fetch report categories
+          const categoriesData = await getReportCategories();
+          setCategories(categoriesData);
+
+          // Fetch unit locations for the user's assigned unit
+          const locationsData = await getUnitLocations(user.id);
+          setLocations(locationsData);
+        } catch (error) {
+          console.error('Error fetching dropdown data:', error);
+          // Set empty arrays if there's an error
+          setCategories([]);
+          setLocations([]);
+        }
+      }
+    };
+
+    fetchData();
+  }, [user]);
 
   // Fetch user's assigned unit on component mount
   useEffect(() => {
@@ -255,6 +285,16 @@ export default function CreateReportPage() {
       return;
     }
 
+    if (!category) {
+      alert('Silakan pilih kategori laporan sebelum mengirim');
+      return;
+    }
+
+    if (!locationRoom) {
+      alert('Silakan pilih lokasi/ruangan dari unit Anda sebelum mengirim');
+      return;
+    }
+
     if (!imageFile) {
       alert('Tidak ada file gambar ditemukan');
       return;
@@ -273,6 +313,8 @@ export default function CreateReportPage() {
         formData.append('longitude', location.lng.toString());
         formData.append('unitId', assignedUnit.id);
         formData.append('userId', user.id);
+        formData.append('categoryId', category);
+        formData.append('locationId', locationRoom);
 
         const response = await fetch('/api/reports', {
           method: 'POST',
@@ -297,6 +339,8 @@ export default function CreateReportPage() {
           notes,
           latitude: location.lat,
           longitude: location.lng,
+          categoryId: category,
+          locationId: locationRoom,
           capturedAt: new Date().toISOString()
         });
 
@@ -500,6 +544,30 @@ export default function CreateReportPage() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Category Dropdown */}
+          <div className="space-y-2">
+            <Label htmlFor="category">Kategori Laporan</Label>
+            <Combobox
+              options={categories}
+              value={category}
+              onValueChange={setCategory}
+              placeholder="Pilih kategori..."
+              emptyMessage="Kategori tidak ditemukan."
+            />
+          </div>
+
+          {/* Location Room Dropdown */}
+          <div className="space-y-2">
+            <Label htmlFor="locationRoom">Lokasi/Ruangan</Label>
+            <Combobox
+              options={locations}
+              value={locationRoom}
+              onValueChange={setLocationRoom}
+              placeholder="Pilih lokasi/ruangan..."
+              emptyMessage="Lokasi tidak ditemukan."
+            />
           </div>
 
           {/* Notes Section */}

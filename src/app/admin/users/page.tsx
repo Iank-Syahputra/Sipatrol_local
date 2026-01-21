@@ -16,6 +16,8 @@ async function getUsersAndUnits(searchTerm: string = '') {
     .select(`
       id,
       full_name,
+      username,
+      phone_number,
       role,
       assigned_unit_id,
       created_at,

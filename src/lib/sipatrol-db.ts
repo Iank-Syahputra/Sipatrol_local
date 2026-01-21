@@ -17,6 +17,8 @@ export interface UserProfile {
   full_name: string;
   role: UserRole;
   assigned_unit_id: string | null;
+  phone_number?: string;
+  username?: string;
   created_at: string;
 }
 
@@ -28,9 +30,25 @@ export interface Report {
   notes?: string;
   latitude?: number;
   longitude?: number;
+  category_id?: string;
+  location_id?: string;
   captured_at: string;
   is_offline_submission: boolean;
   created_at: string;
+  // Joined fields from related tables
+  profiles?: {
+    full_name: string;
+  };
+  units?: {
+    name: string;
+  };
+  report_categories?: {
+    name: string;
+    color?: string;
+  };
+  unit_locations?: {
+    name: string;
+  };
 }
 
 // Unit operations
@@ -129,7 +147,16 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     // 1. Try to fetch existing profile
     const { data, error } = await supabaseAdmin
       .from('profiles')
-      .select('*')
+      .select(`
+        id,
+        full_name,
+        username,
+        phone_number,
+        role,
+        assigned_unit_id,
+        created_at,
+        units ( name )
+      `)
       .eq('id', userId)
       .single();
 
@@ -157,7 +184,16 @@ export async function getUserProfile(): Promise<UserProfile | null> {
             // role will default to 'security' based on DB schema
           }
         ])
-        .select()
+        .select(`
+          id,
+          full_name,
+          username,
+          phone_number,
+          role,
+          assigned_unit_id,
+          created_at,
+          units ( name )
+        `)
         .single();
 
       if (createError) {
@@ -188,8 +224,24 @@ export async function createUserProfile(profileData: Omit<UserProfile, 'created_
 
     const { data, error } = await supabaseAdmin
       .from('profiles')
-      .insert([profileData])
-      .select()
+      .insert([{
+        id: profileData.id,
+        full_name: profileData.full_name,
+        role: profileData.role,
+        assigned_unit_id: profileData.assigned_unit_id,
+        phone_number: profileData.phone_number,
+        username: profileData.username
+      }])
+      .select(`
+        id,
+        full_name,
+        username,
+        phone_number,
+        role,
+        assigned_unit_id,
+        created_at,
+        units ( name )
+      `)
       .single();
 
     if (error) {
@@ -204,6 +256,39 @@ export async function createUserProfile(profileData: Omit<UserProfile, 'created_
   }
 }
 
+export async function getAllProfiles(): Promise<UserProfile[]> {
+  try {
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .select(`
+        id,
+        full_name,
+        username,
+        phone_number,
+        role,
+        assigned_unit_id,
+        created_at,
+        units ( name )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Supabase Error Detail:', JSON.stringify(error, null, 2));
+      throw error;
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error in getAllProfiles:', error);
+    throw new Error('Failed to fetch all profiles');
+  }
+}
+
 export async function updateUserProfile(userId: string, profileData: Partial<Omit<UserProfile, 'id' | 'created_at'>>): Promise<UserProfile> {
   try {
     const supabaseAdmin = createClient(
@@ -215,7 +300,16 @@ export async function updateUserProfile(userId: string, profileData: Partial<Omi
       .from('profiles')
       .update(profileData)
       .eq('id', userId)
-      .select()
+      .select(`
+        id,
+        full_name,
+        username,
+        phone_number,
+        role,
+        assigned_unit_id,
+        created_at,
+        units ( name )
+      `)
       .single();
 
     if (error) {
@@ -243,7 +337,9 @@ export async function getLatestReports(limit: number = 5): Promise<Report[]> {
       .select(`
         *,
         profiles(full_name),
-        units(name)
+        units(name),
+        report_categories(name, color),
+        unit_locations(name)
       `)
       .order('captured_at', { ascending: false })
       .limit(limit);
@@ -277,7 +373,9 @@ export async function getReportsByFilters(
       .select(`
         *,
         profiles(full_name),
-        units(name)
+        units(name),
+        report_categories(name, color),
+        unit_locations(name)
       `)
       .order('captured_at', { ascending: false });
 
@@ -347,7 +445,9 @@ export async function getUserReports(userId: string): Promise<Report[]> {
       .from('reports')
       .select(`
         *,
-        units(name)
+        units(name),
+        report_categories(name, color),
+        unit_locations(name)
       `)
       .eq('user_id', userId)
       .order('captured_at', { ascending: false });

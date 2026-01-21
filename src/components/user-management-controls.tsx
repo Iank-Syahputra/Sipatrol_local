@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Download, Printer, Search, Plus } from 'lucide-react';
+import Link from 'next/link';
 
 interface UserManagementControlsProps {
   initialSearchTerm: string;
@@ -26,8 +27,7 @@ export default function UserManagementControls({
   };
 
   const handleAddUser = () => {
-    // TODO: Implement add user modal/form
-    alert('Add user form would open here');
+    router.push('/admin/users/create');
   };
 
   const handleExport = () => {
@@ -73,13 +73,13 @@ export default function UserManagementControls({
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
           </div>
 
-          <button
-            onClick={handleAddUser}
+          <Link
+            href="/admin/users/create"
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm"
           >
             <Plus className="h-4 w-4" />
             Add New User
-          </button>
+          </Link>
         </div>
       </div>
     </>

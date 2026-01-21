@@ -11,6 +11,8 @@ export interface OfflineReport {
   notes?: string;
   latitude?: number;
   longitude?: number;
+  categoryId?: string;
+  locationId?: string;
   capturedAt: string;
   createdAt: string;
 }

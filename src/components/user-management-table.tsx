@@ -81,7 +81,9 @@ export default function UserManagementTable({
         .from('profiles')
         .update({
           full_name: editingUser.full_name,
+          username: editingUser.username || null,
           role: editingUser.role,
+          phone_number: editingUser.phone_number || null,
           assigned_unit_id: editingUser.assigned_unit_id || null
         })
         .eq('id', editingUser.id);
@@ -111,7 +113,9 @@ export default function UserManagementTable({
           <thead>
             <tr className="border-b border-zinc-800 text-left text-sm text-zinc-400">
               <th className="pb-3">Name</th>
+              <th className="pb-3">Username</th>
               <th className="pb-3">Role</th>
+              <th className="pb-3">Phone Number</th>
               <th className="pb-3">Assigned Unit</th>
               <th className="pb-3">Created At</th>
               <th className="pb-3">Actions</th>
@@ -123,6 +127,9 @@ export default function UserManagementTable({
                 <td className="py-3 font-medium text-white">
                   {user.full_name}
                 </td>
+                <td className="py-3 text-zinc-300">
+                  {user.username || '-'}
+                </td>
                 <td className="py-3">
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     user.role === 'admin'
@@ -131,6 +138,20 @@ export default function UserManagementTable({
                   }`}>
                     {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                   </span>
+                </td>
+                <td className="py-3 text-zinc-300">
+                  {user.phone_number ? (
+                    <a
+                      href={`https://wa.me/${user.phone_number.replace(/^0/, '62').replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 underline"
+                    >
+                      {user.phone_number}
+                    </a>
+                  ) : (
+                    '-'
+                  )}
                 </td>
                 <td className="py-3 text-zinc-300">
                   {user.units?.name || 'Unassigned'}
@@ -208,6 +229,17 @@ export default function UserManagementTable({
               </div>
 
               <div>
+                <Label htmlFor="username">Username</Label>
+                <input
+                  id="username"
+                  type="text"
+                  value={editingUser.username || ''}
+                  onChange={(e) => setEditingUser({...editingUser, username: e.target.value})}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
                 <Label htmlFor="role">Role</Label>
                 <select
                   id="role"
@@ -219,6 +251,17 @@ export default function UserManagementTable({
                   <option value="security">Security</option>
                   <option value="admin">Admin</option>
                 </select>
+              </div>
+
+              <div>
+                <Label htmlFor="phone-number">Phone Number</Label>
+                <input
+                  id="phone-number"
+                  type="text"
+                  value={editingUser.phone_number || ''}
+                  onChange={(e) => setEditingUser({...editingUser, phone_number: e.target.value})}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
 
               <div>

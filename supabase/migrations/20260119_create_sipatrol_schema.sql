@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS profiles (
     full_name TEXT NOT NULL,
     role app_role DEFAULT 'security',
     assigned_unit_id UUID REFERENCES units (id) ON DELETE SET NULL,
+    username TEXT UNIQUE,           -- For login
+    phone_number TEXT,              -- For WA
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -50,6 +52,8 @@ CREATE TABLE IF NOT EXISTS reports (
     notes TEXT,
     latitude DOUBLE PRECISION,
     longitude DOUBLE PRECISION,
+    category_id UUID REFERENCES report_categories(id) ON DELETE SET NULL,
+    location_id UUID REFERENCES unit_locations(id) ON DELETE SET NULL,
     captured_at TIMESTAMPTZ NOT NULL,
     is_offline_submission BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW()
@@ -117,8 +121,24 @@ FOR SELECT USING (
     )
 );
 
+-- Enable RLS for new tables
+ALTER TABLE report_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE unit_locations ENABLE ROW LEVEL SECURITY;
+
+-- Policies for report_categories
+CREATE POLICY "Enable read access for authenticated users" ON report_categories
+FOR SELECT USING (
+    auth.role() = 'authenticated'
+);
+
+-- Policies for unit_locations
+CREATE POLICY "Enable read access for authenticated users" ON unit_locations
+FOR SELECT USING (
+    auth.role() = 'authenticated'
+);
+
 -- Insert sample units for testing
-INSERT INTO units (name, district) VALUES 
+INSERT INTO units (name, district) VALUES
 ('PLN UP 1 Kendari', 'Kendari'),
 ('PLN UP 2 Kendari', 'Kendari'),
 ('PLN UP 3 Kendari', 'Kendari'),
@@ -135,3 +155,27 @@ INSERT INTO units (name, district) VALUES
 ('PLN UP 14 Kendari', 'Kendari'),
 ('PLN UP 15 Kendari', 'Kendari')
 ON CONFLICT (name) DO NOTHING;
+
+-- Insert default categories
+INSERT INTO report_categories (name, description) VALUES
+('safe', 'Laporan aman/safe'),
+('unsafe', 'Laporan tidak aman/unsafe'),
+('maintenance_needed', 'Dibutuhkan pemeliharaan'),
+('incident_report', 'Laporan insiden')
+ON CONFLICT (name) DO NOTHING;
+
+-- Insert default locations for all units
+DO $$
+DECLARE
+    unit_record RECORD;
+BEGIN
+    FOR unit_record IN SELECT id, name FROM units LOOP
+        INSERT INTO unit_locations (unit_id, name, description) VALUES
+        (unit_record.id, 'Gerbang Utama', 'Pintu masuk utama area ' || unit_record.name),
+        (unit_record.id, 'Ruang Kontrol', 'Ruang kendali utama ' || unit_record.name),
+        (unit_record.id, 'Ruang Server', 'Ruang server ' || unit_record.name),
+        (unit_record.id, 'Ruang Generator', 'Ruang generator ' || unit_record.name),
+        (unit_record.id, 'Area Parkir', 'Area parkir ' || unit_record.name)
+        ON CONFLICT (unit_id, name) DO NOTHING;
+    END LOOP;
+END $$;

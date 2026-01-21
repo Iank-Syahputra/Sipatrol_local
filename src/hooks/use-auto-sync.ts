@@ -28,7 +28,7 @@ export const syncOfflineReports = async (
     // Attempt to sync each report
     for (const report of offlineReports) {
       try {
-        const syncResponse = await fetch('/api/reports', {
+        const syncResponse = await fetch('/api/reports/sync', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -38,8 +38,11 @@ export const syncOfflineReports = async (
             notes: report.notes,
             latitude: report.latitude,
             longitude: report.longitude,
-            capturedAt: report.capturedAt,
-            isOfflineSubmission: true
+            unitId: report.unitId,
+            userId: report.userId,
+            categoryId: report.categoryId || '',
+            locationId: report.locationId || '',
+            capturedAt: report.capturedAt
           }),
         });
 
@@ -103,5 +106,5 @@ export const useAutoSync = () => {
     };
   }, [offlineReports.length, isSignedIn, isSyncing, refreshOfflineReports, getAllOfflineReports, deleteOfflineReport]);
 
-  return { isSyncing, lastSync };
+  return { isSyncing, lastSync, getAllOfflineReports };
 };

@@ -23,7 +23,9 @@ export async function GET(request: NextRequest) {
       .select(`
         *,
         profiles(full_name),
-        units(name)
+        units(name),
+        report_categories(name, color),
+        unit_locations(name)
       `)
       .order('captured_at', { ascending: false })
       .limit(5);
