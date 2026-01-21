@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Activity, FileText, Building, User, LogOut } from 'lucide-react';
 import { SignOutButton } from '@clerk/nextjs';
+import Link from 'next/link';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -32,7 +33,7 @@ export default function AdminSidebar() {
           const Icon = item.icon;
           const isActive = pathname === item.href;
           return (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
@@ -43,7 +44,7 @@ export default function AdminSidebar() {
             >
               <Icon className="h-5 w-5" />
               <span>{item.label}</span>
-            </a>
+            </Link>
           );
         })}
       </nav>
