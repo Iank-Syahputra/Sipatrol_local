@@ -1,26 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Camera, MapPin, Wifi, WifiOff, Loader2, CheckCircle, RotateCcw, ImageUp, X, UserRound } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 
-// Create Supabase client with public keys (safe for client-side)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-export default function UserManagementTable({ 
-  initialUsers, 
-  initialUnits 
-}: { 
-  initialUsers: any[]; 
-  initialUnits: any[]; 
+export default function UserManagementTable({
+  initialUsers,
+  initialUnits
+}: {
+  initialUsers: any[];
+  initialUnits: any[];
 }) {
   const [users, setUsers] = useState(initialUsers);
   const [units] = useState(initialUnits);
@@ -29,7 +20,7 @@ export default function UserManagementTable({
   const [editingUser, setEditingUser] = useState<any>(null);
   const { user: clerkUser } = useUser();
 
-  // Delete user function using direct Supabase call
+  // Delete user function using API call
   const handleDelete = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       return;
@@ -38,14 +29,17 @@ export default function UserManagementTable({
     setLoadingStates(prev => ({ ...prev, [userId]: true }));
 
     try {
-      // Delete user from profiles table
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
+      const response = await fetch('/api/admin/users', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: userId }),
+      });
 
-      if (error) {
-        throw new Error(error.message);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       // Remove user from local state
@@ -70,31 +64,38 @@ export default function UserManagementTable({
     setEditingUser(null);
   };
 
-  // Update user function using direct Supabase call
+  // Update user function using API call
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!editingUser) return;
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
+      const response = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: editingUser.id,
           full_name: editingUser.full_name,
           username: editingUser.username || null,
           role: editingUser.role,
           phone_number: editingUser.phone_number || null,
           assigned_unit_id: editingUser.assigned_unit_id || null
-        })
-        .eq('id', editingUser.id);
+        }),
+      });
 
-      if (error) {
-        throw new Error(error.message);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
+      const result = await response.json();
+
       // Update user in local state
-      setUsers(users.map(u => 
-        u.id === editingUser.id ? editingUser : u
+      setUsers(users.map(u =>
+        u.id === editingUser.id ? result.user : u
       ));
 
       closeEditModal();

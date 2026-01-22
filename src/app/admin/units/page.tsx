@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Activity, Map, Users, AlertTriangle, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, User, Plus, Download, Printer } from "lucide-react";
+import { Activity, Map, Users, AlertTriangle, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, User, Plus, Download, Printer, Edit3, Trash2 } from "lucide-react";
 import AdminSidebar from '@/components/admin-sidebar';
 
 export default function ManageUnitsPage() {
@@ -11,6 +11,8 @@ export default function ManageUnitsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingUnit, setEditingUnit] = useState<any>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
 
   // Fetch units from API
   useEffect(() => {
@@ -73,6 +75,87 @@ export default function ManageUnitsPage() {
       console.error('Error adding unit:', err);
       alert('Failed to add unit');
     }
+  };
+
+  const handleEditUnit = async () => {
+    const name = (document.getElementById('edit-unit-name') as HTMLInputElement)?.value;
+    const district = (document.getElementById('edit-unit-district') as HTMLInputElement)?.value;
+
+    if (!name || !district || !editingUnit) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/admin/units', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: editingUnit.id, name, district }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      // Refresh the data
+      const data = await response.json();
+      setUnits(units.map(u => u.id === editingUnit.id ? data.unit : u));
+      setFilteredUnits(filteredUnits.map(u => u.id === editingUnit.id ? data.unit : u));
+      setShowEditForm(false);
+      setEditingUnit(null);
+
+      // Clear form
+      (document.getElementById('edit-unit-name') as HTMLInputElement).value = '';
+      (document.getElementById('edit-unit-district') as HTMLInputElement).value = '';
+    } catch (err) {
+      console.error('Error updating unit:', err);
+      alert(err instanceof Error ? err.message : 'Failed to update unit');
+    }
+  };
+
+  const handleDeleteUnit = async (unit: any) => {
+    if (!window.confirm(`Are you sure you want to delete unit "${unit.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/admin/units', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: unit.id }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      // Remove from state
+      setUnits(units.filter(u => u.id !== unit.id));
+      setFilteredUnits(filteredUnits.filter(u => u.id !== unit.id));
+    } catch (err) {
+      console.error('Error deleting unit:', err);
+      alert(err instanceof Error ? err.message : 'Failed to delete unit');
+    }
+  };
+
+  const startEditUnit = (unit: any) => {
+    setEditingUnit(unit);
+    setShowEditForm(true);
+
+    // Populate form fields after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      const nameInput = document.getElementById('edit-unit-name') as HTMLInputElement;
+      const districtInput = document.getElementById('edit-unit-district') as HTMLInputElement;
+
+      if (nameInput) nameInput.value = unit.name;
+      if (districtInput) districtInput.value = unit.district;
+    }, 0);
   };
 
   if (loading) {
@@ -191,6 +274,50 @@ export default function ManageUnitsPage() {
                 </div>
               </div>
             )}
+
+            {/* Edit Unit Form */}
+            {showEditForm && editingUnit && (
+              <div className="mt-6 p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
+                <h3 className="font-medium text-white mb-3">Edit Unit</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-zinc-400 mb-1">Unit Name</label>
+                    <input
+                      id="edit-unit-name"
+                      type="text"
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter unit name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-zinc-400 mb-1">District</label>
+                    <input
+                      id="edit-unit-district"
+                      type="text"
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter district"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <button
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm"
+                    onClick={handleEditUnit}
+                  >
+                    Update Unit
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-sm"
+                    onClick={() => {
+                      setShowEditForm(false);
+                      setEditingUnit(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Units Table */}
@@ -221,11 +348,17 @@ export default function ManageUnitsPage() {
                       </td>
                       <td className="py-3">
                         <div className="flex gap-2">
-                          <button className="text-blue-400 hover:text-blue-300 text-sm">
-                            Edit
+                          <button
+                            className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1"
+                            onClick={() => startEditUnit(unit)}
+                          >
+                            <Edit3 className="h-4 w-4" /> Edit
                           </button>
-                          <button className="text-red-400 hover:text-red-300 text-sm">
-                            Delete
+                          <button
+                            className="text-red-400 hover:text-red-300 text-sm flex items-center gap-1"
+                            onClick={() => handleDeleteUnit(unit)}
+                          >
+                            <Trash2 className="h-4 w-4" /> Delete
                           </button>
                         </div>
                       </td>

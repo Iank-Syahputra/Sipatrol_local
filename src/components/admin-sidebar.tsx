@@ -60,7 +60,10 @@ export default function AdminSidebar() {
             </span>
           </div>
           <SignOutButton>
-            <button className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white">
+            <button
+              type="button"
+              className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white"
+            >
               <LogOut className="h-4 w-4" />
             </button>
           </SignOutButton>

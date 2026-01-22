@@ -1,103 +1,136 @@
-import { NextRequest } from 'next/server';
-import { auth, createClerkClient } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
+import { auth } from '@clerk/nextjs/server';
+import { NextRequest } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
-    // Verify the user is authenticated and is an admin
-    const { userId } = await auth();
+    // Verify the user is authenticated
+    const { userId: currentUserId } = await auth();
 
-    if (!userId) {
+    if (!currentUserId) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify user is an admin by checking their profile in Supabase
+    // Get Supabase client with service role key to bypass RLS
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const { id, full_name, username, role, phone_number, assigned_unit_id } = await request.json();
+
+    // Validate required fields
+    if (!id || !full_name || !role) {
+      return Response.json({ error: 'ID, full_name, and role are required' }, { status: 400 });
+    }
+
+    // Check if the current user is an admin
+    const { data: currentUserProfile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('role')
-      .eq('id', userId)
+      .eq('id', currentUserId)
       .single();
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    if (profileError || !currentUserProfile || currentUserProfile.role !== 'admin') {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    // Parse request body
-    const { fullName, username, password, phoneNumber, unitId } = await request.json();
-
-    // Validate required fields
-    if (!fullName || !username || !password || !phoneNumber || !unitId) {
-      return Response.json({ error: 'Missing required fields' }, { status: 400 });
-    }
-
-    // Verify that the unit exists
-    const { data: unit, error: unitError } = await supabaseAdmin
-      .from('units')
-      .select('id')
-      .eq('id', unitId)
+    // Update the user
+    const { data: user, error: userError } = await supabaseAdmin
+      .from('profiles')
+      .update({ 
+        full_name, 
+        username: username || null, 
+        role, 
+        phone_number: phone_number || null, 
+        assigned_unit_id: assigned_unit_id || null 
+      })
+      .eq('id', id)
+      .select()
       .single();
 
-    if (unitError || !unit) {
-      return Response.json({ error: 'Invalid unit selected' }, { status: 400 });
+    if (userError) {
+      console.error('Error updating user:', userError);
+      return Response.json({ error: userError.message }, { status: 500 });
     }
 
-    try {
-      // Create the Clerk client
-      const clerkClient = createClerkClient({
-        secretKey: process.env.CLERK_SECRET_KEY,
-      });
-
-      // Create the user in Clerk
-      const clerkUser = await clerkClient.users.createUser({
-        username: username, // Use username directly
-        firstName: fullName.split(' ').slice(0, -1).join(' ') || fullName, // Everything except last word as first name
-        lastName: fullName.split(' ').pop(), // Last word as last name
-        password,
-        publicMetadata: {
-          role: 'security',
-          assignedUnitId: unitId
-        }
-      });
-
-      // Create the profile in Supabase
-      const { error: profileCreationError } = await supabaseAdmin
-        .from('profiles')
-        .insert([
-          {
-            id: clerkUser.id,
-            full_name: fullName,
-            role: 'security',
-            assigned_unit_id: unitId,
-            phone_number: phoneNumber,
-            username: username
-          }
-        ]);
-
-      if (profileCreationError) {
-        // Rollback: Delete the user from Clerk if profile creation fails
-        await clerkClient.users.deleteUser(clerkUser.id);
-        console.error('Error creating profile:', profileCreationError);
-        return Response.json({ error: 'Failed to create user profile' }, { status: 500 });
-      }
-
-      return Response.json({ 
-        success: true, 
-        message: 'User created successfully',
-        userId: clerkUser.id
-      });
-    } catch (clerkError: any) {
-      console.error('Error creating user in Clerk:', clerkError);
-      return Response.json({ 
-        error: clerkError.errors?.[0]?.message || 'Failed to create user in authentication system' 
-      }, { status: 500 });
-    }
+    return Response.json({ user });
   } catch (error) {
-    console.error('Unexpected error in user creation:', error);
+    console.error('Unexpected error in users API (PUT):', error);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    // Verify the user is authenticated
+    const { userId: currentUserId } = await auth();
+
+    if (!currentUserId) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get Supabase client with service role key to bypass RLS
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    // Parse the request body to get the user ID
+    const { id } = await request.json();
+
+    // Validate required field
+    if (!id) {
+      return Response.json({ error: 'User ID is required' }, { status: 400 });
+    }
+
+    // Check if the current user is an admin
+    const { data: currentUserProfile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', currentUserId)
+      .single();
+
+    if (profileError || !currentUserProfile || currentUserProfile.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+
+    // Check if the user is trying to delete themselves
+    if (id === currentUserId) {
+      return Response.json({ error: 'Cannot delete your own account' }, { status: 400 });
+    }
+
+    // Check if there are any reports associated with this user
+    const { count: reportCount, error: reportCheckError } = await supabaseAdmin
+      .from('reports')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', id);
+
+    if (reportCheckError) {
+      console.error('Error checking reports associated with user:', reportCheckError);
+      return Response.json({ error: reportCheckError.message }, { status: 500 });
+    }
+
+    if (reportCount && reportCount > 0) {
+      return Response.json({ 
+        error: 'Cannot delete user: there are reports associated with this user.' 
+      }, { status: 400 });
+    }
+
+    // Delete the user from profiles table
+    const { error: userError } = await supabaseAdmin
+      .from('profiles')
+      .delete()
+      .eq('id', id);
+
+    if (userError) {
+      console.error('Error deleting user:', userError);
+      return Response.json({ error: userError.message }, { status: 500 });
+    }
+
+    return Response.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Unexpected error in users API (DELETE):', error);
     return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
