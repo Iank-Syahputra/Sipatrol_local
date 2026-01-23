@@ -107,12 +107,15 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
                       <div className="mt-1">
                         <span
                           className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                            report.report_categories.color === 'green' || report.report_categories.name.toLowerCase().includes('aman') || report.report_categories.name.toLowerCase().includes('safe')
-                              ? 'bg-green-500/20 text-green-400'
-                              : report.report_categories.color === 'red' || report.report_categories.name.toLowerCase().includes('unsafe')
-                                ? 'bg-red-500/20 text-red-400'
-                                : report.report_categories.color === 'yellow' || report.report_categories.name.toLowerCase().includes('maintenance')
-                                  ? 'bg-yellow-500/20 text-yellow-400'
+                            // 1. Check RED/UNSAFE First (Priority!)
+                            report.report_categories.color === 'red' || report.report_categories.name.toLowerCase().includes('unsafe') || report.report_categories.name.toLowerCase().includes('tidak aman') || report.report_categories.name.toLowerCase().includes('bahaya')
+                              ? 'bg-red-500/20 text-red-400'
+                              // 2. Check YELLOW/WARNING
+                              : report.report_categories.color === 'yellow' || report.report_categories.name.toLowerCase().includes('maintenance') || report.report_categories.name.toLowerCase().includes('perbaikan') || report.report_categories.name.toLowerCase().includes('warning')
+                                ? 'bg-yellow-500/20 text-yellow-400'
+                                // 3. Check GREEN/SAFE Last
+                                : report.report_categories.color === 'green' || report.report_categories.name.toLowerCase().includes('safe') || report.report_categories.name.toLowerCase().includes('aman')
+                                  ? 'bg-green-500/20 text-green-400'
                                   : 'bg-blue-500/20 text-blue-400'
                           }`}
                         >

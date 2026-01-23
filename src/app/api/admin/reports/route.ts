@@ -1,14 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import { auth } from '@clerk/nextjs/server';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
     // Verify the user is authenticated
     const { userId } = await auth();
-    
+
     if (!userId) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get Supabase client with service role key to bypass RLS
@@ -18,66 +18,65 @@ export async function GET(request: NextRequest) {
     );
 
     // Extract query parameters
-    const url = new URL(request.url);
-    const searchTerm = url.searchParams.get('search') || '';
-    const unitFilter = url.searchParams.get('unit') || 'all';
-    const limit = parseInt(url.searchParams.get('limit') || '50');
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get('search') || '';
+    const unitId = searchParams.get('unit') || 'all';
+    const date = searchParams.get('date') || ''; // YYYY-MM-DD
 
-    // Build the query
+    // 1. Base Query with Joins
+    // We use !inner for profiles to filter reports based on the profile name
     let query = supabaseAdmin
       .from('reports')
       .select(`
         *,
-        profiles(full_name),
-        units(name),
+        profiles!inner(full_name),
+        units(name, id),
         report_categories(name, color),
         unit_locations(name)
       `)
-      .order('captured_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .order('captured_at', { ascending: false });
 
-    // Apply search filter if provided
-    if (searchTerm) {
-      query = query.or(
-        `profiles.full_name.ilike.%${searchTerm}%,units.name.ilike.%${searchTerm}%,notes.ilike.%${searchTerm}%`
-      );
+    // 2. Apply Unit Filter
+    if (unitId !== 'all') {
+      query = query.eq('unit_id', unitId);
     }
 
-    // Apply unit filter if provided and not 'all'
-    if (unitFilter !== 'all') {
-      query = query.eq('unit_id', unitFilter);
+    // 3. Apply Name Search Filter
+    if (search) {
+      query = query.ilike('profiles.full_name', `%${search}%`);
     }
 
-    const { data: reports, error: reportsError, count } = await query;
+    // 4. Apply Date Filter
+    if (date) {
+      // Create start and end of the selected day
+      const startDate = `${date}T00:00:00.000Z`;
+      const endDate = `${date}T23:59:59.999Z`;
+
+      // Filter captured_at between start and end of that day
+      query = query.gte('captured_at', startDate).lte('captured_at', endDate);
+    }
+
+    const { data: reports, error: reportsError } = await query;
 
     if (reportsError) {
       console.error('Error fetching reports:', reportsError);
-      return Response.json({ error: reportsError.message }, { status: 500 });
+      return NextResponse.json({ error: reportsError.message }, { status: 500 });
     }
 
-    // Fetch all units for filter options
+    // Fetch units for the dropdown
     const { data: units, error: unitsError } = await supabaseAdmin
       .from('units')
-      .select('id, name');
+      .select('id, name')
+      .order('name', { ascending: true });
 
     if (unitsError) {
       console.error('Error fetching units:', unitsError);
-      return Response.json({ error: unitsError.message }, { status: 500 });
+      return NextResponse.json({ error: unitsError.message }, { status: 500 });
     }
 
-    return Response.json({
-      reports,
-      units,
-      count,
-      pagination: {
-        limit,
-        offset,
-        total: count || 0
-      }
-    });
-  } catch (error) {
-    console.error('Unexpected error in reports API:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ reports, units });
+
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

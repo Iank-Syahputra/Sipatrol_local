@@ -13,6 +13,8 @@ export default function ReportManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUnit, setSelectedUnit] = useState('all');
+  // 1. ADD DATE STATE
+  const [selectedDate, setSelectedDate] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,8 +23,16 @@ export default function ReportManagementPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/admin/reports?search=${encodeURIComponent(searchTerm)}&unit=${encodeURIComponent(selectedUnit)}`);
+        // 2. UPDATE FETCH LOGIC
+        // Add date param to URL
+        const queryParams = new URLSearchParams({
+          search: searchTerm,
+          unit: selectedUnit,
+          date: selectedDate
+        });
 
+        const response = await fetch(`/api/admin/reports?${queryParams}`);
+        // ... handle response ...
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -40,7 +50,7 @@ export default function ReportManagementPage() {
     };
 
     fetchData();
-  }, [searchTerm, selectedUnit]);
+  }, [searchTerm, selectedUnit, selectedDate]); // 3. ADD DEPENDENCY
 
   const handleViewReport = (report: any) => {
     setSelectedReport(report);
@@ -108,13 +118,14 @@ export default function ReportManagementPage() {
         <div className="flex-1 p-6 overflow-y-auto">
           {/* Filters */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Search</label>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4"> {/* Change to grid-cols-4 */}
+              {/* Search Field */}
+              <div className="md:col-span-1">
+                <label className="block text-sm font-medium text-zinc-400 mb-2">Search Name</label>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search reports..."
+                    placeholder="Search by name..."
                     className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -123,6 +134,7 @@ export default function ReportManagementPage() {
                 </div>
               </div>
 
+              {/* Unit Dropdown */}
               <div>
                 <label className="block text-sm font-medium text-zinc-400 mb-2">Filter by Unit</label>
                 <select
@@ -136,15 +148,30 @@ export default function ReportManagementPage() {
                 </select>
               </div>
 
+              {/* 4. ADD DATE INPUT */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">Filter by Date</label>
+                <input
+                  type="date"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                />
+              </div>
+
+              {/* Reset/Apply Button */}
               <div className="flex items-end">
                 <button
                   className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700"
                   onClick={() => {
-                    // This will trigger the useEffect to refetch data
+                    // Optional: Reset filters logic
+                    setSearchTerm('');
+                    setSelectedUnit('all');
+                    setSelectedDate('');
                   }}
                 >
                   <Filter className="h-4 w-4" />
-                  Apply Filters
+                  Reset Filters
                 </button>
               </div>
             </div>
