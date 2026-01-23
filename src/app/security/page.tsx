@@ -7,6 +7,7 @@ import { Clock, MapPin, Camera, FileText, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { OnlineStatusIndicator } from '@/components/online-status-indicator';
+import RecentReportList from '@/components/security/recent-report-list';
 
 export default async function SecurityDashboardPage() {
   try {
@@ -112,42 +113,11 @@ export default async function SecurityDashboardPage() {
           <CardContent>
             {reports.length > 0 ? (
               <div className="space-y-4">
-                {reports.slice(0, 3).map((report) => (
-                  <div
-                    key={report.id}
-                    className="border rounded-lg p-4 hover:bg-accent transition-colors"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold">Report #{report.id.substring(0, 8)}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {report.units?.name || 'Unknown Unit'}
-                        </p>
-                      </div>
-                      <Badge variant="secondary">
-                        {new Date(report.captured_at).toLocaleDateString()}
-                      </Badge>
-                    </div>
+                {/* Replace static map with Interactive Component */}
+                {/* Pass only the first 3 reports */}
+                <RecentReportList reports={reports.slice(0, 3)} />
 
-                    <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                      {report.latitude && report.longitude && (
-                        <>
-                          <MapPin className="h-4 w-4" />
-                          <span>{report.latitude.toFixed(6)}, {report.longitude.toFixed(6)}</span>
-                        </>
-                      )}
-                    </div>
-
-                    {report.notes && (
-                      <p className="mt-2 text-sm truncate">{report.notes}</p>
-                    )}
-
-                    {report.is_offline_submission && (
-                      <Badge variant="outline" className="mt-2">Offline Submission</Badge>
-                    )}
-                  </div>
-                ))}
-
+                {/* Keep the View All button */}
                 {reports.length > 3 && (
                   <Button variant="outline" className="w-full mt-4" asChild>
                     <Link href="/security/reports">View All Reports</Link>

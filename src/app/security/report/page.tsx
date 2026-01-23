@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Camera, MapPin, Wifi, WifiOff, Loader2, CheckCircle, RotateCcw, ImageUp } from 'lucide-react';
+import { Camera, MapPin, Wifi, WifiOff, Loader2, CheckCircle, RotateCcw } from 'lucide-react';
 import { useOfflineReports } from '@/hooks/use-offline-reports';
 import { useUser } from '@clerk/nextjs';
 import { createClient } from '@supabase/supabase-js';
@@ -43,7 +43,6 @@ export default function CreateReportPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check online status
   useEffect(() => {
@@ -215,16 +214,6 @@ export default function CreateReportPage() {
     }
   };
 
-  // Handle file selection from gallery
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
-      setIsImageCaptured(true);
-    }
-  };
 
   // Clear the current photo and return to selection mode
   const clearPhoto = () => {
@@ -407,37 +396,25 @@ export default function CreateReportPage() {
           )}
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Camera/Gallery Selection */}
+          {/* Camera Only Selection */}
           <div className="space-y-2">
-            <Label>Foto Bukti</Label>
+            <Label>Foto Bukti (Wajib Kamera)</Label> {/* Updated Label */}
             {!isImageCaptured && !isCameraActive ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="w-full"> {/* Changed from grid to full width */}
                 <Button
                   type="button"
                   onClick={startCamera}
                   variant="outline"
-                  className="flex flex-col items-center justify-center h-32"
+                  className="flex flex-col items-center justify-center h-48 w-full border-2 border-dashed border-zinc-700 hover:border-blue-500 hover:bg-zinc-800/50 transition-all"
                 >
-                  <Camera className="h-8 w-8 mb-2" />
-                  <span>Kamera</span>
+                  <div className="bg-zinc-800 p-4 rounded-full mb-3">
+                     <Camera className="h-8 w-8 text-blue-500" />
+                  </div>
+                  <span className="font-medium text-lg">Buka Kamera</span>
+                  <span className="text-sm text-muted-foreground mt-1">Ambil foto langsung di lokasi</span>
                 </Button>
-                <Button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  variant="outline"
-                  className="flex flex-col items-center justify-center h-32"
-                >
-                  <ImageUp className="h-8 w-8 mb-2" />
-                  <span>Galeri</span>
-                </Button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  ref={fileInputRef}
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
+
+                {/* GALLERY BUTTON & INPUT REMOVED */}
               </div>
             ) : isImageCaptured ? (
               <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
