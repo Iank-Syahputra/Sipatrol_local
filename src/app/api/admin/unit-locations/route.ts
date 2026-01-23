@@ -19,46 +19,51 @@ export async function GET(request: NextRequest) {
 
     // Extract query parameters
     const url = new URL(request.url);
-    const unitId = url.searchParams.get('unit_id') || '';
     const searchTerm = url.searchParams.get('search') || '';
-    const limit = parseInt(url.searchParams.get('limit') || '50');
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+
+    // Parse Multi-Select Param
+    const unitIds = url.searchParams.get('units')?.split(',').filter(Boolean) || [];
 
     // Build the query
     let query = supabaseAdmin
       .from('unit_locations')
       .select(`
         *,
-        units (name)
-      `, { count: 'exact' })
-      .order('name', { ascending: true })
-      .range(offset, offset + limit - 1);
-
-    // Apply unit filter if provided
-    if (unitId) {
-      query = query.eq('unit_id', unitId);
-    }
+        units (id, name)
+      `)
+      .order('name', { ascending: true });
 
     // Apply search filter if provided
     if (searchTerm) {
       query = query.ilike('name', `%${searchTerm}%`);
     }
 
-    const { data: locations, error: locationsError, count } = await query;
+    // Apply Multi-Select Unit Filter
+    if (unitIds.length > 0) {
+      query = query.in('unit_id', unitIds);
+    }
+
+    const { data: locations, error: locationsError } = await query;
 
     if (locationsError) {
       console.error('Error fetching unit locations:', locationsError);
       return Response.json({ error: locationsError.message }, { status: 500 });
     }
 
+    // Fetch Units for Dropdown
+    const { data: units, error: unitsError } = await supabaseAdmin
+      .from('units')
+      .select('id, name')
+      .order('name', { ascending: true });
+
+    if (unitsError) {
+      console.error('Error fetching units:', unitsError);
+      return Response.json({ error: unitsError.message }, { status: 500 });
+    }
+
     return Response.json({
       locations,
-      count,
-      pagination: {
-        limit,
-        offset,
-        total: count || 0
-      }
+      units
     });
   } catch (error) {
     console.error('Unexpected error in unit locations API:', error);
