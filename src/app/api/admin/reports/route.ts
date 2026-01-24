@@ -23,6 +23,8 @@ export async function GET(request: NextRequest) {
     // Convert "id1,id2" string into ['id1', 'id2']
     const unitIds = searchParams.get('units')?.split(',').filter(Boolean) || [];
     const categoryIds = searchParams.get('categories')?.split(',').filter(Boolean) || [];
+    // 1. PARSE NEW PARAM
+    const locationIds = searchParams.get('locations')?.split(',').filter(Boolean) || [];
     const search = searchParams.get('search') || '';
     const date = searchParams.get('date') || ''; // YYYY-MM-DD
 
@@ -33,7 +35,8 @@ export async function GET(request: NextRequest) {
         *,
         profiles!inner(full_name),
         units(name, id),
-        report_categories(id, name, color)
+        report_categories(id, name, color),
+        unit_locations(id, name)
       `)
       .order('captured_at', { ascending: false });
 
@@ -59,6 +62,11 @@ export async function GET(request: NextRequest) {
     // Filter by Category (CORRECTED based on DB Screenshot)
     if (categoryIds.length > 0) {
       query = query.in('category_id', categoryIds); // <--- Using 'category_id'
+    }
+
+    // 3. APPLY LOCATION FILTER
+    if (locationIds.length > 0) {
+      query = query.in('location_id', locationIds);
     }
 
     const { data: reports, error: reportsError } = await query;
@@ -89,7 +97,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: categoriesError.message }, { status: 500 });
     }
 
-    return NextResponse.json({ reports, units, categories });
+    // Fetch all locations for the filter dropdown
+    const { data: locations, error: locationsError } = await supabaseAdmin
+      .from('unit_locations')
+      .select('id, name')
+      .order('name', { ascending: true });
+
+    if (locationsError) {
+      console.error('Error fetching locations:', locationsError);
+      return NextResponse.json({ error: locationsError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ reports, units, categories, locations });
 
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

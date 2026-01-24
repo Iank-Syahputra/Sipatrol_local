@@ -51,6 +51,7 @@ export default function ReportManagementPage() {
   const [reports, setReports] = useState<any[]>([]);
   const [allUnits, setAllUnits] = useState<any[]>([]);
   const [allCategories, setAllCategories] = useState<any[]>([]);
+  const [allLocations, setAllLocations] = useState<any[]>([]); // New State for Options
   const [filteredReports, setFilteredReports] = useState<any[]>([]);
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -58,6 +59,7 @@ export default function ReportManagementPage() {
   // 1. CHANGE STATE TO ARRAYS
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]); // New State for Filter
   // 2. ADD DATE STATE
   const [selectedDate, setSelectedDate] = useState('');
   const [loading, setLoading] = useState(true);
@@ -76,7 +78,8 @@ export default function ReportManagementPage() {
           search: searchTerm,
           date: selectedDate,
           units: selectedUnits.join(','),       // Array to String
-          categories: selectedCategories.join(',') // Array to String
+          categories: selectedCategories.join(','), // Array to String
+          locations: selectedLocations.join(',') // Add this
         });
 
         const response = await fetch(`/api/admin/reports?${queryParams}`);
@@ -89,6 +92,7 @@ export default function ReportManagementPage() {
         setReports(data.reports);
         setAllUnits(data.units);
         setAllCategories(data.categories); // Save categories from API
+        setAllLocations(data.locations || []); // Set options
         setFilteredReports(data.reports);
       } catch (err) {
         console.error('Error fetching reports:', err);
@@ -111,6 +115,7 @@ export default function ReportManagementPage() {
     setSearchTerm('');
     setSelectedUnits([]);
     setSelectedCategories([]);
+    setSelectedLocations([]); // Reset this
     setSelectedDate('');
     // Trigger fetch after state update (React batches these, so effect sees new state)
     setFilterTrigger(prev => prev + 1);
@@ -182,7 +187,7 @@ export default function ReportManagementPage() {
         <div className="flex-1 p-6 overflow-y-auto">
           {/* Filters */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4"> {/* Change cols to 5 to fit buttons */}
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4"> {/* Increase cols to 6 */}
               {/* Use New Component */}
               <div>
                 <label className="block text-sm text-zinc-400 mb-2">Filter Units</label>
@@ -202,6 +207,18 @@ export default function ReportManagementPage() {
                   placeholder="Select Categories"
                 />
               </div>
+
+              {/* NEW LOCATION FILTER */}
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">Filter Location</label>
+                <MultiSelectDropdown
+                  options={allLocations}
+                  selected={selectedLocations}
+                  onChange={setSelectedLocations}
+                  placeholder="Select Spots"
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-zinc-400 mb-2">Search Name</label>
                 <div className="relative">
@@ -256,6 +273,7 @@ export default function ReportManagementPage() {
                     <th className="pb-3">Officer</th>
                     <th className="pb-3">Unit</th>
                     <th className="pb-3">Category</th>
+                    <th className="pb-3">Specific Loc</th> {/* New Header */}
                     <th className="pb-3">Date/Time</th>
                     <th className="pb-3">Location</th>
                     <th className="pb-3">Status</th>
@@ -288,6 +306,11 @@ export default function ReportManagementPage() {
                         )}
                       </td>
 
+                      {/* NEW SPECIFIC LOCATION COLUMN */}
+                      <td className="py-3 text-zinc-300">
+                        {report.unit_locations?.name || '-'}
+                      </td>
+
                       <td className="py-3 text-zinc-300">
                         {new Date(report.captured_at).toLocaleString()}
                       </td>
@@ -315,7 +338,7 @@ export default function ReportManagementPage() {
 
                   {reports.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-zinc-500">
+                      <td colSpan={8} className="py-8 text-center text-zinc-500">
                         No reports found matching your criteria
                       </td>
                     </tr>
