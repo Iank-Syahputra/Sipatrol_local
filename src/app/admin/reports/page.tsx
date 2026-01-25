@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+// 1. IMPORT XLSX
+import * as XLSX from 'xlsx';
 import { Activity, Map, Users, AlertTriangle, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, User, Download, Printer, ChevronDown, Check, ImageIcon } from "lucide-react";
 import ReportDetailsModal from '@/components/report-details-modal';
 import AdminSidebar from '@/components/admin-sidebar';
@@ -130,6 +132,41 @@ export default function ReportManagementPage() {
     setIsModalOpen(true);
   };
 
+  // 2. EXPORT FUNCTION LOGIC
+  const handleExport = () => {
+    if (reports.length === 0) {
+      alert("Tidak ada data laporan untuk diexport.");
+      return;
+    }
+
+    // Mapping data agar sesuai dengan kolom Excel yang diinginkan
+    const dataToExport = reports.map(report => ({
+      "Tanggal & Waktu": new Date(report.captured_at).toLocaleString('id-ID'),
+      "Nama Petugas": report.profiles?.full_name || 'N/A',
+      "Unit": report.units?.name || 'N/A',
+      "Kategori": report.report_categories?.name || 'N/A',
+      "Lokasi Spesifik": report.unit_locations?.name || '-',
+      "Catatan Petugas": report.notes || '-', // Mengambil Notes
+      "Latitude": report.latitude,
+      "Longitude": report.longitude,
+      "Link Foto": report.image_path || 'Tidak ada foto',
+      "Status": "Completed"
+    }));
+
+    // Membuat Worksheet dan Workbook
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Security");
+
+    // Auto-width columns (Sedikit styling biar rapi)
+    const max_width = dataToExport.reduce((w, r) => Math.max(w, r["Catatan Petugas"].length), 10);
+    worksheet["!cols"] = [ { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: max_width }, { wch: 15 }, { wch: 15 }, { wch: 50 } ];
+
+    // Generate file name dengan timestamp
+    const timestamp = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(workbook, `Laporan_Security_${timestamp}.xlsx`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
@@ -176,11 +213,16 @@ export default function ReportManagementPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold">Report Management</h1>
             <div className="flex items-center gap-4">
-              <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700">
+              {/* 3. ATTACH EXPORT FUNCTION */}
+              <button
+                onClick={handleExport}
+                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700 transition-colors"
+              >
                 <Download className="h-4 w-4" />
-                Export
+                Export Excel
               </button>
-              <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700">
+
+              <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700 transition-colors">
                 <Printer className="h-4 w-4" />
                 Print
               </button>
@@ -308,7 +350,7 @@ export default function ReportManagementPage() {
                               loading="lazy"
                             />
                           ) : (
-                            <FileText className="h-4 w-4 text-zinc-600" />
+                            <ImageIcon className="h-4 w-4 text-zinc-600" />
                           )}
                         </div>
                       </td>

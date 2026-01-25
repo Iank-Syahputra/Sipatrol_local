@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+// 1. IMPORT XLSX
+import * as XLSX from 'xlsx';
 import { Search, Filter, Download, Printer, Plus, Edit3, Trash2, MapPin, ChevronDown, Check } from "lucide-react";
 import AdminSidebar from '@/components/admin-sidebar';
 
@@ -163,6 +165,35 @@ export default function ManageUnitLocationsPage() {
     setShowAddForm(false);
   };
 
+  // 2. EXPORT FUNCTION LOGIC
+  const handleExport = () => {
+    if (locations.length === 0) {
+      alert("Tidak ada data lokasi unit untuk diexport.");
+      return;
+    }
+
+    // Mapping data agar sesuai dengan kolom Excel yang diinginkan
+    const dataToExport = locations.map(location => ({
+      "Nama Lokasi": location.name || 'N/A',
+      "Unit": location.units?.name || 'N/A',
+      "Tanggal Dibuat": new Date(location.created_at).toLocaleString('id-ID'),
+      "ID Lokasi": location.id,
+      "ID Unit": location.unit_id
+    }));
+
+    // Membuat Worksheet dan Workbook
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Daftar Lokasi Unit");
+
+    // Auto-width columns (Sedikit styling biar rapi)
+    worksheet["!cols"] = [ { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 30 }, { wch: 30 } ];
+
+    // Generate file name dengan timestamp
+    const timestamp = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(workbook, `Daftar_Lokasi_Unit_${timestamp}.xlsx`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
@@ -201,15 +232,18 @@ export default function ManageUnitLocationsPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold">Manage Unit Locations</h1>
             <div className="flex gap-2">
-              <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700">
+              <button
+                onClick={handleExport}
+                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700 transition-colors"
+              >
                 <Download className="h-4 w-4" />
-                Export
+                Export Excel
               </button>
-              <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700">
+              <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700 transition-colors">
                 <Printer className="h-4 w-4" />
                 Print
               </button>
-              <button 
+              <button
                 onClick={() => {
                   setShowAddForm(true);
                   setShowEditForm(false);
