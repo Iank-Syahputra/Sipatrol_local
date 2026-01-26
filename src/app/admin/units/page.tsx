@@ -7,8 +7,7 @@ import { Activity, Map, Users, AlertTriangle, CircleGauge, Clock, Shield, Eye, S
 import AdminSidebar from '@/components/admin-sidebar';
 
 export default function ManageUnitsPage() {
-  const [allUnits, setAllUnits] = useState<any[]>([]); // Stores all data
-  const [filteredUnits, setFilteredUnits] = useState<any[]>([]); // Stores displayed data
+  const [units, setUnits] = useState<any[]>([]); // Stores paginated data
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -16,44 +15,46 @@ export default function ManageUnitsPage() {
   const [editingUnit, setEditingUnit] = useState<any>(null);
   const [showEditForm, setShowEditForm] = useState(false);
 
-  // 2. FETCH ALL DATA (Run Once)
-  useEffect(() => {
-    const fetchAllUnits = async () => {
-      try {
-        setLoading(true);
-        // Call API without search params to get everything
-        const response = await fetch(`/api/admin/units`);
+  // PAGINATION STATES
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const itemsPerPage = 10; // Maximum 10 rows per page
 
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+  // 2. FETCH DATA WITH PAGINATION
+  const fetchUnits = async () => {
+    try {
+      setLoading(true);
+      // Calculate offset for pagination
+      const offset = (currentPage - 1) * itemsPerPage;
 
-        const data = await response.json();
-        setAllUnits(data.units || []);       // Save to Master
-        setFilteredUnits(data.units || []);  // Initialize View
-      } catch (err) {
-        console.error('Error fetching units:', err);
-        setError('Failed to load units');
-      } finally {
-        setLoading(false);
-      }
-    };
+      // Call API with pagination and search params
+      const queryParams = new URLSearchParams({
+        search: searchTerm,
+        limit: itemsPerPage.toString(),
+        offset: offset.toString()
+      });
 
-    fetchAllUnits();
-  }, []); // Empty dependency = Run Once
+      const response = await fetch(`/api/admin/units?${queryParams}`);
 
-  // 3. REAL-TIME FILTER EFFECT (Runs on typing)
-  useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredUnits(allUnits);
-    } else {
-      const lowerTerm = searchTerm.toLowerCase();
-      // Filter in memory (Instant)
-      const results = allUnits.filter(unit =>
-        unit.name.toLowerCase().includes(lowerTerm) ||
-        (unit.district && unit.district.toLowerCase().includes(lowerTerm))
-      );
-      setFilteredUnits(results);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+      const data = await response.json();
+      setUnits(data.units || []);       // Set paginated units
+      setTotalCount(data.pagination?.total || 0);  // Set total count
+      setTotalPages(Math.ceil((data.pagination?.total || 0) / itemsPerPage)); // Calculate total pages
+    } catch (err) {
+      console.error('Error fetching units:', err);
+      setError('Failed to load units');
+    } finally {
+      setLoading(false);
     }
-  }, [searchTerm, allUnits]);
+  };
+
+  // Effect to fetch units when currentPage or searchTerm changes
+  useEffect(() => {
+    fetchUnits();
+  }, [currentPage, searchTerm]);
 
   const handleAddUnit = async () => {
     // Get form values
@@ -79,13 +80,10 @@ export default function ManageUnitsPage() {
       }
 
       // Refresh the data
-      const data = await response.json();
-
-      // Update Master List Manually
-      const updatedList = [data.unit, ...allUnits];
-      setAllUnits(updatedList);
-      // The Filter Effect above will automatically update 'filteredUnits'
       setShowAddForm(false);
+      // Reset to first page after adding new unit
+      setCurrentPage(1);
+      fetchUnits();
 
       // Clear form
       (document.getElementById('unit-name') as HTMLInputElement).value = '';
@@ -120,13 +118,9 @@ export default function ManageUnitsPage() {
       }
 
       // Refresh the data
-      const data = await response.json();
-
-      // Update Item in Master List
-      const updatedList = allUnits.map(u => u.id === editingUnit.id ? data.unit : u);
-      setAllUnits(updatedList);
       setShowEditForm(false);
       setEditingUnit(null);
+      fetchUnits();
 
       // Clear form
       (document.getElementById('edit-unit-name') as HTMLInputElement).value = '';
@@ -163,9 +157,8 @@ export default function ManageUnitsPage() {
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      // Remove from Master List
-      const updatedList = allUnits.filter(u => u.id !== unit.id);
-      setAllUnits(updatedList);
+      // Refresh the data
+      fetchUnits();
     } catch (err) {
       console.error('Error deleting unit:', err);
       if (err instanceof TypeError && err.message.includes('fetch failed')) {
@@ -194,32 +187,41 @@ export default function ManageUnitsPage() {
     }, 0);
   };
 
-  // 2. EXPORT FUNCTION LOGIC
-  const handleExport = () => {
-    if (allUnits.length === 0) {
-      alert("Tidak ada data unit untuk diexport.");
-      return;
+  // 2. EXPORT FUNCTION LOGIC - Fetch all units for export
+  const handleExport = async () => {
+    try {
+      // Fetch all units (with a large limit to get everything)
+      const response = await fetch('/api/admin/units?limit=10000&offset=0');
+      const data = await response.json();
+
+      if (!data.units || data.units.length === 0) {
+        alert("Tidak ada data unit untuk diexport.");
+        return;
+      }
+
+      // Mapping data agar sesuai dengan kolom Excel yang diinginkan
+      const dataToExport = data.units.map(unit => ({
+        "Nama Unit": unit.name || 'N/A',
+        "Wilayah/Daerah": unit.district || 'N/A',
+        "Tanggal Dibuat": new Date(unit.created_at).toLocaleString('id-ID'),
+        "ID": unit.id
+      }));
+
+      // Membuat Worksheet dan Workbook
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Daftar Unit");
+
+      // Auto-width columns (Sedikit styling biar rapi)
+      worksheet["!cols"] = [ { wch: 25 }, { wch: 30 }, { wch: 20 }, { wch: 30 } ];
+
+      // Generate file name dengan timestamp
+      const timestamp = new Date().toISOString().slice(0,10);
+      XLSX.writeFile(workbook, `Daftar_Unit_${timestamp}.xlsx`);
+    } catch (error) {
+      console.error('Error exporting units:', error);
+      alert("Gagal melakukan export data unit.");
     }
-
-    // Mapping data agar sesuai dengan kolom Excel yang diinginkan
-    const dataToExport = allUnits.map(unit => ({
-      "Nama Unit": unit.name || 'N/A',
-      "Wilayah/Daerah": unit.district || 'N/A',
-      "Tanggal Dibuat": new Date(unit.created_at).toLocaleString('id-ID'),
-      "ID": unit.id
-    }));
-
-    // Membuat Worksheet dan Workbook
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Daftar Unit");
-
-    // Auto-width columns (Sedikit styling biar rapi)
-    worksheet["!cols"] = [ { wch: 25 }, { wch: 30 }, { wch: 20 }, { wch: 30 } ];
-
-    // Generate file name dengan timestamp
-    const timestamp = new Date().toISOString().slice(0,10);
-    XLSX.writeFile(workbook, `Daftar_Unit_${timestamp}.xlsx`);
   };
 
   if (loading) {
@@ -287,7 +289,10 @@ export default function ManageUnitsPage() {
                   placeholder="Search units..."
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1); // Reset to first page when searching
+                  }}
                 />
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
               </div>
@@ -390,7 +395,12 @@ export default function ManageUnitsPage() {
 
           {/* Units Table */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-            <h2 className="text-lg font-bold mb-4">Units List</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold">Units List</h2>
+              <div className="text-sm text-zinc-400">
+                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} - {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} units
+              </div>
+            </div>
 
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -403,17 +413,11 @@ export default function ManageUnitsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800">
-                  {filteredUnits.map((unit: any) => (
+                  {units.map((unit: any) => (
                     <tr key={unit.id} className="text-sm">
-                      <td className="py-3 font-medium text-white">
-                        {unit.name}
-                      </td>
-                      <td className="py-3 text-zinc-300">
-                        {unit.district}
-                      </td>
-                      <td className="py-3 text-zinc-300">
-                        {new Date(unit.created_at).toLocaleDateString()}
-                      </td>
+                      <td className="py-3 font-medium text-white">{unit.name}</td>
+                      <td className="py-3 text-zinc-300">{unit.district}</td>
+                      <td className="py-3 text-zinc-300">{new Date(unit.created_at).toLocaleDateString()}</td>
                       <td className="py-3">
                         <div className="flex gap-2">
                           <button
@@ -433,7 +437,7 @@ export default function ManageUnitsPage() {
                     </tr>
                   ))}
 
-                  {filteredUnits.length === 0 && (
+                  {units.length === 0 && (
                     <tr>
                       <td colSpan={4} className="py-8 text-center text-zinc-500">
                         No units found matching your criteria
@@ -443,6 +447,63 @@ export default function ManageUnitsPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6">
+                <div className="text-sm text-zinc-400">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1.5 rounded-lg ${currentPage === 1 ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}
+                  >
+                    Previous
+                  </button>
+
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      // Show all pages if total is 5 or less
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      // Show first 5 pages if current page is 1-3
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      // Show last 5 pages if current page is near the end
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      // Show current page in the middle
+                      pageNum = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`px-3 py-1.5 rounded-lg min-w-[36px] ${
+                          currentPage === pageNum
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-zinc-800 text-white hover:bg-zinc-700'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-1.5 rounded-lg ${currentPage === totalPages ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
