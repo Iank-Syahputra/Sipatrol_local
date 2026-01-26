@@ -26,9 +26,56 @@ export async function GET(request: NextRequest) {
     // 1. PARSE NEW PARAM
     const locationIds = searchParams.get('locations')?.split(',').filter(Boolean) || [];
     const search = searchParams.get('search') || '';
-    const date = searchParams.get('date') || ''; // YYYY-MM-DD
+    const startDateParam = searchParams.get('startDate') || '';
+    const endDateParam = searchParams.get('endDate') || '';
 
-    // 1. QUERY BUILDER
+    // PAGINATION PARAMETERS
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 10); // Maximum 10 rows per page
+    const offset = (page - 1) * limit;
+
+    // 1. QUERY BUILDER FOR COUNT (to calculate total pages)
+    let countQuery = supabaseAdmin
+      .from('reports')
+      .select('*', { count: 'exact', head: true });
+
+    // 2. APPLY FILTERS TO COUNT QUERY
+    if (search) {
+      countQuery = countQuery.ilike('profiles.full_name', `%${search}%`);
+    }
+
+    if (startDateParam && endDateParam) {
+      const startDate = `${startDateParam}T00:00:00.000Z`;
+      const endDate = `${endDateParam}T23:59:59.999Z`;
+      countQuery = countQuery.gte('captured_at', startDate).lte('captured_at', endDate);
+    }
+
+    // Filter by Unit
+    if (unitIds.length > 0) {
+      countQuery = countQuery.in('unit_id', unitIds);
+    }
+
+    // Filter by Category (CORRECTED based on DB Screenshot)
+    if (categoryIds.length > 0) {
+      countQuery = countQuery.in('category_id', categoryIds); // <--- Using 'category_id'
+    }
+
+    // 3. APPLY LOCATION FILTER
+    if (locationIds.length > 0) {
+      countQuery = countQuery.in('location_id', locationIds);
+    }
+
+    const { count: totalReports, error: countError } = await countQuery;
+
+    if (countError) {
+      console.error('Error counting reports:', countError);
+      return NextResponse.json({ error: countError.message }, { status: 500 });
+    }
+
+    // CALCULATE TOTAL PAGES
+    const totalPages = Math.ceil(totalReports! / limit);
+
+    // 1. QUERY BUILDER FOR DATA
     let query = supabaseAdmin
       .from('reports')
       .select(`
@@ -38,19 +85,20 @@ export async function GET(request: NextRequest) {
         report_categories(id, name, color),
         unit_locations(id, name)
       `)
-      .order('captured_at', { ascending: false });
+      .order('captured_at', { ascending: false })
+      .range(offset, offset + limit - 1); // Apply pagination
 
-    // 2. APPLY FILTERS
+    // 2. APPLY FILTERS TO DATA QUERY
 
     // Search by Name
     if (search) {
       query = query.ilike('profiles.full_name', `%${search}%`);
     }
 
-    // Filter by Date
-    if (date) {
-      const startDate = `${date}T00:00:00.000Z`;
-      const endDate = `${date}T23:59:59.999Z`;
+    // Filter by Date Range
+    if (startDateParam && endDateParam) {
+      const startDate = `${startDateParam}T00:00:00.000Z`;
+      const endDate = `${endDateParam}T23:59:59.999Z`;
       query = query.gte('captured_at', startDate).lte('captured_at', endDate);
     }
 
@@ -108,7 +156,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: locationsError.message }, { status: 500 });
     }
 
-    return NextResponse.json({ reports, units, categories, locations });
+    return NextResponse.json({
+      reports,
+      units,
+      categories,
+      locations,
+      totalPages,
+      totalCount: totalReports || 0
+    });
 
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

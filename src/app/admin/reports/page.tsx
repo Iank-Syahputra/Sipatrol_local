@@ -68,6 +68,12 @@ export default function ReportManagementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // PAGINATION STATES
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalReports, setTotalReports] = useState(0);
+  const itemsPerPage = 10; // Maximum 10 rows per page
+
   // 1. ADD TRIGGER STATE
   const [filterTrigger, setFilterTrigger] = useState(0);
 
@@ -83,7 +89,9 @@ export default function ReportManagementPage() {
           endDate: endDate,     // Kirim end date
           units: selectedUnits.join(','),
           categories: selectedCategories.join(','),
-          locations: selectedLocations.join(',')
+          locations: selectedLocations.join(','),
+          page: currentPage.toString(),
+          limit: itemsPerPage.toString()
         });
 
         const response = await fetch(`/api/admin/reports?${queryParams}`);
@@ -98,6 +106,8 @@ export default function ReportManagementPage() {
         setAllCategories(data.categories); // Save categories from API
         setAllLocations(data.locations || []); // Set options
         setFilteredReports(data.reports);
+        setTotalPages(data.totalPages || 1);
+        setTotalReports(data.totalCount || data.reports.length);
       } catch (err) {
         console.error('Error fetching reports:', err);
         setError('Failed to load reports');
@@ -108,7 +118,7 @@ export default function ReportManagementPage() {
 
     fetchData();
     // ONLY RUN ON MOUNT OR WHEN TRIGGER CHANGES
-  }, [filterTrigger]); // 3. UPDATE DEPENDENCY
+  }, [filterTrigger, currentPage]); // 3. UPDATE DEPENDENCY
 
   // 3. HANDLER FUNCTIONS
   const handleApplyFilters = () => {
@@ -319,24 +329,126 @@ export default function ReportManagementPage() {
 
           {/* Reports Table */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-            <h2 className="text-lg font-bold mb-4">Reports List</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold">Reports List</h2>
+              <div className="text-sm text-zinc-400">
+                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalReports)} - {Math.min(currentPage * itemsPerPage, totalReports)} of {totalReports} reports
+              </div>
+            </div>
 
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-zinc-800 text-left text-sm text-zinc-400"><th className="pb-3 pl-2">Evidence</th> {/* 1. Ganti Location jadi Evidence */}<th className="pb-3">Officer</th><th className="pb-3">Unit</th><th className="pb-3">Category</th><th className="pb-3">Specific Loc</th><th className="pb-3">Date/Time</th>{/* HAPUS COLUMN Location */}<th className="pb-3">Status</th><th className="pb-3">Actions</th></tr>
+                  <tr className="border-b border-zinc-800 text-left text-sm text-zinc-400">
+                    <th className="pb-3 pl-2">Evidence</th> {/* 1. Ganti Location jadi Evidence */}
+                    <th className="pb-3">Officer</th>
+                    <th className="pb-3">Unit</th>
+                    <th className="pb-3">Category</th>
+                    <th className="pb-3">Specific Loc</th>
+                    <th className="pb-3">Date/Time</th>{/* HAPUS COLUMN Location */}
+                    <th className="pb-3">Status</th>
+                    <th className="pb-3">Actions</th>
+                  </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800">
                   {reports.map((report: any) => (
-                    <tr key={report.id} className="text-sm hover:bg-zinc-800/30 transition-colors"><td className="py-3 pl-2"><div className="h-10 w-16 bg-zinc-800 rounded-md overflow-hidden border border-zinc-700 flex items-center justify-center">{report.image_path ? (<img src={report.image_path} alt="Evd" className="h-full w-full object-cover" loading="lazy" />) : (<ImageIcon className="h-4 w-4 text-zinc-600" />)}</div></td><td className="py-3 font-medium text-white">{report.profiles?.full_name || 'N/A'}</td><td className="py-3 text-zinc-300">{report.units?.name || 'N/A'}</td><td className="py-3">{report.report_categories && (<span className={`px-2 py-1 rounded-full text-xs font-medium ${(report.report_categories.color === 'red' || report.report_categories.name.toLowerCase().includes('unsafe') || report.report_categories.name.toLowerCase().includes('tidak aman')) ? 'bg-red-500/20 text-red-400' : report.report_categories.color === 'yellow' || report.report_categories.name.toLowerCase().includes('maintenance') ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>{report.report_categories.name}</span>)}</td><td className="py-3 text-zinc-300">{report.unit_locations?.name || '-'}</td><td className="py-3 text-zinc-300">{new Date(report.captured_at).toLocaleString()}</td>{/* HAPUS CELL Kordinat */}<td className="py-3"><span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-full">Completed</span></td><td className="py-3"><button onClick={() => handleViewReport(report)} className="flex items-center gap-1 text-blue-400 hover:text-blue-300 text-sm"><Eye className="h-4 w-4" />View</button></td></tr>
+                    <tr key={report.id} className="text-sm hover:bg-zinc-800/30 transition-colors">
+                      <td className="py-3 pl-2">
+                        <div className="h-10 w-16 bg-zinc-800 rounded-md overflow-hidden border border-zinc-700 flex items-center justify-center">
+                          {report.image_path ? (
+                            <img src={report.image_path} alt="Evd" className="h-full w-full object-cover" loading="lazy" />
+                          ) : (
+                            <ImageIcon className="h-4 w-4 text-zinc-600" />
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 font-medium text-white">{report.profiles?.full_name || 'N/A'}</td>
+                      <td className="py-3 text-zinc-300">{report.units?.name || 'N/A'}</td>
+                      <td className="py-3">
+                        {report.report_categories && (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${(report.report_categories.color === 'red' || report.report_categories.name.toLowerCase().includes('unsafe') || report.report_categories.name.toLowerCase().includes('tidak aman')) ? 'bg-red-500/20 text-red-400' : report.report_categories.color === 'yellow' || report.report_categories.name.toLowerCase().includes('maintenance') ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
+                            {report.report_categories.name}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 text-zinc-300">{report.unit_locations?.name || '-'}</td>
+                      <td className="py-3 text-zinc-300">{new Date(report.captured_at).toLocaleString()}</td>{/* HAPUS CELL Kordinat */}
+                      <td className="py-3">
+                        <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-full">Completed</span>
+                      </td>
+                      <td className="py-3">
+                        <button onClick={() => handleViewReport(report)} className="flex items-center gap-1 text-blue-400 hover:text-blue-300 text-sm">
+                          <Eye className="h-4 w-4" />View
+                        </button>
+                      </td>
+                    </tr>
                   ))}
 
                   {reports.length === 0 && (
-                    <tr><td colSpan={8} className="py-8 text-center text-zinc-500">No reports found matching your criteria</td></tr>
+                    <tr>
+                      <td colSpan={8} className="py-8 text-center text-zinc-500">No reports found matching your criteria</td>
+                    </tr>
                   )}
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6">
+                <div className="text-sm text-zinc-400">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1.5 rounded-lg ${currentPage === 1 ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}
+                  >
+                    Previous
+                  </button>
+
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      // Show all pages if total is 5 or less
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      // Show first 5 pages if current page is 1-3
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      // Show last 5 pages if current page is near the end
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      // Show current page in the middle
+                      pageNum = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`px-3 py-1.5 rounded-lg min-w-[36px] ${
+                          currentPage === pageNum
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-zinc-800 text-white hover:bg-zinc-700'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-1.5 rounded-lg ${currentPage === totalPages ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
