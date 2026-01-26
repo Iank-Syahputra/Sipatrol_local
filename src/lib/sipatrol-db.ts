@@ -437,14 +437,22 @@ export async function createReport(reportData: Omit<Report, 'id' | 'created_at'>
   }
 }
 
-export async function getUserReports(userId: string): Promise<Report[]> {
+export async function getUserReports(
+  userId: string,
+  options?: { page?: number; limit?: number; startDate?: string; endDate?: string }
+): Promise<{ data: Report[]; totalCount: number }> {
   try {
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const { data, error } = await supabaseAdmin
+    const page = options?.page || 1;
+    const limit = options?.limit || 10;
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    let query = supabaseAdmin
       .from('reports')
       .select(`
         *,
@@ -452,19 +460,30 @@ export async function getUserReports(userId: string): Promise<Report[]> {
         report_categories(name, color),
         unit_locations(name),
         profiles (full_name)  // <--- TAMBAHKAN BARIS INI (Supaya nama tidak N/A)
-      `)
+      `, { count: 'exact' }) // Request total count
       .eq('user_id', userId)
       .order('captured_at', { ascending: false });
+
+    // Apply Date Filter
+    if (options?.startDate) {
+      query = query.gte('captured_at', `${options.startDate}T00:00:00`);
+    }
+    if (options?.endDate) {
+      query = query.lte('captured_at', `${options.endDate}T23:59:59`);
+    }
+
+    // Apply Pagination
+    const { data, count, error } = await query.range(from, to);
 
     if (error) {
       console.error('Supabase Error Detail:', JSON.stringify(error, null, 2));
       throw error;
     }
 
-    return data || [];
+    return { data: data || [], totalCount: count || 0 };
   } catch (error) {
     console.error('Error in getUserReports:', error);
-    throw new Error('Failed to fetch user reports');
+    return { data: [], totalCount: 0 }; // Return empty result instead of throwing
   }
 }
 

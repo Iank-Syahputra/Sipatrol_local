@@ -19,7 +19,7 @@ export default async function SecurityMapPage() {
   }
 
   // Get user's reports
-  const reports = await getUserReports(user.id);
+  const { data: reports } = await getUserReports(user.id);
 
   // Prepare location data for the map
   const locations = reports

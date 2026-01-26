@@ -26,7 +26,7 @@ export default async function SecurityDashboardPage() {
     const assignedUnit = await getCurrentUserAssignedUnit();
 
     // Get user's reports
-    const reports = await getUserReports(profile.id);
+    const { data: reports } = await getUserReports(profile.id);
 
     return (
     <div className="container mx-auto py-10">
