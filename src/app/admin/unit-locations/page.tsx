@@ -7,7 +7,7 @@ import { Search, Filter, Download, Printer, Plus, Edit3, Trash2, MapPin, Chevron
 import AdminSidebar from '@/components/admin-sidebar';
 
 // --- REUSABLE MULTI-SELECT COMPONENT ---
-const MultiSelectDropdown = ({ options, selected, onChange, placeholder }: any) => {
+const MultiSelectDropdown = ({ options, selected, onChange, placeholder, onPageChange }: any) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleOption = (id: string) => {
@@ -51,57 +51,76 @@ const MultiSelectDropdown = ({ options, selected, onChange, placeholder }: any) 
 export default function ManageUnitLocationsPage() {
   const [locations, setLocations] = useState<any[]>([]);
   const [units, setUnits] = useState<any[]>([]);
-  
+
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
-  const [filterTrigger, setFilterTrigger] = useState(0);
 
   // Form States (Controlled Inputs)
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingLocation, setEditingLocation] = useState<any>(null);
-  
+
   // Add/Edit Form Data
   const [formData, setFormData] = useState({ name: '', unit_id: '' });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // FETCH DATA
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const queryParams = new URLSearchParams({
-          search: searchTerm,
-          units: selectedUnits.join(','),
-        });
+  // PAGINATION STATES
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const itemsPerPage = 10; // Maximum 10 rows per page
 
-        const response = await fetch(`/api/admin/unit-locations?${queryParams}`);
-        if (!response.ok) throw new Error('Failed to fetch data');
+  // FETCH DATA WITH PAGINATION
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams({
+        search: searchTerm,
+        units: selectedUnits.join(','),
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
+      });
 
-        const data = await response.json();
+      const response = await fetch(`/api/admin/unit-locations?${queryParams}`);
+      if (!response.ok) throw new Error('Failed to fetch data');
+
+      const data = await response.json();
         setLocations(data.locations || []);
         setUnits(data.units || []);
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load locations and units');
-      } finally {
-        setLoading(false);
-      }
-    };
+        setTotalPages(data.totalPages || 1);
+        setTotalCount(data.totalCount || 0);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load locations and units');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Effect to fetch data when currentPage changes only
+  useEffect(() => {
     fetchData();
-  }, [filterTrigger]);
+  }, [currentPage]);
+
+  // Effect to fetch data once when component mounts
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   // HANDLERS
-  const handleApplyFilters = () => setFilterTrigger(prev => prev + 1);
-  
+  const handleApplyFilters = () => {
+    setCurrentPage(1); // Reset to first page when applying filters
+    fetchData(); // Explicitly fetch data when Apply is clicked
+  };
+
   const handleResetFilters = () => {
     setSearchTerm('');
     setSelectedUnits([]);
-    setFilterTrigger(prev => prev + 1);
+    setCurrentPage(1); // Reset to first page when resetting filters
+    fetchData(); // Explicitly fetch data when Reset is clicked
   };
 
   const handleSaveLocation = async (isEdit: boolean) => {
@@ -125,9 +144,10 @@ export default function ManageUnitLocationsPage() {
         throw new Error(errorData.error || 'Failed to save location');
       }
 
-      // Refresh data
-      setFilterTrigger(prev => prev + 1);
-      
+      // Reset to first page and refresh data
+      setCurrentPage(1);
+      await fetchData();
+
       // Reset & Close
       setShowAddForm(false);
       setShowEditForm(false);
@@ -146,13 +166,14 @@ export default function ManageUnitLocationsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to delete location');
       }
-      
-      setFilterTrigger(prev => prev + 1);
+
+      // Refresh data
+      await fetchData();
     } catch (err: any) {
       alert(err.message || 'Failed to delete location');
     }
@@ -165,33 +186,42 @@ export default function ManageUnitLocationsPage() {
     setShowAddForm(false);
   };
 
-  // 2. EXPORT FUNCTION LOGIC
-  const handleExport = () => {
-    if (locations.length === 0) {
-      alert("Tidak ada data lokasi unit untuk diexport.");
-      return;
+  // 2. EXPORT FUNCTION LOGIC - Fetch all locations for export
+  const handleExport = async () => {
+    try {
+      // Fetch all locations (with a large limit to get everything)
+      const response = await fetch('/api/admin/unit-locations?limit=10000&page=1');
+      const data = await response.json();
+
+      if (!data.locations || data.locations.length === 0) {
+        alert("Tidak ada data lokasi unit untuk diexport.");
+        return;
+      }
+
+      // Mapping data agar sesuai dengan kolom Excel yang diinginkan
+      const dataToExport = data.locations.map(location => ({
+        "Nama Lokasi": location.name || 'N/A',
+        "Unit": location.units?.name || 'N/A',
+        "Tanggal Dibuat": new Date(location.created_at).toLocaleString('id-ID'),
+        "ID Lokasi": location.id,
+        "ID Unit": location.unit_id
+      }));
+
+      // Membuat Worksheet dan Workbook
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Daftar Lokasi Unit");
+
+      // Auto-width columns (Sedikit styling biar rapi)
+      worksheet["!cols"] = [ { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 30 }, { wch: 30 } ];
+
+      // Generate file name dengan timestamp
+      const timestamp = new Date().toISOString().slice(0,10);
+      XLSX.writeFile(workbook, `Daftar_Lokasi_Unit_${timestamp}.xlsx`);
+    } catch (error) {
+      console.error('Error exporting locations:', error);
+      alert("Gagal melakukan export data lokasi unit.");
     }
-
-    // Mapping data agar sesuai dengan kolom Excel yang diinginkan
-    const dataToExport = locations.map(location => ({
-      "Nama Lokasi": location.name || 'N/A',
-      "Unit": location.units?.name || 'N/A',
-      "Tanggal Dibuat": new Date(location.created_at).toLocaleString('id-ID'),
-      "ID Lokasi": location.id,
-      "ID Unit": location.unit_id
-    }));
-
-    // Membuat Worksheet dan Workbook
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Daftar Lokasi Unit");
-
-    // Auto-width columns (Sedikit styling biar rapi)
-    worksheet["!cols"] = [ { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 30 }, { wch: 30 } ];
-
-    // Generate file name dengan timestamp
-    const timestamp = new Date().toISOString().slice(0,10);
-    XLSX.writeFile(workbook, `Daftar_Lokasi_Unit_${timestamp}.xlsx`);
   };
 
   if (loading) {
@@ -343,7 +373,13 @@ export default function ManageUnitLocationsPage() {
 
           {/* TABLE SECTION */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-            <h2 className="text-lg font-bold mb-4">Locations List</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold">Locations List</h2>
+              <div className="text-sm text-zinc-400">
+                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} - {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} locations
+              </div>
+            </div>
+
             {loading ? (
                <div className="text-center py-10 text-zinc-500">Loading...</div>
             ) : (
@@ -381,6 +417,63 @@ export default function ManageUnitLocationsPage() {
                     )}
                   </tbody>
                 </table>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-6">
+                    <div className="text-sm text-zinc-400">
+                      Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className={`px-3 py-1.5 rounded-lg ${currentPage === 1 ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}
+                      >
+                        Previous
+                      </button>
+
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          // Show all pages if total is 5 or less
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          // Show first 5 pages if current page is 1-3
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          // Show last 5 pages if current page is near the end
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          // Show current page in the middle
+                          pageNum = currentPage - 2 + i;
+                        }
+
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setCurrentPage(pageNum)}
+                            className={`px-3 py-1.5 rounded-lg min-w-[36px] ${
+                              currentPage === pageNum
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-zinc-800 text-white hover:bg-zinc-700'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className={`px-3 py-1.5 rounded-lg ${currentPage === totalPages ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

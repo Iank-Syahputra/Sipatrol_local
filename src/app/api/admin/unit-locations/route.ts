@@ -20,18 +20,47 @@ export async function GET(request: NextRequest) {
     // Extract query parameters
     const url = new URL(request.url);
     const searchTerm = url.searchParams.get('search') || '';
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 10); // Maximum 10 rows per page
+    const offset = (page - 1) * limit;
 
     // Parse Multi-Select Param
     const unitIds = url.searchParams.get('units')?.split(',').filter(Boolean) || [];
 
-    // Build the query
+    // Build the count query
+    let countQuery = supabaseAdmin
+      .from('unit_locations')
+      .select('*', { count: 'exact', head: true });
+
+    // Apply search filter if provided
+    if (searchTerm) {
+      countQuery = countQuery.ilike('name', `%${searchTerm}%`);
+    }
+
+    // Apply Multi-Select Unit Filter
+    if (unitIds.length > 0) {
+      countQuery = countQuery.in('unit_id', unitIds);
+    }
+
+    const { count: totalLocations, error: countError } = await countQuery;
+
+    if (countError) {
+      console.error('Error counting unit locations:', countError);
+      return Response.json({ error: countError.message }, { status: 500 });
+    }
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalLocations! / limit);
+
+    // Build the main query
     let query = supabaseAdmin
       .from('unit_locations')
       .select(`
         *,
         units (id, name)
       `)
-      .order('name', { ascending: true });
+      .order('name', { ascending: true })
+      .range(offset, offset + limit - 1);
 
     // Apply search filter if provided
     if (searchTerm) {
@@ -63,7 +92,9 @@ export async function GET(request: NextRequest) {
 
     return Response.json({
       locations,
-      units
+      units,
+      totalPages,
+      totalCount: totalLocations || 0
     });
   } catch (error) {
     console.error('Unexpected error in unit locations API:', error);
