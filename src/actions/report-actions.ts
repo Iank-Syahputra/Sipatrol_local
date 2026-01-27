@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@supabase/supabase-js';
+import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
 export interface CategoryOption {
@@ -15,22 +15,13 @@ export interface LocationOption {
 
 export async function getReportCategories(): Promise<CategoryOption[]> {
   try {
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const categories = await prisma.reportCategory.findMany({
+      orderBy: {
+        name: 'asc',
+      },
+    });
 
-    const { data, error } = await supabaseAdmin
-      .from('report_categories')
-      .select('id, name, color')
-      .order('name', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching report categories:', error);
-      return [];
-    }
-
-    return data.map(cat => ({
+    return categories.map(cat => ({
       value: cat.id,
       label: cat.name,
     }));
@@ -42,41 +33,32 @@ export async function getReportCategories(): Promise<CategoryOption[]> {
 
 export async function getUnitLocations(userId: string): Promise<LocationOption[]> {
   try {
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
     // First, get the user's assigned unit
-    const { data: profileData, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('assigned_unit_id')
-      .eq('id', userId)
-      .single();
+    const profile = await prisma.profile.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        assignedUnitId: true,
+      },
+    });
 
-    if (profileError) {
-      console.error('Error fetching user profile:', profileError);
-      return [];
-    }
-
-    if (!profileData || !profileData.assigned_unit_id) {
+    if (!profile || !profile.assignedUnitId) {
       // Return empty array if user has no assigned unit
       return [];
     }
 
     // Fetch unit locations for the user's assigned unit
-    const { data, error: locationsError } = await supabaseAdmin
-      .from('unit_locations')
-      .select('id, name')
-      .eq('unit_id', profileData.assigned_unit_id)
-      .order('name', { ascending: true });
+    const locations = await prisma.unitLocation.findMany({
+      where: {
+        unitId: profile.assignedUnitId,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
 
-    if (locationsError) {
-      console.error('Error fetching unit locations:', locationsError);
-      return [];
-    }
-
-    return data.map(loc => ({
+    return locations.map(loc => ({
       value: loc.id,
       label: loc.name,
     }));

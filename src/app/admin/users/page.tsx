@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-// 1. IMPORT XLSX
-import * as XLSX from 'xlsx';
 import { Search, Filter, Download, Printer, UserPlus, Trash2, Edit, ChevronDown, Check, Eye } from "lucide-react";
 import AdminSidebar from '@/components/admin-sidebar';
 import Link from 'next/link';
@@ -76,8 +74,8 @@ export default function ManageUsersPage() {
         units: selectedUnits.join(','), // Array to String
         page: currentPage.toString(),
         limit: itemsPerPage.toString(),
-      });
-
+      })
+      
       const response = await fetch(`/api/admin/users?${queryParams}`);
       if (!response.ok) throw new Error('Failed to fetch users');
 
@@ -156,6 +154,9 @@ export default function ManageUsersPage() {
   // 2. EXPORT FUNCTION LOGIC - Fetch all users for export
   const handleExport = async () => {
     try {
+      // Dynamically import XLSX here to avoid build errors
+      const XLSX = await import('xlsx');
+
       // Fetch all users (with a large limit to get everything)
       const response = await fetch('/api/admin/users?limit=10000&page=1');
       const data = await response.json();

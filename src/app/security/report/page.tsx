@@ -9,20 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Camera, MapPin, Wifi, WifiOff, Loader2, CheckCircle, RotateCcw } from 'lucide-react';
 import { useOfflineReports } from '@/hooks/use-offline-reports';
-import { useUser } from '@clerk/nextjs';
-import { createClient } from '@supabase/supabase-js';
+import { useSession } from 'next-auth/react';
 import { Combobox } from '@/components/ui/combobox';
 import { getReportCategories, getUnitLocations } from '@/actions/report-actions';
 
-// Create Supabase client with public keys (safe for client-side)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export default function CreateReportPage() {
   const router = useRouter();
-  const { user } = useUser();
+  const { data: session, status } = useSession();
   const { addOfflineReport } = useOfflineReports();
   const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -65,14 +58,14 @@ export default function CreateReportPage() {
   // Fetch categories and locations on component mount using server actions
   useEffect(() => {
     const fetchData = async () => {
-      if (user) {
+      if (session?.user) {
         try {
           // Fetch report categories
           const categoriesData = await getReportCategories();
           setCategories(categoriesData);
 
           // Fetch unit locations for the user's assigned unit
-          const locationsData = await getUnitLocations(user.id);
+          const locationsData = await getUnitLocations(session.user.id as string);
           setLocations(locationsData);
         } catch (error) {
           console.error('Error fetching dropdown data:', error);
@@ -84,12 +77,12 @@ export default function CreateReportPage() {
     };
 
     fetchData();
-  }, [user]);
+  }, [session]);
 
   // Fetch user's assigned unit on component mount
   useEffect(() => {
     const fetchAssignedUnit = async () => {
-      if (user) {
+      if (session?.user) {
         try {
           const response = await fetch('/api/user/unit');
           if (response.ok) {
@@ -111,7 +104,7 @@ export default function CreateReportPage() {
     };
 
     fetchAssignedUnit();
-  }, [user]);
+  }, [session]);
 
   // Initialize camera with simplified approach to fix DOM timing issue
   const startCamera = async () => {
@@ -258,7 +251,7 @@ export default function CreateReportPage() {
 
   // 2. UPDATE SUBMIT FUNCTION (Try-Catch Pattern)
   const submitReport = async () => {
-    if (!user) {
+    if (!session?.user) {
       alert('Anda harus masuk untuk mengirim laporan');
       return;
     }
@@ -308,7 +301,7 @@ export default function CreateReportPage() {
       formData.append('latitude', location.lat.toString());
       formData.append('longitude', location.lng.toString());
       formData.append('unitId', assignedUnit.id);
-      formData.append('userId', user.id);
+      formData.append('userId', session.user.id as string);
       formData.append('categoryId', category);
       formData.append('locationId', locationRoom);
 
@@ -332,7 +325,7 @@ export default function CreateReportPage() {
       // FALLBACK: Save to IndexedDB
       try {
         await addOfflineReport({
-          userId: user.id,
+          userId: session.user.id as string,
           unitId: assignedUnit.id,
           imageData: imagePreview,
           notes,

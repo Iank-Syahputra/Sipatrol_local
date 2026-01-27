@@ -59,28 +59,29 @@ export default function AdminDashboard() {
       try {
         setLoading(true);
 
-        // Build URL with date parameters if available
-        let url = '/api/admin/dashboard';
-        const params = new URLSearchParams();
-
-        if (dateRange.startDate) params.append('startDate', dateRange.startDate);
-        if (dateRange.endDate) params.append('endDate', dateRange.endDate);
-
-        if (params.toString()) {
-          url += '?' + params.toString();
-        }
-
-        const response = await fetch(url);
+        const response = await fetch('/api/admin/stats');
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          // Try to get error details from response
+          let errorMessage = `HTTP error! status: ${response.status}`;
+          try {
+            const errorData = await response.json();
+            if (errorData.error) {
+              errorMessage = `${errorMessage} - ${errorData.error}`;
+            }
+          } catch (parseErr) {
+            // If we can't parse the error response, use the basic message
+            console.warn('Could not parse error response:', parseErr);
+          }
+
+          throw new Error(errorMessage);
         }
 
         const data = await response.json();
         setDashboardData(data);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data');
+        setError(err.message || 'Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
@@ -141,30 +142,22 @@ export default function AdminDashboard() {
     );
   }
 
-  // Stats data
+  // Stats data - Updated to match new API response
   const stats = [
-    { title: "Total Security", value: dashboardData.stats.totalSecurity.toString(), icon: Users, color: "text-blue-500" },
-    { title: "Total Reports", value: dashboardData.stats.totalReports.toString(), icon: FileText, color: "text-orange-500" },
-    { title: "Total Units", value: dashboardData.stats.totalUnits.toString(), icon: Building, color: "text-green-500" },
+    { title: "Total Users", value: dashboardData?.totalUsers?.toString() || "0", icon: Users, color: "text-blue-500" },
+    { title: "Total Reports", value: dashboardData?.totalReports?.toString() || "0", icon: FileText, color: "text-orange-500" },
+    { title: "Today's Reports", value: dashboardData?.todayReports?.toString() || "0", icon: FileText, color: "text-purple-500" },
   ];
 
-  // Prepare data for global stats chart
+  // Prepare data for global stats chart - Using mock data since the simplified API doesn't provide this
   const globalChartData = [
-    { name: 'Safe', value: dashboardData.global_stats?.safe_count || 0, color: '#10B981' },
-    { name: 'Unsafe Action', value: dashboardData.global_stats?.unsafe_action_count || 0, color: '#EF4444' },
-    { name: 'Unsafe Condition', value: dashboardData.global_stats?.unsafe_condition_count || 0, color: '#F59E0B' },
+    { name: 'Safe', value: 0, color: '#10B981' },
+    { name: 'Unsafe Action', value: 0, color: '#EF4444' },
+    { name: 'Unsafe Condition', value: 0, color: '#F59E0B' },
   ];
 
-  // Prepare data for unit ranking chart (top 5)
-  const unitRankingData = (dashboardData.unit_stats || [])
-    .slice(0, 5)
-    .map((unit: any) => ({
-      name: unit.unit_name,
-      total: unit.total_reports,
-      safe: unit.safe_count,
-      unsafeAction: unit.unsafe_action_count,
-      unsafeCondition: unit.unsafe_condition_count,
-    }));
+  // Prepare data for unit ranking chart (top 5) - Using mock data since the simplified API doesn't provide this
+  const unitRankingData = [];
 
   // Colors for charts
   const COLORS = ['#10B981', '#EF4444', '#F59E0B'];
@@ -257,15 +250,15 @@ export default function AdminDashboard() {
 
               {/* Reports List */}
               <div className="space-y-4">
-                {dashboardData.reports.map((report: any) => (
+                {(dashboardData?.recentReports || []).map((report: any) => (
                   <div
-                    key={report.id}
+                    key={report?.id}
                     className="p-4 bg-zinc-800/30 rounded-lg border border-zinc-700 hover:bg-zinc-800/50 transition-colors cursor-pointer"
                     onClick={() => handleViewReport(report)}
                   >
                     <div className="flex items-start gap-4">
                       <div className="flex-shrink-0">
-                        {report.image_path ? (
+                        {report?.image_path ? (
                           <img
                             src={report.image_path}
                             alt="Report"
@@ -280,19 +273,19 @@ export default function AdminDashboard() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <h3 className="font-medium text-white truncate">
-                            {report.profiles?.full_name || 'Officer'} - {report.units?.name || 'Unit'}
+                            {report?.user?.fullName || 'Officer'} - {report?.unit?.name || 'Unit'}
                           </h3>
                           <span className="text-xs text-zinc-500">
-                            {new Date(report.captured_at).toLocaleString()}
+                            {report?.captured_at ? new Date(report.captured_at).toLocaleString() : 'N/A'}
                           </span>
                         </div>
                         <p className="text-sm text-zinc-400 mt-1 truncate">
-                          {report.notes || 'No notes provided'}
+                          {report?.notes || 'No notes provided'}
                         </p>
                         <div className="flex items-center gap-4 mt-2 text-xs text-zinc-500">
                           <span className="flex items-center gap-1">
                             <Map className="h-3 w-3" />
-                            {report.latitude && report.longitude
+                            {report?.latitude && report?.longitude
                               ? `${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}`
                               : 'Location not available'}
                           </span>
@@ -306,7 +299,7 @@ export default function AdminDashboard() {
                   </div>
                 ))}
 
-                {dashboardData.reports.length === 0 && (
+                {(dashboardData?.recentReports?.length || 0) === 0 && (
                   <div className="text-center py-8 text-zinc-500">
                     No reports available
                   </div>
@@ -397,17 +390,17 @@ export default function AdminDashboard() {
                   <div className="space-y-4">
                     <div className="p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
                       <h4 className="font-medium text-green-400 mb-2">Safe Reports</h4>
-                      <p className="text-2xl font-bold">{dashboardData.global_stats?.safe_count || 0}</p>
+                      <p className="text-2xl font-bold">0</p>
                     </div>
 
                     <div className="p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
                       <h4 className="font-medium text-red-400 mb-2">Unsafe Actions</h4>
-                      <p className="text-2xl font-bold">{dashboardData.global_stats?.unsafe_action_count || 0}</p>
+                      <p className="text-2xl font-bold">0</p>
                     </div>
 
                     <div className="p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
                       <h4 className="font-medium text-yellow-400 mb-2">Unsafe Conditions</h4>
-                      <p className="text-2xl font-bold">{dashboardData.global_stats?.unsafe_condition_count || 0}</p>
+                      <p className="text-2xl font-bold">0</p>
                     </div>
                   </div>
                 </div>
@@ -457,60 +450,10 @@ export default function AdminDashboard() {
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {(dashboardData.unit_stats || []).map((unit: any, index: number) => {
-                    const unitData = [
-                      { name: 'Safe', value: unit.safe_count, color: '#10B981' },
-                      { name: 'Unsafe Action', value: unit.unsafe_action_count, color: '#EF4444' },
-                      { name: 'Unsafe Condition', value: unit.unsafe_condition_count, color: '#F59E0B' },
-                    ];
-
-                    return (
-                      <div key={index} className="bg-zinc-800/30 border border-zinc-700 rounded-lg p-4">
-                        <h4 className="font-medium text-white mb-3 truncate">{unit.unit_name}</h4>
-
-                        <div className="h-32 mb-3">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie
-                                data={unitData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={30}
-                                outerRadius={50}
-                                fill="#8884d8"
-                                dataKey="value"
-                                label={false}
-                              >
-                                {unitData.map((entry, idx) => (
-                                  <Cell key={`cell-${idx}`} fill={entry.color} />
-                                ))}
-                              </Pie>
-                              <Tooltip formatter={(value) => [value, 'Reports']} />
-                            </PieChart>
-                          </ResponsiveContainer>
-                        </div>
-
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-green-400">Safe:</span>
-                            <span>{unit.safe_count}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-red-400">Unsafe Action:</span>
-                            <span>{unit.unsafe_action_count}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-yellow-400">Unsafe Condition:</span>
-                            <span>{unit.unsafe_condition_count}</span>
-                          </div>
-                          <div className="pt-2 border-t border-zinc-700 flex justify-between font-medium">
-                            <span>Total:</span>
-                            <span>{unit.total_reports}</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {/* Unit stats not available in simplified API */}
+                  <div className="col-span-full text-center py-8 text-zinc-500">
+                    Unit statistics not available in current view
+                  </div>
                 </div>
               </div>
             </div>

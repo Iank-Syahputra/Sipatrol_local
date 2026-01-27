@@ -137,6 +137,10 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 
     const userId = session.user.id as string;
 
+    if (!userId) {
+      return null;
+    }
+
     const profile = await prisma.profile.findUnique({
       where: { id: userId },
       include: {

@@ -1,20 +1,27 @@
-import { createClient } from '@supabase/supabase-js';
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../../auth/[...nextauth]/route';
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId: currentUserId } = await auth();
+    const session = await getServerSession(authOptions);
 
-    if (!currentUserId) {
+    if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get Supabase client with service role key to bypass RLS
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const currentUserId = session.user.id as string;
+
+    // Check if the current user is an admin
+    const currentUserProfile = await prisma.profile.findUnique({
+      where: { id: currentUserId },
+    });
+
+    if (!currentUserProfile || currentUserProfile.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
@@ -26,60 +33,60 @@ export async function GET(request: NextRequest) {
     const unitIds = searchParams.get('units')?.split(',').filter(Boolean) || [];
 
     // 1. Count Query
-    let countQuery = supabaseAdmin
-      .from('profiles')
-      .select('*', { count: 'exact', head: true });
+    let countQuery = prisma.profile.count({
+      where: {
+        ...(search && {
+          OR: [
+            { fullName: { contains: search } },
+            { username: { contains: search } }
+          ]
+        }),
+        ...(unitIds.length > 0 && { assignedUnitId: { in: unitIds } })
+      }
+    });
 
-    // 2. Apply Search (Name or Username)
-    if (search) {
-      countQuery = countQuery.or(`full_name.ilike.%${search}%,username.ilike.%${search}%`);
-    }
-
-    // 3. Apply Multi-Select Unit Filter
-    if (unitIds.length > 0) {
-      countQuery = countQuery.in('assigned_unit_id', unitIds);
-    }
-
-    const { count: totalUsers, error: countError } = await countQuery;
-    if (countError) throw countError;
+    const totalUsers = await countQuery;
 
     // Calculate total pages
-    const totalPages = Math.ceil(totalUsers! / limit);
+    const totalPages = Math.ceil(totalUsers / limit);
 
-    // 1. Base Query
-    let query = supabaseAdmin
-      .from('profiles')
-      .select(`
-        *,
-        units (id, name)
-      `)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    // 2. Apply Search (Name or Username)
-    if (search) {
-      query = query.or(`full_name.ilike.%${search}%,username.ilike.%${search}%`);
-    }
-
-    // 3. Apply Multi-Select Unit Filter
-    if (unitIds.length > 0) {
-      query = query.in('assigned_unit_id', unitIds);
-    }
-
-    const { data: users, error } = await query;
-    if (error) throw error;
+    // 2. Fetch Users with assigned units
+    let users = await prisma.profile.findMany({
+      where: {
+        ...(search && {
+          OR: [
+            { fullName: { contains: search } },
+            { username: { contains: search } }
+          ]
+        }),
+        ...(unitIds.length > 0 && { assignedUnitId: { in: unitIds } })
+      },
+      include: {
+        assignedUnit: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      skip: offset,
+      take: limit
+    });
 
     // 4. Fetch Units for Dropdown
-    const { data: units } = await supabaseAdmin.from('units').select('id, name').order('name');
+    const units = await prisma.unit.findMany({
+      orderBy: {
+        name: 'asc'
+      }
+    });
 
     return NextResponse.json({
       users,
       units,
       totalPages,
-      totalCount: totalUsers || 0
+      totalCount: totalUsers
     });
 
   } catch (error: any) {
+    console.error('Error in GET users API:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -87,20 +94,22 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Verify the user is authenticated
-    const { userId: currentUserId } = await auth();
+    const session = await getServerSession(authOptions);
 
-    if (!currentUserId) {
+    if (!session || !session.user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get Clerk client instance
-    const client = await clerkClient();
+    const currentUserId = session.user.id as string;
 
-    // Get Supabase client with service role key to bypass RLS
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // Check if the current user is an admin
+    const currentUserProfile = await prisma.profile.findUnique({
+      where: { id: currentUserId },
+    });
+
+    if (!currentUserProfile || currentUserProfile.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
 
     const body = await request.json();
     const { fullName, username, password, phoneNumber, unitId } = body;
@@ -114,62 +123,26 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Password minimal 8 karakter!' }, { status: 400 });
     }
 
-    // Check if the current user is an admin
-    const { data: currentUserProfile, error: authError } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', currentUserId)
-      .single();
-
-    if (authError || !currentUserProfile || currentUserProfile.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
-
     // 2. PREPARE DATA
     // Convert empty string to null explicitly
     const validPhone = (!phoneNumber || phoneNumber.trim() === "") ? null : phoneNumber;
 
-    // 3. CLERK CREATION
-    // We do NOT send phone number to Clerk to avoid formatting issues
-    let clerkUser;
-    try {
-      clerkUser = await client.users.createUser({
-        username: username,
-        password: password,
-        firstName: fullName,
-        skipPasswordChecks: true,
-      });
-    } catch (clerkErr) {
-      // Catch Clerk validation errors (e.g. Username taken)
-      console.error("Clerk Create Error:", clerkErr);
-      const msg = clerkErr.errors?.[0]?.longMessage || clerkErr.message || "Gagal membuat user di Clerk";
-      return Response.json({ error: `Clerk: ${msg}` }, { status: 422 });
-    }
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4. SUPABASE INSERT
-    const { error: insertError } = await supabaseAdmin
-      .from('profiles')
-      .insert([{
-        id: clerkUser.id,
-        full_name: fullName,
+    // 3. CREATE USER IN DATABASE
+    const newUser = await prisma.profile.create({
+      data: {
         username: username,
+        password: hashedPassword,
+        fullName: fullName,
         role: 'security',
-        assigned_unit_id: unitId,
-        phone_number: validPhone, // This will be null if empty
-      }]);
-
-    if (insertError) {
-      console.error("Supabase Insert Error:", insertError);
-      // Rollback Clerk User
-      try {
-        await client.users.deleteUser(clerkUser.id);
-      } catch (rollbackError) {
-        console.error('Error deleting Clerk user during rollback:', rollbackError);
+        assignedUnitId: unitId,
+        phoneNumber: validPhone, // This will be null if empty
       }
-      return Response.json({ error: `Database Error: ${insertError.message}` }, { status: 500 });
-    }
+    });
 
-    return Response.json({ success: true, userId: clerkUser.id });
+    return Response.json({ success: true, userId: newUser.id });
   } catch (error) {
     console.error("General API Error:", error);
     return Response.json(
@@ -182,17 +155,22 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     // Verify the user is authenticated
-    const { userId: currentUserId } = await auth();
+    const session = await getServerSession(authOptions);
 
-    if (!currentUserId) {
+    if (!session || !session.user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get Supabase client with service role key to bypass RLS
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const currentUserId = session.user.id as string;
+
+    // Check if the current user is an admin
+    const currentUserProfile = await prisma.profile.findUnique({
+      where: { id: currentUserId },
+    });
+
+    if (!currentUserProfile || currentUserProfile.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
 
     const { id, full_name, username, role, phone_number, assigned_unit_id } = await request.json();
 
@@ -201,35 +179,17 @@ export async function PUT(request: NextRequest) {
       return Response.json({ error: 'ID, full_name, and role are required' }, { status: 400 });
     }
 
-    // Check if the current user is an admin
-    const { data: currentUserProfile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', currentUserId)
-      .single();
-
-    if (profileError || !currentUserProfile || currentUserProfile.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
-
     // Update the user
-    const { data: user, error: userError } = await supabaseAdmin
-      .from('profiles')
-      .update({ 
-        full_name, 
-        username: username || null, 
-        role, 
-        phone_number: phone_number || null, 
-        assigned_unit_id: assigned_unit_id || null 
-      })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (userError) {
-      console.error('Error updating user:', userError);
-      return Response.json({ error: userError.message }, { status: 500 });
-    }
+    const user = await prisma.profile.update({
+      where: { id },
+      data: {
+        fullName: full_name,
+        username: username || null,
+        role,
+        phoneNumber: phone_number || null,
+        assignedUnitId: assigned_unit_id || null
+      }
+    });
 
     return Response.json({ user });
   } catch (error) {
@@ -241,17 +201,22 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     // Verify the user is authenticated
-    const { userId: currentUserId } = await auth();
+    const session = await getServerSession(authOptions);
 
-    if (!currentUserId) {
+    if (!session || !session.user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get Supabase client with service role key to bypass RLS
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const currentUserId = session.user.id as string;
+
+    // Check if the current user is an admin
+    const currentUserProfile = await prisma.profile.findUnique({
+      where: { id: currentUserId },
+    });
+
+    if (!currentUserProfile || currentUserProfile.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
 
     // Parse the request body to get the user ID
     const { id } = await request.json();
@@ -261,49 +226,26 @@ export async function DELETE(request: NextRequest) {
       return Response.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    // Check if the current user is an admin
-    const { data: currentUserProfile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', currentUserId)
-      .single();
-
-    if (profileError || !currentUserProfile || currentUserProfile.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
-
     // Check if the user is trying to delete themselves
     if (id === currentUserId) {
       return Response.json({ error: 'Cannot delete your own account' }, { status: 400 });
     }
 
     // Check if there are any reports associated with this user
-    const { count: reportCount, error: reportCheckError } = await supabaseAdmin
-      .from('reports')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', id);
+    const reportCount = await prisma.report.count({
+      where: { userId: id }
+    });
 
-    if (reportCheckError) {
-      console.error('Error checking reports associated with user:', reportCheckError);
-      return Response.json({ error: reportCheckError.message }, { status: 500 });
-    }
-
-    if (reportCount && reportCount > 0) {
-      return Response.json({ 
-        error: 'Cannot delete user: there are reports associated with this user.' 
+    if (reportCount > 0) {
+      return Response.json({
+        error: 'Cannot delete user: there are reports associated with this user.'
       }, { status: 400 });
     }
 
     // Delete the user from profiles table
-    const { error: userError } = await supabaseAdmin
-      .from('profiles')
-      .delete()
-      .eq('id', id);
-
-    if (userError) {
-      console.error('Error deleting user:', userError);
-      return Response.json({ error: userError.message }, { status: 500 });
-    }
+    await prisma.profile.delete({
+      where: { id }
+    });
 
     return Response.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {

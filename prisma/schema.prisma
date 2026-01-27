@@ -1,5 +1,3 @@
-// File: prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,115 +7,83 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// =============================================
-// 1. ENUMS (Pilihan Role)
-// =============================================
-enum Role {
-  admin
-  security
-}
-
-// =============================================
-// 2. MODEL TABEL
-// =============================================
-
-// Tabel: units
 model Unit {
-  id        String   @id @default(uuid()) // Pengganti gen_random_uuid()
+  id        String         @id @default(uuid())
   name      String
   district  String
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relasi (Hubungan ke tabel lain)
+  createdAt DateTime       @default(now()) @map("created_at")
   profiles  Profile[]
-  locations UnitLocation[]
   reports   Report[]
+  locations UnitLocation[]
 
-  @@map("units") // Nama tabel di MySQL tetap 'units'
+  @@map("units")
 }
 
-// Tabel: profiles (Pengganti User Clerk)
 model Profile {
-  // Kita ubah ID jadi UUID juga agar seragam
-  id             String   @id @default(uuid()) 
-  username       String?  @unique // Kolom baru untuk Login
-  password       String?  // WAJIB ADA: Untuk simpan password terenkripsi
+  id             String   @id @default(uuid())
+  username       String?  @unique
+  password       String?
   fullName       String   @map("full_name")
   role           Role     @default(security)
   phoneNumber    String?  @map("phone_number")
-  
   assignedUnitId String?  @map("assigned_unit_id")
-  assignedUnit   Unit?    @relation(fields: [assignedUnitId], references: [id], onDelete: SetNull)
-  
   createdAt      DateTime @default(now()) @map("created_at")
-
-  // Relasi
+  assignedUnit   Unit?    @relation(fields: [assignedUnitId], references: [id])
   reports        Report[]
 
+  @@index([assignedUnitId], map: "profiles_assigned_unit_id_fkey")
   @@map("profiles")
 }
 
-// Tabel: report_categories
 model ReportCategory {
   id        String   @id @default(uuid())
   name      String   @unique
   color     String?  @default("gray")
   createdAt DateTime @default(now()) @map("created_at")
-
   reports   Report[]
 
   @@map("report_categories")
 }
 
-// Tabel: unit_locations
 model UnitLocation {
   id        String   @id @default(uuid())
-  
   unitId    String   @map("unit_id")
-  unit      Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  
   name      String
   createdAt DateTime @default(now()) @map("created_at")
-
   reports   Report[]
+  unit      Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
 
-  // Mencegah nama lokasi kembar dalam 1 unit (UNIQUE constraint)
   @@unique([unitId, name])
   @@map("unit_locations")
 }
 
-// Tabel: reports (Tabel Utama)
 model Report {
-  id          String   @id @default(uuid())
-  
-  // Siapa yang lapor?
-  userId      String   @map("user_id")
-  user        Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Unit mana?
-  unitId      String   @map("unit_id")
-  unit        Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  
-  // Kategori apa?
-  categoryId  String?  @map("category_id")
-  category    ReportCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  
-  // Lokasi spesifik mana?
-  locationId  String?  @map("location_id")
-  location    UnitLocation?   @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  
-  // Data Laporan
-  imagePath          String?  @map("image_path")
-  notes              String?  @db.Text // Text panjang
-  latitude           Float?
-  longitude          Float?
-  capturedAt         DateTime @map("captured_at")
-  isOfflineSubmission Boolean @default(false) @map("is_offline_submission")
-  
-  // Cache nama lokasi (sesuai request SQL Anda)
-  locationNameCached String?  @map("location_name_cached")
-  
-  createdAt          DateTime @default(now()) @map("created_at")
+  id                  String          @id @default(uuid())
+  userId              String          @map("user_id")
+  unitId              String          @map("unit_id")
+  categoryId          String?         @map("category_id")
+  locationId          String?         @map("location_id")
+  imagePath           String?         @map("image_path")
+  notes               String?         @db.Text
+  latitude            Float?
+  longitude           Float?
+  capturedAt          DateTime        @map("captured_at")
+  isOfflineSubmission Boolean         @default(false) @map("is_offline_submission")
+  locationNameCached  String?         @map("location_name_cached")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  category            ReportCategory? @relation(fields: [categoryId], references: [id])
+  location            UnitLocation?   @relation(fields: [locationId], references: [id])
+  unit                Unit            @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  user                Profile         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([categoryId], map: "reports_category_id_fkey")
+  @@index([locationId], map: "reports_location_id_fkey")
+  @@index([unitId], map: "reports_unit_id_fkey")
+  @@index([userId], map: "reports_user_id_fkey")
   @@map("reports")
+}
+
+enum Role {
+  admin
+  security
 }

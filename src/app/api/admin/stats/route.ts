@@ -1,16 +1,14 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../api/auth/[...nextauth]/route';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../../api/auth/[...nextauth]/route";
+import { prisma } from "@/lib/prisma";
 
-// Deprecated: This endpoint has been moved to /api/admin/stats
-// Maintaining for backward compatibility with same response structure
 export async function GET() {
   try {
     // 1. Auth Check (Must be Admin)
     const session = await getServerSession(authOptions);
-
-    if (!session || !session.user || session.user.role !== 'admin') {
+    
+    if (!session || session.user.role !== 'admin') {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -28,10 +26,11 @@ export async function GET() {
       })
     ]);
 
-    // 3. Calculate "Reports Today"
+    // 3. Calculate "Reports Today" manually to avoid timezone complexity for now
+    // (Or use a simple JS date filter if needed, but count is safer)
     const startOfDay = new Date();
     startOfDay.setHours(0,0,0,0);
-
+    
     const reportsToday = await prisma.report.count({
         where: {
             capturedAt: {
@@ -40,7 +39,7 @@ export async function GET() {
         }
     });
 
-    // 4. Return Data with same structure as new endpoint
+    // 4. Return Data
     return NextResponse.json({
       totalUsers,
       totalReports,
@@ -49,7 +48,7 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error("[API_ADMIN_DASHBOARD_LEGACY_ERROR]", error);
+    console.error("[API_ADMIN_STATS_ERROR]", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

@@ -1,29 +1,36 @@
-import { getServerSession } from "next-auth/next";
+import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import AdminForbidden from "@/components/admin-forbidden"; // Import the error component
+import { authOptions } from "../api/auth/[...nextauth]/route";
+import AdminSidebar from "@/components/admin-sidebar";
+import AdminForbidden from "@/components/admin-forbidden";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // 1. Check if user is authenticated using NextAuth
-  const session = await getServerSession();
+  // Fetch session with auth options
+  const session = await getServerSession(authOptions);
 
+  // DEBUG: Log session role for troubleshooting
+  console.log("[AdminLayout] Session Role:", session?.user?.role);
+
+  // CHECK 1 (Not Logged In): If no session, redirect to login
   if (!session || !session.user) {
-    // Redirect to login if not authenticated
     redirect('/login');
   }
 
-  // 2. Get user role from session
-  const userRole = session.user.role;
-
-  // 3. Check if user has admin role
-  if (userRole !== 'admin') {
+  // CHECK 2 (Role Validation): Check strictly for 'admin' role
+  if (session.user.role !== 'admin') {
     // User logged in, but WRONG ROLE -> Show Error Screen
     return <AdminForbidden />;
   }
 
-  // 4. User is Admin -> Show Dashboard
-  return <>{children}</>;
+  // User is Admin -> Show Dashboard with sidebar
+  return (
+    <div className="flex h-screen bg-gray-100">
+      <AdminSidebar />
+      <main className="flex-1 overflow-y-auto p-8">{children}</main>
+    </div>
+  );
 }

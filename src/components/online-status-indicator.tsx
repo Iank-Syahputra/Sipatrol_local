@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 
 export function OnlineStatusIndicator() {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState<boolean | null>(null); // Start with null to avoid hydration mismatch
   const [isOpen, setIsOpen] = useState(false);
   // TODO: Replace with NextAuth session check once implemented
   const isAuthenticated = true; // Placeholder - will be replaced with actual session check
@@ -24,6 +24,9 @@ export function OnlineStatusIndicator() {
   const { isSyncing, lastSync } = useAutoSync();
 
   useEffect(() => {
+    // Set the initial state on the client side only
+    setIsOnline(navigator.onLine);
+
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -41,8 +44,12 @@ export function OnlineStatusIndicator() {
   return (
     <>
       <div className="flex items-center gap-3">
-        <Badge variant={isOnline ? "default" : "destructive"}>
-          {isOnline ? (
+        <Badge variant={isOnline === null ? "secondary" : isOnline ? "default" : "destructive"}>
+          {isOnline === null ? (
+            <>
+              <Wifi className="mr-1 h-3 w-3" /> Checking...
+            </>
+          ) : isOnline ? (
             <>
               <Wifi className="mr-1 h-3 w-3" /> Online
             </>
