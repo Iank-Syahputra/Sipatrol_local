@@ -1,48 +1,35 @@
-import { createClient } from '@supabase/supabase-js';
-import { auth } from '@clerk/nextjs/server';
+import { getServerSession } from 'next-auth/next';
+import { PrismaClient } from '@prisma/client';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify the user is authenticated
-    const { userId } = await auth();
-    
-    if (!userId) {
+    // Verify the user is authenticated using NextAuth
+    const session = await getServerSession();
+
+    if (!session || !session.user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get Supabase client with service role key to bypass RLS
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const userId = session.user.id as string;
 
-    // Fetch the user's profile to get assigned unit
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('assigned_unit_id')
-      .eq('id', userId)
-      .single();
-
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
-      return Response.json({ error: profileError.message }, { status: 500 });
-    }
+    // Fetch the user's profile to get assigned unit using Prisma
+    const profile = await prisma.profile.findUnique({
+      where: { id: userId },
+      select: { assigned_unit_id: true }
+    });
 
     if (!profile || !profile.assigned_unit_id) {
       return Response.json({ assignedUnit: null });
     }
 
-    // Fetch the unit details
-    const { data: unit, error: unitError } = await supabaseAdmin
-      .from('units')
-      .select('*')
-      .eq('id', profile.assigned_unit_id)
-      .single();
+    // Fetch the unit details using Prisma
+    const unit = await prisma.unit.findUnique({
+      where: { id: profile.assigned_unit_id }
+    });
 
-    if (unitError) {
-      console.error('Error fetching unit:', unitError);
-      return Response.json({ error: unitError.message }, { status: 500 });
+    if (!unit) {
+      return Response.json({ assignedUnit: null });
     }
 
     return Response.json({ assignedUnit: unit });

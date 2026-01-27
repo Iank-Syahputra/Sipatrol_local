@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUser } from "@clerk/nextjs";
+// Import for authentication will be handled by NextAuth
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { checkRoleAndRedirect } from "@/app/actions/check-role";
 
 export default function CheckAuthPage() {
-  const { isLoaded, isSignedIn } = useUser();
+  // TODO: Replace with NextAuth session check once implemented
+  // const { status } = useSession(); // Will be used once NextAuth is implemented
+  const isLoaded = true; // Placeholder - will be replaced with actual session check
+  const isSignedIn = true; // Placeholder - will be replaced with actual session check
   const router = useRouter();
   const [status, setStatus] = useState("Memeriksa status login...");
 

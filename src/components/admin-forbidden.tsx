@@ -1,6 +1,6 @@
 "use client";
 
-import { SignOutButton } from "@clerk/nextjs";
+import { signOut } from 'next-auth/react';
 import { ShieldAlert, LogOut } from "lucide-react";
 
 export default function AdminForbidden() {
@@ -20,12 +20,13 @@ export default function AdminForbidden() {
         </p>
         
         {/* Logout Button to try again */}
-        <SignOutButton>
-          <button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2">
-            <LogOut className="w-4 h-4" />
-            Keluar & Coba Akun Lain
-          </button>
-        </SignOutButton>
+        <button
+          onClick={() => signOut({ callbackUrl: '/login' })}
+          className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+        >
+          <LogOut className="w-4 h-4" />
+          Keluar & Coba Akun Lain
+        </button>
         
       </div>
     </div>

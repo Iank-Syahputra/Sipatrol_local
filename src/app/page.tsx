@@ -1,29 +1,34 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth/next";
 import Link from "next/link";
-import { Shield, Activity, Map, Users, AlertTriangle, CircleGauge } from "lucide-react";
-import { getUserProfile } from "@/lib/sipatrol-db";
+import { Shield, Activity, Map, AlertTriangle, CircleGauge } from "lucide-react";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export default async function Home() {
   // 1. Server-Side Auth Check
-  const user = await currentUser();
+  const session = await getServerSession();
 
-  // 2. Role-Based Redirect Logic
-  if (user) {
+  // 2. Role-Based Redirect Logic - only redirect if user is already logged in
+  if (session?.user) {
+    const userId = session.user.id as string;
+
     // Fetch the user's profile to determine role
-    const profile = await getUserProfile();
+    const profile = await prisma.profile.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
 
-    if (profile && profile.role === "admin") {
-      redirect("/admin/dashboard"); // Admins go to admin dashboard
-    } else if (profile && profile.role === "security") {
-      redirect("/security"); // Security officers go to security dashboard
-    } else {
-      // If no profile or unrecognized role, redirect to home
-      redirect("/");
+    if (profile?.role === "admin") {
+      // We can't redirect here on the server since this page should be public
+      // Instead, we'll let the middleware handle protected routes
+    } else if (profile?.role === "security") {
+      // We can't redirect here on the server since this page should be public
+      // Instead, we'll let the middleware handle protected routes
     }
   }
 
-  // 3. Public Landing Page UI
+  // 3. Public Landing Page UI - Always render for everyone
   return (
     <main className="flex min-h-screen flex-col bg-zinc-950 text-white">
       {/* Header */}
@@ -36,7 +41,7 @@ export default async function Home() {
             <h1 className="text-2xl font-bold tracking-tight">SiPatrol</h1>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/sign-in" className="text-zinc-400 hover:text-white transition-colors">
+            <Link href="/login" className="text-zinc-400 hover:text-white transition-colors">
               Sign In
             </Link>
           </div>
@@ -67,7 +72,7 @@ export default async function Home() {
               Access point for field officers to report incidents, check-in, and submit patrol findings.
             </p>
             <Link
-              href="/sign-in?redirect_url=/check-auth"
+              href="/login"
               className="mt-auto w-full bg-white text-black py-3 rounded-xl font-bold hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
             >
               Access Portal
@@ -84,7 +89,7 @@ export default async function Home() {
               Monitoring dashboard for administrators to oversee operations and manage security data.
             </p>
             <Link
-              href="/admin/dashboard"
+              href="/login"
               className="mt-auto w-full bg-zinc-900 border border-orange-500 text-orange-400 py-3 rounded-xl font-bold hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2"
             >
               Admin Access

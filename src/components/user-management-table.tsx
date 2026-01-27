@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Loader2, X } from 'lucide-react';
-import { useUser } from '@clerk/nextjs';
+// Import for user authentication will be handled by NextAuth
 
 export default function UserManagementTable({
   initialUsers,
@@ -18,7 +18,8 @@ export default function UserManagementTable({
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
-  const { user: clerkUser } = useUser();
+  // TODO: Replace with NextAuth session check once implemented
+  // const session = useSession(); // Will be used once NextAuth is implemented
 
   // Delete user function using API call
   const handleDelete = async (userId: string) => {

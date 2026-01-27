@@ -1,14 +1,12 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
 import { Activity, FileText, Building, User, LogOut, MapPin } from 'lucide-react';
-import { SignOutButton } from '@clerk/nextjs';
 import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const { user } = useUser();
 
   const menuItems = [
     { href: '/admin/dashboard', label: 'Live Feed', icon: Activity },
@@ -57,17 +55,16 @@ export default function AdminSidebar() {
               <User className="h-4 w-4 text-zinc-400" />
             </div>
             <span className="text-sm font-medium text-zinc-200">
-              {user?.firstName || user?.username || "Admin"}
+              Admin
             </span>
           </div>
-          <SignOutButton>
-            <button
-              type="button"
-              className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </SignOutButton>
+          <button
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            type="button"
+            className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>

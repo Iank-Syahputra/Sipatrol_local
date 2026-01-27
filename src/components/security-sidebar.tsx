@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Shield, Camera, FileText, MapPin, Menu } from "lucide-react";
-import { UserButton } from "@clerk/nextjs";
-import { dark } from "@clerk/themes"; // Optional: for dark mode clerk
 import { Button } from './ui/button';
 import {
   Sheet,
@@ -14,6 +12,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { ThemeToggle } from '@/components/theme-toggle';
+import { signOut } from 'next-auth/react';
 
 type UserProfile = {
   full_name: string | null;
@@ -81,7 +80,12 @@ export default function SecuritySidebar({
         <div className="mt-auto flex flex-col gap-2">
           <div className="p-2 border rounded-lg bg-zinc-900/30 border-zinc-800">
             <div className="flex items-center justify-between">
-              <UserButton appearance={{ baseTheme: dark }} showName />
+              <button
+                onClick={() => signOut()}
+                className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors"
+              >
+                Logout
+              </button>
               <ThemeToggle />
             </div>
           </div>
@@ -129,7 +133,12 @@ export default function SecuritySidebar({
           <div className="absolute bottom-4 left-4 right-4">
             <div className="p-2 border rounded-lg bg-zinc-900/30 border-zinc-800">
               <div className="flex items-center justify-between">
-                <UserButton appearance={{ baseTheme: dark }} />
+                <button
+                  onClick={() => signOut()}
+                  className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors"
+                >
+                  Logout
+                </button>
                 <ThemeToggle />
               </div>
             </div>
@@ -145,7 +154,12 @@ export default function SecuritySidebar({
               <h1 className="text-lg font-semibold text-white">Security Dashboard</h1>
             </div>
             <div className="flex items-center gap-2">
-              <UserButton appearance={{ baseTheme: dark }} />
+              <button
+                onClick={() => signOut()}
+                className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors px-3 py-1 rounded-md hover:bg-red-900/30"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </header>

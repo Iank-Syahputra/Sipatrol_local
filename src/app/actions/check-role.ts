@@ -1,30 +1,27 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
-import { createClient } from "@supabase/supabase-js";
+import { getServerSession } from "next-auth/next";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function checkRoleAndRedirect() {
-  const { userId } = await auth();
+  const session = await getServerSession();
 
-  if (!userId) {
+  if (!session || !session.user) {
     return { error: "Not Authenticated" };
   }
 
-  // Initialize Admin Client
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const userId = session.user.id as string;
 
-  // Fetch Profile using Admin Client (Bypass RLS for check)
-  const { data: profile, error } = await supabaseAdmin
-    .from('profiles')
-    .select('role')
-    .eq('id', userId)
-    .single();
+  // Fetch Profile using Prisma
+  const profile = await prisma.profile.findUnique({
+    where: { id: userId },
+    select: { role: true }
+  });
 
-  if (error || !profile) {
+  if (!profile) {
     // If no profile, maybe guide to onboarding or show error
     return { error: "Profile not found" };
   }

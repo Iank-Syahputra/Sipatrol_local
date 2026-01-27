@@ -1,33 +1,32 @@
-import { createClient } from '@supabase/supabase-js';
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify the user is authenticated
-    const { userId } = await auth();
+    // Verify the user is authenticated using NextAuth
+    const session = await getServerSession();
 
-    if (!userId) {
+    if (!session || !session.user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get Supabase client with service role key to bypass RLS
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const userId = session.user.id as string;
 
-    // Fetch the user's profile
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('id, full_name, role, assigned_unit_id, phone_number, username')
-      .eq('id', userId)
-      .single();
-
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
-      return Response.json({ error: profileError.message }, { status: 500 });
-    }
+    // Fetch the user's profile using Prisma
+    const profile = await prisma.profile.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        full_name: true,
+        role: true,
+        assigned_unit_id: true,
+        phone_number: true,
+        username: true
+      }
+    });
 
     if (!profile) {
       return Response.json({ error: 'Profile not found' }, { status: 404 });

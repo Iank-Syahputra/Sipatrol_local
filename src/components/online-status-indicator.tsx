@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
+// Import for user authentication will be handled by NextAuth
 import { useOfflineReports } from '@/hooks/use-offline-reports';
 import { useAutoSync } from '@/hooks/use-auto-sync';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +18,8 @@ import {
 export function OnlineStatusIndicator() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isOpen, setIsOpen] = useState(false);
-  const { isSignedIn } = useUser();
+  // TODO: Replace with NextAuth session check once implemented
+  const isAuthenticated = true; // Placeholder - will be replaced with actual session check
   const { offlineReports } = useOfflineReports();
   const { isSyncing, lastSync } = useAutoSync();
 
@@ -35,7 +36,7 @@ export function OnlineStatusIndicator() {
     };
   }, []);
 
-  if (!isSignedIn) return null;
+  if (!isAuthenticated) return null;
 
   return (
     <>

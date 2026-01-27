@@ -1,27 +1,31 @@
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
-import { getUserProfile } from "@/lib/sipatrol-db";
+import { PrismaClient } from "@prisma/client";
 import AdminForbidden from "@/components/admin-forbidden"; // Import the error component
+
+const prisma = new PrismaClient();
 
 // Helper function to wait for profile creation to complete
 // Same retry logic as security layout and check-auth page
-async function waitForProfile(maxAttempts = 10, delayMs = 500) {
+async function waitForProfile(userId: string, maxAttempts = 10, delayMs = 500) {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     console.log(`[Admin Layout] Profile check attempt ${attempt}/${maxAttempts}`);
-    
-    const profile = await getUserProfile();
-    
+
+    const profile = await prisma.profile.findUnique({
+      where: { id: userId },
+    });
+
     if (profile) {
       console.log('[Admin Layout] ✓ Profile found:', profile.role);
       return profile;
     }
-    
+
     if (attempt < maxAttempts) {
       console.log(`[Admin Layout] Profile not found, waiting ${delayMs}ms before retry...`);
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
-  
+
   console.log('[Admin Layout] ✗ Profile not found after all retry attempts');
   return null;
 }
@@ -32,22 +36,24 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   console.log('[Admin Layout] === Started ===');
-  
-  // 1. Trigger Clerk Login if not authenticated
-  const { userId } = await auth();
 
-  if (!userId) {
-    // This opens the Clerk Login Form (Google/Username/Pass)
-    // After success, it brings them back here
-    redirect('/sign-in?redirect_url=/admin/dashboard');
+  // 1. Check if user is authenticated using NextAuth
+  const session = await getServerSession();
+
+  if (!session || !session.user) {
+    // Redirect to login if not authenticated
+    redirect('/login');
   }
 
+  // Extract user ID from session
+  const userId = session.user.id as string;
+
   // 2. Wait for User Profile from Database (with retry logic)
-  const profile = await waitForProfile(10, 500); // 10 attempts × 500ms = 5 seconds max
+  const profile = await waitForProfile(userId, 10, 500); // 10 attempts × 500ms = 5 seconds max
 
   // 3. STRICT DATABASE SYNC: Check if profile exists after all retries
   if (!profile) {
-    // Profile was deleted or never created in Supabase -> Force logout
+    // Profile was deleted or never created in database -> Force logout
     console.error('[Admin Layout] Profile does not exist after retries, forcing logout');
     const ForceLogout = (await import('@/components/force-logout')).default;
     return <ForceLogout />;

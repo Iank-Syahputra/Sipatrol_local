@@ -1,6 +1,6 @@
 'use client';
 
-import { SignOutButton } from '@clerk/nextjs';
+import { signOut } from 'next-auth/react';
 import { UserRound } from 'lucide-react';
 import Link from 'next/link';
 
@@ -26,12 +26,13 @@ export default function AccessDenied({ userRole, fullName }: AccessDeniedProps) 
         </p>
         
         <div className="space-y-4">
-          <SignOutButton>
-            <button className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-xl font-bold transition-colors">
-              Switch Account
-            </button>
-          </SignOutButton>
-          
+          <button
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-xl font-bold transition-colors"
+          >
+            Switch Account
+          </button>
+
           <Link href="/">
             <button className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3 rounded-xl font-bold transition-colors border border-zinc-700">
               Back to Home
