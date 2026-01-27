@@ -14,7 +14,13 @@ export async function GET() {
     const units = await prisma.unit.findMany({
       orderBy: { name: 'asc' }
     });
-    return NextResponse.json(units);
+
+    const formattedUnits = units.map(unit => ({
+      ...unit,
+      created_at: unit.createdAt, // Map camelCase to snake_case
+    }));
+
+    return NextResponse.json(formattedUnits);
   } catch (error) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

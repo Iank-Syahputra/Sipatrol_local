@@ -6,7 +6,8 @@ import * as XLSX from 'xlsx';
 import { Activity, Map, Users, AlertTriangle, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, User, Plus, Download, Printer, Edit, Trash } from "lucide-react";
 
 export default function ManageUnitsPage() {
-  const [units, setUnits] = useState<any[]>([]); // Stores paginated data
+  const [allUnits, setAllUnits] = useState<any[]>([]); // Stores full list from database
+  const [filteredUnits, setFilteredUnits] = useState<any[]>([]); // Stores currently displayed list
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -31,7 +32,8 @@ export default function ManageUnitsPage() {
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      setUnits(data || []);       // Set units (no pagination in new API)
+      setAllUnits(data || []);       // Set all units from database
+      setFilteredUnits(data || []);  // Set filtered units initially to all units
       setTotalCount(data?.length || 0);  // Set total count
       setTotalPages(1); // Set to 1 since no pagination in new API
     } catch (err) {
@@ -42,10 +44,10 @@ export default function ManageUnitsPage() {
     }
   };
 
-  // Effect to fetch units when currentPage or searchTerm changes
+  // Effect to fetch units when component mounts
   useEffect(() => {
     fetchUnits();
-  }, [currentPage, searchTerm]);
+  }, []);
 
   const handleAddUnit = async () => {
     // Get form values
@@ -278,8 +280,21 @@ export default function ManageUnitsPage() {
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={searchTerm}
                   onChange={(e) => {
-                    setSearchTerm(e.target.value);
+                    const term = e.target.value;
+                    setSearchTerm(term);
                     setCurrentPage(1); // Reset to first page when searching
+
+                    if (term.trim() === '') {
+                      // If search term is empty, show all units
+                      setFilteredUnits(allUnits);
+                    } else {
+                      // Filter units based on search term
+                      const filtered = allUnits.filter(unit =>
+                        unit.name.toLowerCase().includes(term.toLowerCase()) ||
+                        unit.district.toLowerCase().includes(term.toLowerCase())
+                      );
+                      setFilteredUnits(filtered);
+                    }
                   }}
                 />
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
@@ -386,7 +401,7 @@ export default function ManageUnitsPage() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold">Units List</h2>
               <div className="text-sm text-zinc-400">
-                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} - {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} units
+                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredUnits.length)} - {Math.min(currentPage * itemsPerPage, filteredUnits.length)} of {filteredUnits.length} units
               </div>
             </div>
 
@@ -401,7 +416,7 @@ export default function ManageUnitsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800">
-                  {units.map((unit: any) => (
+                  {filteredUnits.map((unit: any) => (
                     <tr key={unit.id} className="text-sm">
                       <td className="py-3 font-medium text-white">{unit.name}</td>
                       <td className="py-3 text-zinc-300">{unit.district}</td>
@@ -425,7 +440,7 @@ export default function ManageUnitsPage() {
                     </tr>
                   ))}
 
-                  {units.length === 0 && (
+                  {filteredUnits.length === 0 && (
                     <tr>
                       <td colSpan={4} className="py-8 text-center text-zinc-500">
                         No units found matching your criteria

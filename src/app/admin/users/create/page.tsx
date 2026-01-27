@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, UserPlus, Building, Phone, Mail, Lock } from 'lucide-react';
 import { Combobox } from '@/components/ui/combobox';
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 
 interface UnitOption {
   value: string;
@@ -18,7 +18,7 @@ interface UnitOption {
 
 export default function CreateUserPage() {
   const router = useRouter();
-  const { user } = useUser();
+  const { data: session, status } = useSession();
 
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
@@ -34,43 +34,28 @@ export default function CreateUserPage() {
 
   // Check if user is admin
   useEffect(() => {
-    const checkAdminRole = async () => {
-      if (!user) {
-        router.push('/sign-in');
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/user/profile');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.role === 'admin') {
-            setIsAdmin(true);
-          } else {
-            router.push('/');
-          }
-        } else {
-          router.push('/sign-in');
-        }
-      } catch (err) {
-        console.error('Error checking admin status:', err);
-        router.push('/sign-in');
-      } finally {
+    if (status === 'loading') {
+      setCheckingAuth(true);
+    } else if (status === 'unauthenticated') {
+      router.push('/login');
+    } else if (status === 'authenticated') {
+      if (session.user.role !== 'admin') {
+        router.push('/');
+      } else {
+        setIsAdmin(true);
         setCheckingAuth(false);
       }
-    };
-
-    checkAdminRole();
-  }, [user, router]);
+    }
+  }, [status, session, router]);
 
   // Fetch units on component mount
-  useState(() => {
+  useEffect(() => {
     const fetchUnits = async () => {
       try {
-        const response = await fetch('/api/admin/units?limit=100');
+        const response = await fetch('/api/admin/units');
         if (response.ok) {
           const data = await response.json();
-          const unitOptions = data.units.map((unit: any) => ({
+          const unitOptions = data.map((unit: any) => ({
             value: unit.id,
             label: unit.name
           }));
@@ -83,7 +68,7 @@ export default function CreateUserPage() {
     };
 
     fetchUnits();
-  });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
