@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Activity, Map, Users, AlertTriangle, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, User, Calendar, RotateCcw } from "lucide-react";
 import ReportDetailsModal from '@/components/report-details-modal';
-import AdminSidebar from '@/components/admin-sidebar';
 import {
   PieChart,
   Pie,
@@ -163,10 +162,7 @@ export default function AdminDashboard() {
   const COLORS = ['#10B981', '#EF4444', '#F59E0B'];
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex">
-      {/* Sidebar Navigation */}
-      <AdminSidebar />
-
+    <>
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
@@ -469,6 +465,6 @@ export default function AdminDashboard() {
           onClose={() => setIsModalOpen(false)}
         />
       )}
-    </div>
+    </>
   );
 }

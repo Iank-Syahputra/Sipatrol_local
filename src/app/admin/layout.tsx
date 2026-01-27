@@ -28,7 +28,7 @@ export default async function AdminLayout({
 
   // User is Admin -> Show Dashboard with sidebar
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-zinc-950 text-zinc-100">
       <AdminSidebar />
       <main className="flex-1 overflow-y-auto p-8">{children}</main>
     </div>

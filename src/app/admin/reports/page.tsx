@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { Activity, Map, Users, AlertTriangle, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, User, Download, Printer, ChevronDown, Check, ImageIcon } from "lucide-react";
 import ReportDetailsModal from '@/components/report-details-modal';
-import AdminSidebar from '@/components/admin-sidebar';
 
 // Custom Multi-Select Component
 const MultiSelectDropdown = ({ options, selected, onChange, placeholder }: any) => {
@@ -77,37 +76,56 @@ export default function ReportManagementPage() {
   // 1. ADD TRIGGER STATE
   const [filterTrigger, setFilterTrigger] = useState(0);
 
-  // 2. UPDATE FETCH LOGIC
+  // 2. UPDATE FETCH LOGIC (no pagination in new API)
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // PERUBAHAN 2: Kirim range tanggal ke API
-        const queryParams = new URLSearchParams({
-          search: searchTerm,
-          startDate: startDate, // Kirim start date
-          endDate: endDate,     // Kirim end date
-          units: selectedUnits.join(','),
-          categories: selectedCategories.join(','),
-          locations: selectedLocations.join(','),
-          page: currentPage.toString(),
-          limit: itemsPerPage.toString()
-        });
 
-        const response = await fetch(`/api/admin/reports?${queryParams}`);
-        // ... handle response ...
+        // Call API (the new API doesn't use pagination parameters)
+        const response = await fetch(`/api/admin/reports`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-        setReports(data.reports);
-        setAllUnits(data.units);
-        setAllCategories(data.categories); // Save categories from API
-        setAllLocations(data.locations || []); // Set options
-        setFilteredReports(data.reports);
-        setTotalPages(data.totalPages || 1);
-        setTotalReports(data.totalCount || data.reports.length);
+        setReports(data || []); // Set reports (no pagination in new API)
+        setFilteredReports(data || []); // Set filtered reports
+        setTotalReports(data?.length || 0); // Set total count
+        setTotalPages(1); // Set to 1 since no pagination in new API
+
+        // For units, categories, and locations, we need to fetch separately since new API doesn't return them
+        const unitsResponse = await fetch('/api/admin/units');
+        if (unitsResponse.ok) {
+          const unitsData = await unitsResponse.json();
+          setAllUnits(unitsData || []);
+        }
+
+        const categoriesResponse = await fetch('/api/admin/categories'); // Assuming this endpoint exists
+        if (categoriesResponse.ok) {
+          const categoriesData = await categoriesResponse.json();
+          setAllCategories(categoriesData || []);
+        } else {
+          // If categories endpoint doesn't exist, fetch from reports data
+          const seenCategoryIds = new Set();
+          const uniqueCategories = data
+            .map(item => item.category)
+            .filter(cat => cat && !seenCategoryIds.has(cat.id) && seenCategoryIds.add(cat.id));
+          setAllCategories(uniqueCategories);
+        }
+
+        const locationsResponse = await fetch('/api/admin/unit-locations'); // Assuming this endpoint exists
+        if (locationsResponse.ok) {
+          const locationsData = await locationsResponse.json();
+          setAllLocations(locationsData || []);
+        } else {
+          // If locations endpoint doesn't exist, fetch from reports data
+          const seenLocationIds = new Set();
+          const uniqueLocations = data
+            .map(item => item.location)
+            .filter(loc => loc && !seenLocationIds.has(loc.id) && seenLocationIds.add(loc.id));
+          setAllLocations(uniqueLocations || []);
+        }
       } catch (err) {
         console.error('Error fetching reports:', err);
         setError('Failed to load reports');
@@ -151,15 +169,15 @@ export default function ReportManagementPage() {
 
     // Mapping data agar sesuai dengan kolom Excel yang diinginkan
     const dataToExport = reports.map(report => ({
-      "Tanggal & Waktu": new Date(report.captured_at).toLocaleString('id-ID'),
-      "Nama Petugas": report.profiles?.full_name || 'N/A',
-      "Unit": report.units?.name || 'N/A',
-      "Kategori": report.report_categories?.name || 'N/A',
-      "Lokasi Spesifik": report.unit_locations?.name || '-',
+      "Tanggal & Waktu": new Date(report.capturedAt).toLocaleString('id-ID'),
+      "Nama Petugas": report.user?.fullName || 'N/A',
+      "Unit": report.unit?.name || 'N/A',
+      "Kategori": report.category?.name || 'N/A',
+      "Lokasi Spesifik": report.location?.name || '-',
       "Catatan Petugas": report.notes || '-', // Mengambil Notes
       "Latitude": report.latitude,
       "Longitude": report.longitude,
-      "Link Foto": report.image_path || 'Tidak ada foto',
+      "Link Foto": report.imagePath || 'Tidak ada foto',
       "Status": "Completed"
     }));
 
@@ -212,10 +230,7 @@ export default function ReportManagementPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex">
-      {/* Sidebar Navigation */}
-      <AdminSidebar />
-
+    <>
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
@@ -339,116 +354,17 @@ export default function ReportManagementPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-zinc-800 text-left text-sm text-zinc-400">
-                    <th className="pb-3 pl-2">Evidence</th> {/* 1. Ganti Location jadi Evidence */}
-                    <th className="pb-3">Officer</th>
-                    <th className="pb-3">Unit</th>
-                    <th className="pb-3">Category</th>
-                    <th className="pb-3">Specific Loc</th>
-                    <th className="pb-3">Date/Time</th>{/* HAPUS COLUMN Location */}
-                    <th className="pb-3">Status</th>
-                    <th className="pb-3">Actions</th>
-                  </tr>
+                  <tr className="border-b border-zinc-800 text-left text-sm text-zinc-400"><th className="pb-3 pl-2">Evidence</th><th className="pb-3">Officer</th><th className="pb-3">Unit</th><th className="pb-3">Category</th><th className="pb-3">Specific Loc</th><th className="pb-3">Date/Time</th><th className="pb-3">Status</th><th className="pb-3">Actions</th></tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800">
-                  {reports.map((report: any) => (
-                    <tr key={report.id} className="text-sm hover:bg-zinc-800/30 transition-colors">
-                      <td className="py-3 pl-2">
-                        <div className="h-10 w-16 bg-zinc-800 rounded-md overflow-hidden border border-zinc-700 flex items-center justify-center">
-                          {report.image_path ? (
-                            <img src={report.image_path} alt="Evd" className="h-full w-full object-cover" loading="lazy" />
-                          ) : (
-                            <ImageIcon className="h-4 w-4 text-zinc-600" />
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 font-medium text-white">{report.profiles?.full_name || 'N/A'}</td>
-                      <td className="py-3 text-zinc-300">{report.units?.name || 'N/A'}</td>
-                      <td className="py-3">
-                        {report.report_categories && (
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${(report.report_categories.color === 'red' || report.report_categories.name.toLowerCase().includes('unsafe') || report.report_categories.name.toLowerCase().includes('tidak aman')) ? 'bg-red-500/20 text-red-400' : report.report_categories.color === 'yellow' || report.report_categories.name.toLowerCase().includes('maintenance') ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
-                            {report.report_categories.name}
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 text-zinc-300">{report.unit_locations?.name || '-'}</td>
-                      <td className="py-3 text-zinc-300">{new Date(report.captured_at).toLocaleString()}</td>{/* HAPUS CELL Kordinat */}
-                      <td className="py-3">
-                        <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-full">Completed</span>
-                      </td>
-                      <td className="py-3">
-                        <button onClick={() => handleViewReport(report)} className="flex items-center gap-1 text-blue-400 hover:text-blue-300 text-sm">
-                          <Eye className="h-4 w-4" />View
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-
-                  {reports.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className="py-8 text-center text-zinc-500">No reports found matching your criteria</td>
-                    </tr>
-                  )}
+                  {reports.map((report: any) => (<tr key={report.id} className="text-sm hover:bg-zinc-800/30 transition-colors"><td className="py-3 pl-2"><div className="h-10 w-16 bg-zinc-800 rounded-md overflow-hidden border border-zinc-700 flex items-center justify-center">{report.imagePath ? (<img src={report.imagePath} alt="Evd" className="h-full w-full object-cover" loading="lazy" />) : (<ImageIcon className="h-4 w-4 text-zinc-600" />)}</div></td><td className="py-3 font-medium text-white">{report.user?.fullName || 'N/A'}</td><td className="py-3 text-zinc-300">{report.unit?.name || 'N/A'}</td><td className="py-3">{report.category && (<span className={`px-2 py-1 rounded-full text-xs font-medium ${(report.category.color === 'red' || report.category.name.toLowerCase().includes('unsafe') || report.category.name.toLowerCase().includes('tidak aman')) ? 'bg-red-500/20 text-red-400' : report.category.color === 'yellow' || report.category.name.toLowerCase().includes('maintenance') ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>{report.category.name}</span>)}</td><td className="py-3 text-zinc-300">{report.location?.name || '-'}</td><td className="py-3 text-zinc-300">{new Date(report.capturedAt).toLocaleString()}</td><td className="py-3"><span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-full">Completed</span></td><td className="py-3"><button onClick={() => handleViewReport(report)} className="flex items-center gap-1 text-blue-400 hover:text-blue-300 text-sm"><Eye className="h-4 w-4" />View</button></td></tr>))}
+                  {reports.length === 0 && (<tr><td colSpan={8} className="py-8 text-center text-zinc-500">No reports found matching your criteria</td></tr>)}
                 </tbody>
               </table>
             </div>
 
             {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6">
-                <div className="text-sm text-zinc-400">
-                  Page {currentPage} of {totalPages}
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className={`px-3 py-1.5 rounded-lg ${currentPage === 1 ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}
-                  >
-                    Previous
-                  </button>
-
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      // Show all pages if total is 5 or less
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      // Show first 5 pages if current page is 1-3
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      // Show last 5 pages if current page is near the end
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      // Show current page in the middle
-                      pageNum = currentPage - 2 + i;
-                    }
-
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`px-3 py-1.5 rounded-lg min-w-[36px] ${
-                          currentPage === pageNum
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-zinc-800 text-white hover:bg-zinc-700'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className={`px-3 py-1.5 rounded-lg ${currentPage === totalPages ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
+            {totalPages > 1 && (<div className="flex items-center justify-between mt-6"><div className="text-sm text-zinc-400">Page {currentPage} of {totalPages}</div><div className="flex space-x-2"><button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className={`px-3 py-1.5 rounded-lg ${currentPage === 1 ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}>Previous</button>{Array.from({ length: Math.min(5, totalPages) }, (_, i) => {let pageNum;if (totalPages <= 5) {// Show all pages if total is 5 or lesspageNum = i + 1;} else if (currentPage <= 3) {// Show first 5 pages if current page is 1-3pageNum = i + 1;} else if (currentPage >= totalPages - 2) {// Show last 5 pages if current page is near the endpageNum = totalPages - 4 + i;} else {// Show current page in the middlepageNum = currentPage - 2 + i;}return (<button key={pageNum} onClick={() => setCurrentPage(pageNum)} className={`px-3 py-1.5 rounded-lg min-w-[36px] ${currentPage === pageNum ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}>{pageNum}</button>);})}<button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className={`px-3 py-1.5 rounded-lg ${currentPage === totalPages ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}>Next</button></div></div>)}
           </div>
         </div>
       </div>
@@ -461,6 +377,6 @@ export default function ReportManagementPage() {
           onClose={() => setIsModalOpen(false)}
         />
       )}
-    </div>
+    </>
   );
 }

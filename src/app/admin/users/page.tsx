@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Filter, Download, Printer, UserPlus, Trash2, Edit, ChevronDown, Check, Eye } from "lucide-react";
-import AdminSidebar from '@/components/admin-sidebar';
 import Link from 'next/link';
 
 // --- REUSABLE MULTI-SELECT COMPONENT ---
@@ -224,9 +223,7 @@ export default function ManageUsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex">
-      <AdminSidebar />
-
+    <>
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="border-b border-zinc-800 bg-zinc-900/50 p-4">
@@ -254,11 +251,11 @@ export default function ManageUsersPage() {
         </header>
 
         <div className="flex-1 p-6 overflow-y-auto">
-          
+
           {/* FILTER SECTION (Consistent Design) */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              
+
               {/* Search */}
               <div className="md:col-span-2">
                 <label className="block text-sm text-zinc-400 mb-2">Search Name</label>
@@ -454,6 +451,6 @@ export default function ManageUsersPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

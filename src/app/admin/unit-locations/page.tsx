@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 // 1. IMPORT XLSX
 import * as XLSX from 'xlsx';
 import { Search, Filter, Download, Printer, Plus, Edit3, Trash2, MapPin, ChevronDown, Check } from "lucide-react";
-import AdminSidebar from '@/components/admin-sidebar';
 
 // --- REUSABLE MULTI-SELECT COMPONENT ---
 const MultiSelectDropdown = ({ options, selected, onChange, placeholder, onPageChange }: any) => {
@@ -73,25 +72,25 @@ export default function ManageUnitLocationsPage() {
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 10; // Maximum 10 rows per page
 
-  // FETCH DATA WITH PAGINATION
+  // FETCH DATA (no pagination in new API)
   const fetchData = async () => {
     try {
       setLoading(true);
-      const queryParams = new URLSearchParams({
-        search: searchTerm,
-        units: selectedUnits.join(','),
-        page: currentPage.toString(),
-        limit: itemsPerPage.toString(),
-      });
 
-      const response = await fetch(`/api/admin/unit-locations?${queryParams}`);
+      // Call API (the new API doesn't use pagination parameters)
+      const response = await fetch(`/api/admin/unit-locations`);
       if (!response.ok) throw new Error('Failed to fetch data');
 
       const data = await response.json();
-        setLocations(data.locations || []);
-        setUnits(data.units || []);
-        setTotalPages(data.totalPages || 1);
-        setTotalCount(data.totalCount || 0);
+        setLocations(data || []); // Set locations (no pagination in new API)
+        // For units, we need to fetch separately since new API doesn't return units
+        const unitsResponse = await fetch('/api/admin/units');
+        if (unitsResponse.ok) {
+          const unitsData = await unitsResponse.json();
+          setUnits(unitsData || []);
+        }
+        setTotalCount(data?.length || 0); // Set total count
+        setTotalPages(1); // Set to 1 since no pagination in new API
     } catch (err) {
       console.error(err);
       setError('Failed to load locations and units');
@@ -189,22 +188,22 @@ export default function ManageUnitLocationsPage() {
   // 2. EXPORT FUNCTION LOGIC - Fetch all locations for export
   const handleExport = async () => {
     try {
-      // Fetch all locations (with a large limit to get everything)
-      const response = await fetch('/api/admin/unit-locations?limit=10000&page=1');
+      // Fetch all locations (the new API returns all locations without pagination)
+      const response = await fetch('/api/admin/unit-locations');
       const data = await response.json();
 
-      if (!data.locations || data.locations.length === 0) {
+      if (!data || data.length === 0) {
         alert("Tidak ada data lokasi unit untuk diexport.");
         return;
       }
 
       // Mapping data agar sesuai dengan kolom Excel yang diinginkan
-      const dataToExport = data.locations.map(location => ({
+      const dataToExport = data.map(location => ({
         "Nama Lokasi": location.name || 'N/A',
-        "Unit": location.units?.name || 'N/A',
-        "Tanggal Dibuat": new Date(location.created_at).toLocaleString('id-ID'),
+        "Unit": location.unit?.name || 'N/A',
+        "Tanggal Dibuat": new Date(location.createdAt).toLocaleString('id-ID'),
         "ID Lokasi": location.id,
-        "ID Unit": location.unit_id
+        "ID Unit": location.unitId
       }));
 
       // Membuat Worksheet dan Workbook
@@ -253,9 +252,7 @@ export default function ManageUnitLocationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex">
-      <AdminSidebar />
-
+    <>
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="border-b border-zinc-800 bg-zinc-900/50 p-4">
@@ -288,11 +285,11 @@ export default function ManageUnitLocationsPage() {
         </header>
 
         <div className="flex-1 p-6 overflow-y-auto">
-          
+
           {/* FILTER SECTION */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              
+
               {/* Search */}
               <div className="md:col-span-2">
                 <label className="block text-sm text-zinc-400 mb-2">Search Location</label>
@@ -345,8 +342,8 @@ export default function ManageUnitLocationsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                    <label className="block text-sm text-zinc-400 mb-1">Location Name</label>
-                   <input 
-                     type="text" 
+                   <input
+                     type="text"
                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white"
                      value={formData.name}
                      onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -354,7 +351,7 @@ export default function ManageUnitLocationsPage() {
                 </div>
                 <div>
                    <label className="block text-sm text-zinc-400 mb-1">Unit</label>
-                   <select 
+                   <select
                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white"
                      value={formData.unit_id}
                      onChange={(e) => setFormData({...formData, unit_id: e.target.value})}
@@ -480,6 +477,6 @@ export default function ManageUnitLocationsPage() {
 
         </div>
       </div>
-    </div>
+    </>
   );
 }

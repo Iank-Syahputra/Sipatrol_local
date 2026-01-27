@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 // 1. IMPORT XLSX
 import * as XLSX from 'xlsx';
 import { Activity, Map, Users, AlertTriangle, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, User, Plus, Download, Printer, Edit, Trash } from "lucide-react";
-import AdminSidebar from '@/components/admin-sidebar';
 
 export default function ManageUnitsPage() {
   const [units, setUnits] = useState<any[]>([]); // Stores paginated data
@@ -21,28 +20,20 @@ export default function ManageUnitsPage() {
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 10; // Maximum 10 rows per page
 
-  // 2. FETCH DATA WITH PAGINATION
+  // 2. FETCH DATA (no pagination in new API)
   const fetchUnits = async () => {
     try {
       setLoading(true);
-      // Calculate offset for pagination
-      const offset = (currentPage - 1) * itemsPerPage;
 
-      // Call API with pagination and search params
-      const queryParams = new URLSearchParams({
-        search: searchTerm,
-        limit: itemsPerPage.toString(),
-        offset: offset.toString()
-      });
-
-      const response = await fetch(`/api/admin/units?${queryParams}`);
+      // Call API (the new API doesn't use pagination parameters)
+      const response = await fetch(`/api/admin/units`);
 
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      setUnits(data.units || []);       // Set paginated units
-      setTotalCount(data.pagination?.total || 0);  // Set total count
-      setTotalPages(Math.ceil((data.pagination?.total || 0) / itemsPerPage)); // Calculate total pages
+      setUnits(data || []);       // Set units (no pagination in new API)
+      setTotalCount(data?.length || 0);  // Set total count
+      setTotalPages(1); // Set to 1 since no pagination in new API
     } catch (err) {
       console.error('Error fetching units:', err);
       setError('Failed to load units');
@@ -190,17 +181,17 @@ export default function ManageUnitsPage() {
   // 2. EXPORT FUNCTION LOGIC - Fetch all units for export
   const handleExport = async () => {
     try {
-      // Fetch all units (with a large limit to get everything)
-      const response = await fetch('/api/admin/units?limit=10000&offset=0');
+      // Fetch all units (the new API returns all units without pagination)
+      const response = await fetch('/api/admin/units');
       const data = await response.json();
 
-      if (!data.units || data.units.length === 0) {
+      if (!data || data.length === 0) {
         alert("Tidak ada data unit untuk diexport.");
         return;
       }
 
       // Mapping data agar sesuai dengan kolom Excel yang diinginkan
-      const dataToExport = data.units.map(unit => ({
+      const dataToExport = data.map(unit => ({
         "Nama Unit": unit.name || 'N/A',
         "Wilayah/Daerah": unit.district || 'N/A',
         "Tanggal Dibuat": new Date(unit.created_at).toLocaleString('id-ID'),
@@ -253,10 +244,7 @@ export default function ManageUnitsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex">
-      {/* Sidebar Navigation */}
-      <AdminSidebar />
-
+    <>
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
@@ -507,6 +495,6 @@ export default function ManageUnitsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
