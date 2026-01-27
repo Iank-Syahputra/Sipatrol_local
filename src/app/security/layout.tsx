@@ -1,59 +1,42 @@
+import { getServerSession } from "next-auth/next";
 import { redirect } from 'next/navigation';
-import { getUserProfile } from "@/lib/sipatrol-db";
+import { authOptions } from "../api/auth/[...nextauth]/route";
 import SecuritySidebar from "@/components/security-sidebar";
-
-// Helper function to wait for profile creation to complete
-// Same retry logic as check-auth page
-async function waitForProfile(maxAttempts = 10, delayMs = 500) {
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    console.log(`[Security Layout] Profile check attempt ${attempt}/${maxAttempts}`);
-    
-    const profile = await getUserProfile();
-    
-    if (profile) {
-      console.log('[Security Layout] ✓ Profile found:', profile.role);
-      return profile;
-    }
-    
-    if (attempt < maxAttempts) {
-      console.log(`[Security Layout] Profile not found, waiting ${delayMs}ms before retry...`);
-      await new Promise(resolve => setTimeout(resolve, delayMs));
-    }
-  }
-  
-  console.log('[Security Layout] ✗ Profile not found after all retry attempts');
-  return null;
-}
 
 export default async function SecurityLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  console.log('[Security Layout] === Started ===');
-  
-  // Wait for profile to be created (with retry logic)
-  const user = await waitForProfile(10, 500); // 10 attempts × 500ms = 5 seconds max
+  // Get session with auth options
+  const session = await getServerSession(authOptions);
 
-  // STRICT DATABASE SYNC: Check if profile exists after all retries
-  if (!user) {
-    console.error('[Security Layout] Profile does not exist after retries, forcing logout');
-    // Profile was deleted or never created in Supabase -> Force logout
-    const ForceLogout = (await import('@/components/force-logout')).default;
-    return <ForceLogout />;
+  // Debug logging to help identify the issue
+  console.log('SESSION CHECK:', session?.user);
+
+  if (!session || !session.user) {
+    // Redirect to login if not authenticated
+    redirect('/login');
   }
 
-  // Check if user has security role
-  if (user.role !== 'security') {
-    console.log('[Security Layout] User role is not security, redirecting to home');
-    redirect('/'); // Redirect if not a security user
+  // Get user role from session and normalize it for comparison
+  const userRole = session.user.role?.toLowerCase();
+
+  // Check if user has security role (case-insensitive comparison)
+  if (userRole !== 'security') {
+    console.log('[Security Layout] User role is not security, redirecting to access-denied');
+    redirect('/access-denied'); // Redirect to access-denied instead of home to prevent loop
   }
 
-  console.log('[Security Layout] ✓ Rendering for user:', user.full_name);
+  // Prepare user data for the sidebar
+  const userData = {
+    full_name: session.user.name || session.user.email || "Unknown User",
+    role: userRole,
+  };
 
   // Pass user data to Client Component sidebar
   return (
-    <SecuritySidebar user={user}>
+    <SecuritySidebar user={userData}>
       {children}
     </SecuritySidebar>
   );

@@ -1,7 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import { auth, currentUser } from '@clerk/nextjs/server';
-import { getCurrentUser } from '@/lib/user';
-import { unstable_noStore as noStore } from 'next/cache';
+import { getServerSession } from 'next-auth/next';
+import { prisma } from '@/lib/prisma';
 
 // Types for SiPatrol application
 export type UserRole = 'admin' | 'security';
@@ -54,77 +52,75 @@ export interface Report {
 
 // Unit operations
 export async function getAllUnits(): Promise<Unit[]> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  try {
+    const units = await prisma.unit.findMany({
+      orderBy: {
+        name: 'asc'
+      }
+    });
 
-  const { data, error } = await supabase
-    .from('units')
-    .select('*')
-    .order('name', { ascending: true });
-
-  if (error) {
+    // Convert Prisma model to interface format
+    return units.map(unit => ({
+      id: unit.id,
+      name: unit.name,
+      district: unit.district,
+      created_at: unit.createdAt.toISOString()
+    }));
+  } catch (error) {
     console.error('Error fetching units:', error);
     throw new Error('Failed to fetch units');
   }
-
-  return data || [];
 }
 
 export async function createUnit(unitData: Omit<Unit, 'id' | 'created_at'>): Promise<Unit> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  try {
+    const unit = await prisma.unit.create({
+      data: {
+        name: unitData.name,
+        district: unitData.district
+      }
+    });
 
-  const { data, error } = await supabase
-    .from('units')
-    .insert([unitData])
-    .select()
-    .single();
-
-  if (error) {
+    return {
+      id: unit.id,
+      name: unit.name,
+      district: unit.district,
+      created_at: unit.createdAt.toISOString()
+    };
+  } catch (error) {
     console.error('Error creating unit:', error);
     throw new Error('Failed to create unit');
   }
-
-  return data;
 }
 
 export async function updateUnit(id: string, unitData: Partial<Omit<Unit, 'id' | 'created_at'>>): Promise<Unit> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  try {
+    const unit = await prisma.unit.update({
+      where: { id },
+      data: {
+        name: unitData.name,
+        district: unitData.district
+      }
+    });
 
-  const { data, error } = await supabase
-    .from('units')
-    .update(unitData)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
+    return {
+      id: unit.id,
+      name: unit.name,
+      district: unit.district,
+      created_at: unit.createdAt.toISOString()
+    };
+  } catch (error) {
     console.error('Error updating unit:', error);
     throw new Error('Failed to update unit');
   }
-
-  return data;
 }
 
 export async function deleteUnit(id: string): Promise<void> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  const { error } = await supabase
-    .from('units')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
+  try {
+    await prisma.unit.delete({
+      where: { id }
+    });
+  } catch (error) {
     console.error('Error deleting unit:', error);
     throw new Error('Failed to delete unit');
   }
@@ -132,86 +128,35 @@ export async function deleteUnit(id: string): Promise<void> {
 
 // Profile operations
 export async function getUserProfile(): Promise<UserProfile | null> {
-  noStore(); // <--- PREVENT FUNCTION CACHING
-
   try {
-    const { userId } = await auth();
+    const session = await getServerSession();
 
-    if (!userId) {
+    if (!session || !session.user) {
       return null;
     }
 
-    // Initialize Admin Client
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const userId = session.user.id as string;
 
-    // 1. Try to fetch existing profile
-    const { data, error } = await supabaseAdmin
-      .from('profiles')
-      .select(`
-        id,
-        full_name,
-        username,
-        phone_number,
-        role,
-        assigned_unit_id,
-        created_at,
-        units ( name )
-      `)
-      .eq('id', userId)
-      .single();
-
-    // If found, return it immediately
-    if (!error && data) {
-      return data;
-    }
-
-    // 2. If Not Found (PGRST116), Auto-Create the Profile
-    if (error && error.code === 'PGRST116') {
-      console.log(`Profile not found for ${userId}, creating new one...`);
-
-      const clerkUser = await currentUser();
-      if (!clerkUser) return null;
-
-      // Construct a name from Clerk data
-      const fullName = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || clerkUser.username || "Security Officer";
-
-      const { data: newProfile, error: createError } = await supabaseAdmin
-        .from('profiles')
-        .insert([
-          {
-            id: userId,
-            full_name: fullName,
-            // role will default to 'security' based on DB schema
-          }
-        ])
-        .select(`
-          id,
-          full_name,
-          username,
-          phone_number,
-          role,
-          assigned_unit_id,
-          created_at,
-          units ( name )
-        `)
-        .single();
-
-      if (createError) {
-        console.error("Failed to auto-create profile:", JSON.stringify(createError, null, 2));
-        return null;
+    const profile = await prisma.profile.findUnique({
+      where: { id: userId },
+      include: {
+        assignedUnit: true
       }
+    });
 
-      console.log("✓ New profile created successfully.");
-      return newProfile;
+    if (!profile) {
+      return null;
     }
 
-    // Handle other real errors
-    console.error('Supabase Error:', JSON.stringify(error, null, 2));
-    return null;
-
+    return {
+      id: profile.id,
+      full_name: profile.fullName,
+      role: profile.role,
+      assigned_unit_id: profile.assignedUnitId,
+      phone_number: profile.phoneNumber || undefined,
+      username: profile.username || undefined,
+      created_at: profile.createdAt.toISOString()
+    };
   } catch (error) {
     console.error('Error in getUserProfile:', error);
     return null;
@@ -220,39 +165,30 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 
 export async function createUserProfile(profileData: Omit<UserProfile, 'created_at'>): Promise<UserProfile> {
   try {
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
-    const { data, error } = await supabaseAdmin
-      .from('profiles')
-      .insert([{
+    const profile = await prisma.profile.create({
+      data: {
         id: profileData.id,
-        full_name: profileData.full_name,
+        username: profileData.username,
+        password: profileData.username ? 'default_password' : null, // In production, ensure proper password handling
+        fullName: profileData.full_name,
         role: profileData.role,
-        assigned_unit_id: profileData.assigned_unit_id,
-        phone_number: profileData.phone_number,
-        username: profileData.username
-      }])
-      .select(`
-        id,
-        full_name,
-        username,
-        phone_number,
-        role,
-        assigned_unit_id,
-        created_at,
-        units ( name )
-      `)
-      .single();
+        assignedUnitId: profileData.assigned_unit_id,
+        phoneNumber: profileData.phone_number
+      },
+      include: {
+        assignedUnit: true
+      }
+    });
 
-    if (error) {
-      console.error('Supabase Error Detail:', JSON.stringify(error, null, 2));
-      throw error;
-    }
-
-    return data;
+    return {
+      id: profile.id,
+      full_name: profile.fullName,
+      role: profile.role,
+      assigned_unit_id: profile.assignedUnitId,
+      phone_number: profile.phoneNumber || undefined,
+      username: profile.username || undefined,
+      created_at: profile.createdAt.toISOString()
+    };
   } catch (error) {
     console.error('Error in createUserProfile:', error);
     throw new Error('Failed to create user profile');
@@ -261,31 +197,24 @@ export async function createUserProfile(profileData: Omit<UserProfile, 'created_
 
 export async function getAllProfiles(): Promise<UserProfile[]> {
   try {
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const profiles = await prisma.profile.findMany({
+      include: {
+        assignedUnit: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
 
-    const { data, error } = await supabaseAdmin
-      .from('profiles')
-      .select(`
-        id,
-        full_name,
-        username,
-        phone_number,
-        role,
-        assigned_unit_id,
-        created_at,
-        units ( name )
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Supabase Error Detail:', JSON.stringify(error, null, 2));
-      throw error;
-    }
-
-    return data || [];
+    return profiles.map(profile => ({
+      id: profile.id,
+      full_name: profile.fullName,
+      role: profile.role,
+      assigned_unit_id: profile.assignedUnitId,
+      phone_number: profile.phoneNumber || undefined,
+      username: profile.username || undefined,
+      created_at: profile.createdAt.toISOString()
+    }));
   } catch (error) {
     console.error('Error in getAllProfiles:', error);
     throw new Error('Failed to fetch all profiles');
@@ -294,33 +223,29 @@ export async function getAllProfiles(): Promise<UserProfile[]> {
 
 export async function updateUserProfile(userId: string, profileData: Partial<Omit<UserProfile, 'id' | 'created_at'>>): Promise<UserProfile> {
   try {
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const profile = await prisma.profile.update({
+      where: { id: userId },
+      data: {
+        username: profileData.username,
+        fullName: profileData.full_name,
+        role: profileData.role as UserRole,
+        assignedUnitId: profileData.assigned_unit_id,
+        phoneNumber: profileData.phone_number
+      },
+      include: {
+        assignedUnit: true
+      }
+    });
 
-    const { data, error } = await supabaseAdmin
-      .from('profiles')
-      .update(profileData)
-      .eq('id', userId)
-      .select(`
-        id,
-        full_name,
-        username,
-        phone_number,
-        role,
-        assigned_unit_id,
-        created_at,
-        units ( name )
-      `)
-      .single();
-
-    if (error) {
-      console.error('Supabase Error Detail:', JSON.stringify(error, null, 2));
-      throw error;
-    }
-
-    return data;
+    return {
+      id: profile.id,
+      full_name: profile.fullName,
+      role: profile.role,
+      assigned_unit_id: profile.assignedUnitId,
+      phone_number: profile.phoneNumber || undefined,
+      username: profile.username || undefined,
+      created_at: profile.createdAt.toISOString()
+    };
   } catch (error) {
     console.error('Error in updateUserProfile:', error);
     throw new Error('Failed to update user profile');
@@ -330,29 +255,54 @@ export async function updateUserProfile(userId: string, profileData: Partial<Omi
 // Report operations
 export async function getLatestReports(limit: number = 5): Promise<Report[]> {
   try {
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const reports = await prisma.report.findMany({
+      take: limit,
+      orderBy: {
+        captured_at: 'desc'
+      },
+      include: {
+        user: {
+          select: {
+            fullName: true
+          }
+        },
+        unit: {
+          select: {
+            name: true
+          }
+        },
+        category: {
+          select: {
+            name: true,
+            color: true
+          }
+        },
+        location: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
 
-    const { data, error } = await supabaseAdmin
-      .from('reports')
-      .select(`
-        *,
-        profiles(full_name),
-        units(name),
-        report_categories(name, color),
-        unit_locations(name)
-      `)
-      .order('captured_at', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      console.error('Supabase Error Detail:', JSON.stringify(error, null, 2));
-      throw error;
-    }
-
-    return data || [];
+    return reports.map(report => ({
+      id: report.id,
+      user_id: report.userId,
+      unit_id: report.unitId,
+      image_path: report.imagePath || undefined,
+      notes: report.notes || undefined,
+      latitude: report.latitude || undefined,
+      longitude: report.longitude || undefined,
+      category_id: report.categoryId || undefined,
+      location_id: report.locationId || undefined,
+      captured_at: report.capturedAt.toISOString(),
+      is_offline_submission: report.isOfflineSubmission,
+      created_at: report.createdAt.toISOString(),
+      profiles: report.user ? { full_name: report.user.fullName } : undefined,
+      units: report.unit ? { name: report.unit.name } : undefined,
+      report_categories: report.category ? { name: report.category.name, color: report.category.color || undefined } : undefined,
+      unit_locations: report.location ? { name: report.location.name } : undefined
+    }));
   } catch (error) {
     console.error('Error in getLatestReports:', error);
     throw new Error('Failed to fetch latest reports');
@@ -366,46 +316,61 @@ export async function getReportsByFilters(
   userId?: string
 ): Promise<Report[]> {
   try {
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const whereClause: any = {};
 
-    let query = supabaseAdmin
-      .from('reports')
-      .select(`
-        *,
-        profiles(full_name),
-        units(name),
-        report_categories(name, color),
-        unit_locations(name)
-      `)
-      .order('captured_at', { ascending: false });
+    if (unitId) whereClause.unitId = unitId;
+    if (userId) whereClause.userId = userId;
+    if (dateFrom) whereClause.capturedAt = { ...whereClause.capturedAt, gte: new Date(dateFrom) };
+    if (dateTo) whereClause.capturedAt = { ...whereClause.capturedAt, lte: new Date(dateTo) };
 
-    if (unitId) {
-      query = query.eq('unit_id', unitId);
-    }
+    const reports = await prisma.report.findMany({
+      where: whereClause,
+      orderBy: {
+        captured_at: 'desc'
+      },
+      include: {
+        user: {
+          select: {
+            fullName: true
+          }
+        },
+        unit: {
+          select: {
+            name: true
+          }
+        },
+        category: {
+          select: {
+            name: true,
+            color: true
+          }
+        },
+        location: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
 
-    if (userId) {
-      query = query.eq('user_id', userId);
-    }
-
-    if (dateFrom) {
-      query = query.gte('captured_at', dateFrom);
-    }
-
-    if (dateTo) {
-      query = query.lte('captured_at', dateTo);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Supabase Error Detail:', JSON.stringify(error, null, 2));
-      throw error;
-    }
-
-    return data || [];
+    return reports.map(report => ({
+      id: report.id,
+      user_id: report.userId,
+      unit_id: report.unitId,
+      image_path: report.imagePath || undefined,
+      notes: report.notes || undefined,
+      latitude: report.latitude || undefined,
+      longitude: report.longitude || undefined,
+      category_id: report.categoryId || undefined,
+      location_id: report.locationId || undefined,
+      captured_at: report.capturedAt.toISOString(),
+      is_offline_submission: report.isOfflineSubmission,
+      created_at: report.createdAt.toISOString(),
+      profiles: report.user ? { full_name: report.user.fullName } : undefined,
+      units: report.unit ? { name: report.unit.name } : undefined,
+      report_categories: report.category ? { name: report.category.name, color: report.category.color || undefined } : undefined,
+      unit_locations: report.location ? { name: report.location.name } : undefined
+    }));
   } catch (error) {
     console.error('Error in getReportsByFilters:', error);
     throw new Error('Failed to fetch reports with filters');
@@ -414,23 +379,35 @@ export async function getReportsByFilters(
 
 export async function createReport(reportData: Omit<Report, 'id' | 'created_at'>): Promise<Report> {
   try {
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const report = await prisma.report.create({
+      data: {
+        userId: reportData.user_id,
+        unitId: reportData.unit_id,
+        imagePath: reportData.image_path,
+        notes: reportData.notes,
+        latitude: reportData.latitude,
+        longitude: reportData.longitude,
+        categoryId: reportData.category_id,
+        locationId: reportData.location_id,
+        capturedAt: new Date(reportData.captured_at),
+        isOfflineSubmission: reportData.is_offline_submission
+      }
+    });
 
-    const { data, error } = await supabaseAdmin
-      .from('reports')
-      .insert([reportData])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Supabase Error Detail:', JSON.stringify(error, null, 2));
-      throw error;
-    }
-
-    return data;
+    return {
+      id: report.id,
+      user_id: report.userId,
+      unit_id: report.unitId,
+      image_path: report.imagePath || undefined,
+      notes: report.notes || undefined,
+      latitude: report.latitude || undefined,
+      longitude: report.longitude || undefined,
+      category_id: report.categoryId || undefined,
+      location_id: report.locationId || undefined,
+      captured_at: report.capturedAt.toISOString(),
+      is_offline_submission: report.isOfflineSubmission,
+      created_at: report.createdAt.toISOString()
+    };
   } catch (error) {
     console.error('Error in createReport:', error);
     throw new Error('Failed to create report');
@@ -442,45 +419,61 @@ export async function getUserReports(
   options?: { page?: number; limit?: number; startDate?: string; endDate?: string }
 ): Promise<{ data: Report[]; totalCount: number }> {
   try {
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
     const page = options?.page || 1;
     const limit = options?.limit || 10;
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
+    const skip = (page - 1) * limit;
 
-    let query = supabaseAdmin
-      .from('reports')
-      .select(`
-        *,
-        units(name),
-        report_categories(name, color),
-        unit_locations(name),
-        profiles (full_name)  // <--- TAMBAHKAN BARIS INI (Supaya nama tidak N/A)
-      `, { count: 'exact' }) // Request total count
-      .eq('user_id', userId)
-      .order('captured_at', { ascending: false });
+    const whereClause: any = { userId };
 
-    // Apply Date Filter
-    if (options?.startDate) {
-      query = query.gte('captured_at', `${options.startDate}T00:00:00`);
-    }
-    if (options?.endDate) {
-      query = query.lte('captured_at', `${options.endDate}T23:59:59`);
-    }
+    if (options?.startDate) whereClause.capturedAt = { ...whereClause.capturedAt, gte: new Date(options.startDate) };
+    if (options?.endDate) whereClause.capturedAt = { ...whereClause.capturedAt, lte: new Date(options.endDate) };
 
-    // Apply Pagination
-    const { data, count, error } = await query.range(from, to);
+    const [reports, totalCount] = await Promise.all([
+      prisma.report.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        orderBy: {
+          capturedAt: 'desc'
+        },
+        include: {
+          unit: {
+            select: { name: true }
+          },
+          category: {
+            select: { name: true, color: true }
+          },
+          location: {
+            select: { name: true }
+          },
+          user: {
+            select: { fullName: true }
+          }
+        }
+      }),
+      prisma.report.count({ where: whereClause })
+    ]);
 
-    if (error) {
-      console.error('Supabase Error Detail:', JSON.stringify(error, null, 2));
-      throw error;
-    }
+    const mappedReports = reports.map(report => ({
+      id: report.id,
+      user_id: report.userId,
+      unit_id: report.unitId,
+      image_path: report.imagePath || undefined,
+      notes: report.notes || undefined,
+      latitude: report.latitude || undefined,
+      longitude: report.longitude || undefined,
+      category_id: report.categoryId || undefined,
+      location_id: report.locationId || undefined,
+      captured_at: report.capturedAt.toISOString(),
+      is_offline_submission: report.isOfflineSubmission,
+      created_at: report.createdAt.toISOString(),
+      units: report.unit ? { name: report.unit.name } : undefined,
+      report_categories: report.category ? { name: report.category.name, color: report.category.color || undefined } : undefined,
+      unit_locations: report.location ? { name: report.location.name } : undefined,
+      profiles: report.user ? { full_name: report.user.fullName } : undefined
+    }));
 
-    return { data: data || [], totalCount: count || 0 };
+    return { data: mappedReports, totalCount };
   } catch (error) {
     console.error('Error in getUserReports:', error);
     return { data: [], totalCount: 0 }; // Return empty result instead of throwing
@@ -501,23 +494,20 @@ export async function getCurrentUserAssignedUnit(): Promise<Unit | null> {
   }
 
   try {
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const unit = await prisma.unit.findUnique({
+      where: { id: profile.assigned_unit_id }
+    });
 
-    const { data: unit, error } = await supabaseAdmin
-      .from('units')
-      .select('*')
-      .eq('id', profile.assigned_unit_id)
-      .single();
-
-    if (error) {
-      console.error('Supabase Error Detail:', JSON.stringify(error, null, 2));
+    if (!unit) {
       return null;
     }
 
-    return unit;
+    return {
+      id: unit.id,
+      name: unit.name,
+      district: unit.district,
+      created_at: unit.createdAt.toISOString()
+    };
   } catch (error) {
     console.error('Error in getCurrentUserAssignedUnit:', error);
     return null;

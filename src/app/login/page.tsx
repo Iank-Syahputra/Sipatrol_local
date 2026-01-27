@@ -32,8 +32,17 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error);
       } else {
-        // Successful login - redirect to dashboard or home
-        router.push('/admin/users'); // Default to admin users page
+        // Successful login - fetch session to check user role
+        const sessionResponse = await fetch('/api/auth/session');
+        const session = await sessionResponse.json();
+
+        if (session?.user?.role === 'admin') {
+          router.push('/admin/users'); // Admin goes to admin users page
+        } else if (session?.user?.role === 'security') {
+          router.push('/security'); // Security officer goes to security dashboard
+        } else {
+          router.push('/'); // Default to home page
+        }
         router.refresh(); // Refresh to update session
       }
     } catch (error) {

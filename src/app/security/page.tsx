@@ -1,6 +1,7 @@
+import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/user';
-import { getUserProfile, getUserReports, getCurrentUserAssignedUnit } from '@/lib/sipatrol-db';
+import { prisma } from '@/lib/prisma';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, MapPin, Camera, FileText, Shield } from 'lucide-react';
@@ -10,31 +11,45 @@ import { OnlineStatusIndicator } from '@/components/online-status-indicator';
 import RecentReportList from '@/components/security/recent-report-list';
 
 export default async function SecurityDashboardPage() {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      redirect('/sign-in');
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    redirect('/login');
+  }
+
+  if (session.user.role !== 'security') {
+    redirect('/access-denied');
+  }
+
+  // Fetch essential security data (e.g., today's reports) using prisma.report.findMany
+  const reports = await prisma.report.findMany({
+    where: {
+      userId: session.user.id as string,
+    },
+    include: {
+      user: true,
+      unit: true,
+    },
+    orderBy: {
+      capturedAt: 'desc',
+    },
+    take: 10, // Limit to 10 most recent reports
+  });
+
+  // Get user's assigned unit
+  const assignedUnit = await prisma.unit.findUnique({
+    where: {
+      id: session.user.unitId as string | undefined,
     }
+  });
 
-    // Get user profile to check role
-    const profile = await getUserProfile();
-    if (!profile || profile.role !== 'security') {
-      redirect('/'); // Redirect if not a security user
-    }
-
-    // Get user's assigned unit
-    const assignedUnit = await getCurrentUserAssignedUnit();
-
-    // Get user's reports
-    const { data: reports } = await getUserReports(profile.id);
-
-    return (
+  return (
     <div className="container mx-auto py-10">
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold">Security Dashboard</h1>
-            <p className="text-muted-foreground">Welcome, {profile.full_name}</p>
+            <p className="text-muted-foreground">Welcome, {session.user.name}</p>
           </div>
           <OnlineStatusIndicator />
         </div>
@@ -76,7 +91,7 @@ export default async function SecurityDashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">
               {reports.length > 0
-                ? new Date(reports[0].captured_at).toLocaleDateString()
+                ? new Date(reports[0].capturedAt).toLocaleDateString()
                 : 'None'}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -132,19 +147,4 @@ export default async function SecurityDashboardPage() {
       </div>
     </div>
   );
-} catch (error) {
-  console.error('Error in SecurityDashboardPage:', error);
-  return (
-    <div className="container mx-auto py-10">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-red-500">Error Loading Dashboard</h1>
-        <p className="text-muted-foreground">Please try again later or contact support.</p>
-        <details className="mt-4 text-sm text-red-300">
-          <summary>Error details</summary>
-          <pre>{error instanceof Error ? error.message : String(error)}</pre>
-        </details>
-      </div>
-    </div>
-  );
-}
 }

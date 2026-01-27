@@ -1,19 +1,24 @@
-import { createClient } from '@supabase/supabase-js';
-import { auth } from '@clerk/nextjs/server';
+import { getServerSession } from 'next-auth/next';
 import { NextRequest } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { writeFile } from 'fs/promises';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify the user is authenticated
-    const { userId } = await auth();
+    // Verify the user is authenticated using NextAuth
+    const session = await getServerSession();
 
-    if (!userId) {
+    if (!session || !session.user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = session.user.id as string;
+
     // Parse JSON data (for offline sync)
     const jsonData = await request.json();
-    
+
     const { imageData, notes, latitude, longitude, unitId, userId: userIdFromData, categoryId, locationId, capturedAt } = jsonData;
 
     // Validate required fields
@@ -26,81 +31,49 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Unauthorized: User ID mismatch' }, { status: 401 });
     }
 
-    // Get Supabase client with service role key to bypass RLS
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    let imagePath = null;
 
-    let imageUrl = null;
-
-    // Upload image if it exists (from base64 data)
+    // Save image if it exists (from base64 data)
     if (imageData) {
-      // Convert base64 image data to ArrayBuffer for upload
-      const base64Response = await fetch(imageData);
-      const blob = await base64Response.blob();
-      const buffer = await blob.arrayBuffer();
+      // Generate unique filename for local storage
+      const fileName = `${uuidv4()}_offline.jpg`;
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'evidence');
 
-      // Generate unique filename
-      const fileName = `evidence/${userId}/${Date.now()}_offline.jpg`;
-
-      // Upload image to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabaseAdmin
-        .storage
-        .from('evidence')
-        .upload(fileName, buffer, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: 'image/jpeg'
-        });
-
-      if (uploadError) {
-        console.error('Error uploading image:', uploadError);
-        return Response.json({ error: uploadError.message }, { status: 500 });
+      // Ensure upload directory exists
+      const fs = require('fs');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
       }
 
-      // Get public URL for the uploaded image
-      const { data: publicUrlData } = supabaseAdmin
-        .storage
-        .from('evidence')
-        .getPublicUrl(fileName);
+      const filePath = path.join(uploadDir, fileName);
 
-      imageUrl = publicUrlData?.publicUrl;
+      // Extract base64 data (remove data:image/jpeg;base64, prefix)
+      const base64Data = imageData.replace(/^data:image\/jpeg;base64,/, '');
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+
+      // Save image to local storage
+      await writeFile(filePath, imageBuffer);
+
+      imagePath = `/uploads/evidence/${fileName}`;
     }
 
-    // Insert the report into the database
-    const { data, error } = await supabaseAdmin
-      .from('reports')
-      .insert([
-        {
-          user_id: userId,
-          unit_id: unitId,
-          image_path: imageUrl, // This will be the public URL of the image in storage
-          notes: notes || '',
-          latitude,
-          longitude,
-          category_id: categoryId,
-          location_id: locationId,
-          captured_at: capturedAt || new Date().toISOString(),
-          is_offline_submission: true
-        }
-      ])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating report:', error);
-
-      // Clean up the uploaded image if DB insertion fails
-      if (imageUrl) {
-        const fileName = `evidence/${userId}/${Date.now()}_offline.jpg`;
-        await supabaseAdmin.storage.from('evidence').remove([fileName]);
+    // Insert the report into the database using Prisma
+    const report = await prisma.report.create({
+      data: {
+        userId: userId,
+        unitId: unitId,
+        imagePath: imagePath, // Store relative path for serving from Next.js
+        notes: notes || '',
+        latitude,
+        longitude,
+        categoryId: categoryId,
+        locationId: locationId,
+        capturedAt: capturedAt ? new Date(capturedAt) : new Date(),
+        isOfflineSubmission: true
       }
+    });
 
-      return Response.json({ error: error.message }, { status: 500 });
-    }
-
-    return Response.json({ success: true, data });
+    return Response.json({ success: true, data: report });
   } catch (error) {
     console.error('Unexpected error in offline report sync:', error);
     return Response.json({ error: 'Internal server error' }, { status: 500 });

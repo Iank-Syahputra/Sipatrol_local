@@ -1,79 +1,86 @@
-import NextAuth from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import { PrismaClient } from '@prisma/client';
-import { compare } from 'bcryptjs';
+// src/app/api/auth/[...nextauth]/route.ts
+import NextAuth, { NextAuthOptions } from "next-auth"
+import CredentialsProvider from "next-auth/providers/credentials"
+import { prisma } from "@/lib/prisma" // Pastikan path ini benar sesuai langkah 1
+import bcrypt from "bcryptjs"
 
-const prisma = new PrismaClient();
+export const authOptions: NextAuthOptions = {
+  // 1. Setting Session
+  session: {
+    strategy: "jwt",
+  },
+  // 2. Secret Key (Wajib ambil dari .env)
+  secret: process.env.AUTH_SECRET,
 
-export const {
-  handlers: { GET, POST },
-  auth,
-  signIn,
-  signOut,
-} = NextAuth({
+  // 3. Halaman Login Custom
+  pages: {
+    signIn: "/login", // Kalau user belum login, lempar kesini
+  },
+
+  // 4. Konfigurasi Login (Username & Password)
   providers: [
     CredentialsProvider({
-      name: 'Credentials',
+      name: "Credentials",
       credentials: {
-        username: { label: 'Username', type: 'text' },
-        password: { label: 'Password', type: 'password' }
+        username: { label: "Username", type: "text" },
+        password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        // Cek apakah input ada
         if (!credentials?.username || !credentials?.password) {
-          return null;
+          throw new Error("Username dan Password wajib diisi")
         }
 
-        // Find user by username in the profiles table
+        // Cari User di Database (Tabel Profile)
         const user = await prisma.profile.findUnique({
-          where: {
-            username: credentials.username,
-          },
-        });
+          where: { username: credentials.username }
+        })
 
-        if (!user || !user.password_hash) {
-          return null;
+        // Jika user tidak ada
+        if (!user) {
+          throw new Error("User tidak ditemukan")
         }
 
-        // Compare the provided password with the hashed password
-        const isValid = await compare(credentials.password, user.password_hash);
+        // Cek Password
+        // Handle jika password di db null (akun lama clerk)
+        const dbPassword = user.password || ""
+        const isPasswordValid = await bcrypt.compare(credentials.password, dbPassword)
 
-        if (!isValid) {
-          return null;
+        if (!isPasswordValid) {
+          throw new Error("Password salah")
         }
 
-        // Return user object without password
+        // Jika sukses, kembalikan data user
         return {
           id: user.id,
-          name: user.full_name,
-          email: user.username, // Using username as email for simplicity
+          name: user.fullName,
+          email: user.username, // NextAuth butuh field email, kita isi username saja
           role: user.role,
-          unitId: user.assigned_unit_id,
-        };
+          unitId: user.assignedUnitId
+        }
       }
     })
   ],
+
+  // 5. Callbacks (Agar Role & UnitId tersimpan di session)
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
-        token.unitId = user.unitId;
+        token.role = user.role
+        token.unitId = user.unitId
       }
-      return token;
+      return token
     },
     async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
-        session.user.role = token.role as string;
-        session.user.unitId = token.unitId as string;
+      if (session?.user) {
+        session.user.role = token.role
+        session.user.unitId = token.unitId
       }
-      return session;
+      return session
     }
-  },
-  pages: {
-    signIn: '/login',
-  },
-  secret: process.env.AUTH_SECRET,
-  session: {
-    strategy: 'jwt',
   }
-});
+}
+
+const handler = NextAuth(authOptions)
+
+export { handler as GET, handler as POST }

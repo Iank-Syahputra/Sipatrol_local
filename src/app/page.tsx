@@ -1,34 +1,23 @@
 import { getServerSession } from "next-auth/next";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Shield, Activity, Map, AlertTriangle, CircleGauge } from "lucide-react";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { authOptions } from "./api/auth/[...nextauth]/route";
 
 export default async function Home() {
   // 1. Server-Side Auth Check
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
 
-  // 2. Role-Based Redirect Logic - only redirect if user is already logged in
+  // 2. Role-Based Redirect Logic - redirect based on user role if session exists
   if (session?.user) {
-    const userId = session.user.id as string;
-
-    // Fetch the user's profile to determine role
-    const profile = await prisma.profile.findUnique({
-      where: { id: userId },
-      select: { role: true }
-    });
-
-    if (profile?.role === "admin") {
-      // We can't redirect here on the server since this page should be public
-      // Instead, we'll let the middleware handle protected routes
-    } else if (profile?.role === "security") {
-      // We can't redirect here on the server since this page should be public
-      // Instead, we'll let the middleware handle protected routes
+    if (session.user.role === "admin") {
+      redirect("/admin/dashboard");
+    } else if (session.user.role === "security") {
+      redirect("/security");
     }
   }
 
-  // 3. Public Landing Page UI - Always render for everyone
+  // 3. Public Landing Page UI - Render if no session exists
   return (
     <main className="flex min-h-screen flex-col bg-zinc-950 text-white">
       {/* Header */}

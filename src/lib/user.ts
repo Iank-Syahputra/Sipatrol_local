@@ -1,8 +1,9 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
 
 export async function getCurrentUser() {
   try {
-    return await currentUser();
+    const session = await getServerSession();
+    return session?.user || null;
   } catch (error) {
     console.error('Error getting current user:', error);
     return null;

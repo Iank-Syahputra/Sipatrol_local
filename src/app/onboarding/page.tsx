@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 
 export default function OnboardingPage() {
   const [fullName, setFullName] = useState('');
@@ -16,7 +16,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState('');
   const [fetchingUnits, setFetchingUnits] = useState(true);
   const router = useRouter();
-  const { user } = useUser();
+  const { data: session, status } = useSession();
 
   // Fetch units on component mount
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function OnboardingPage() {
     setError('');
 
     try {
-      if (!user) {
+      if (status !== 'authenticated' || !session?.user) {
         throw new Error('User not authenticated');
       }
 
@@ -62,7 +62,7 @@ export default function OnboardingPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          id: user.id,
+          id: session.user.id as string,
           full_name: fullName,
           role: 'security',
           assigned_unit_id: selectedUnitId, // Using selected unit ID

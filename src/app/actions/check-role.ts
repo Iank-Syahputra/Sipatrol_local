@@ -2,9 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function checkRoleAndRedirect() {
   const session = await getServerSession();

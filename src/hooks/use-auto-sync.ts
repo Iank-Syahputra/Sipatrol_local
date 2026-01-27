@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useOfflineReports } from '@/hooks/use-offline-reports';
 import { getAllOfflineReports } from '@/hooks/use-offline-reports'; // Import directly
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 
 export function useAutoSync() {
   const { refreshOfflineReports, deleteOfflineReport } = useOfflineReports();
-  const { isSignedIn } = useUser();
+  const { data: session, status } = useSession();
+  const isSignedIn = status === 'authenticated';
   const [isSyncing, setIsSyncing] = useState(false);
 
   // Fungsi Sinkronisasi Inti
@@ -47,7 +48,7 @@ export function useAutoSync() {
           formData.append('latitude', String(report.latitude || ''));
           formData.append('longitude', String(report.longitude || ''));
           formData.append('unitId', report.unitId);
-          formData.append('userId', report.userId);
+          formData.append('userId', session?.user?.id as string ?? report.userId);
           formData.append('categoryId', report.categoryId || '');
           formData.append('locationId', report.locationId || '');
           // Pastikan field ini sesuai dengan yang diminta backend (capturedAt vs captured_at)
