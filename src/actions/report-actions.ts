@@ -31,8 +31,13 @@ export async function getReportCategories(): Promise<CategoryOption[]> {
   }
 }
 
-export async function getUnitLocations(userId: string): Promise<LocationOption[]> {
+export async function getUnitLocations(userId: string | undefined): Promise<LocationOption[]> {
   try {
+    if (!userId) {
+      // Return empty array if userId is undefined
+      return [];
+    }
+
     // First, get the user's assigned unit
     const profile = await prisma.profile.findUnique({
       where: {

@@ -34,12 +34,12 @@ export default function EditUserPage({ params }: { params: Promise<{ id: string 
         const unitsData = await unitsRes.json();
 
         // 2. Set State dari Data Database
-        setFullName(userData.user.full_name || '');
-        setUsername(userData.user.username || '');
-        setPhoneNumber(userData.user.phone_number || ''); // Load Phone
-        setRole(userData.user.role || 'security');
-        setUnitId(userData.user.assigned_unit_id || '');
-        setUnits(unitsData.units || []);
+        setFullName(userData.full_name || '');
+        setUsername(userData.username || '');
+        setPhoneNumber(userData.phone_number || ''); // Load Phone
+        setRole(userData.role || 'security');
+        setUnitId(userData.assigned_unit_id || '');
+        setUnits(unitsData || []);
       } catch (err: any) {
         setError(err.message);
       } finally {

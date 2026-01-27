@@ -42,7 +42,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Cek Password
-        // Handle jika password di db null (akun lama clerk)
+        // Handle jika password di db null (akun migrasi lama)
         const dbPassword = user.password || ""
         const isPasswordValid = await bcrypt.compare(credentials.password, dbPassword)
 

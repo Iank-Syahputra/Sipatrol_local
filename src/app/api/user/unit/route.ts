@@ -1,11 +1,12 @@
 import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
     // Verify the user is authenticated using NextAuth
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -16,16 +17,16 @@ export async function GET(request: NextRequest) {
     // Fetch the user's profile to get assigned unit using Prisma
     const profile = await prisma.profile.findUnique({
       where: { id: userId },
-      select: { assigned_unit_id: true }
+      select: { assignedUnitId: true }
     });
 
-    if (!profile || !profile.assigned_unit_id) {
+    if (!profile || !profile.assignedUnitId) {
       return Response.json({ assignedUnit: null });
     }
 
     // Fetch the unit details using Prisma
     const unit = await prisma.unit.findUnique({
-      where: { id: profile.assigned_unit_id }
+      where: { id: profile.assignedUnitId }
     });
 
     if (!unit) {

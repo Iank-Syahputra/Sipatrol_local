@@ -25,7 +25,7 @@ export default function Chat() {
       <div className="mb-6 text-center">
         <h2 className="text-2xl font-bold mb-2">🤖 AI Chat</h2>
         <p className="text-gray-600 dark:text-gray-400 text-sm">
-          Powered by OpenAI GPT-4o • Protected by Clerk Authentication
+          Powered by OpenAI GPT-4o • Protected by NextAuth Authentication
         </p>
       </div>
 

@@ -61,7 +61,7 @@ export default function ManageUnitLocationsPage() {
   const [editingLocation, setEditingLocation] = useState<any>(null);
 
   // Add/Edit Form Data
-  const [formData, setFormData] = useState({ name: '', unit_id: '' });
+  const [formData, setFormData] = useState({ name: '', unitId: '' });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -123,7 +123,7 @@ export default function ManageUnitLocationsPage() {
   };
 
   const handleSaveLocation = async (isEdit: boolean) => {
-    if (!formData.name || !formData.unit_id) {
+    if (!formData.name || !formData.unitId) {
       alert('Please fill in all fields');
       return;
     }
@@ -150,7 +150,7 @@ export default function ManageUnitLocationsPage() {
       // Reset & Close
       setShowAddForm(false);
       setShowEditForm(false);
-      setFormData({ name: '', unit_id: '' });
+      setFormData({ name: '', unitId: '' });
       setEditingLocation(null);
     } catch (err: any) {
       alert(err.message || 'Error saving location');
@@ -180,7 +180,7 @@ export default function ManageUnitLocationsPage() {
 
   const startEdit = (loc: any) => {
     setEditingLocation(loc);
-    setFormData({ name: loc.name, unit_id: loc.unit_id });
+    setFormData({ name: loc.name, unitId: loc.unitId || loc.unit_id });
     setShowEditForm(true);
     setShowAddForm(false);
   };
@@ -274,7 +274,7 @@ export default function ManageUnitLocationsPage() {
                 onClick={() => {
                   setShowAddForm(true);
                   setShowEditForm(false);
-                  setFormData({ name: '', unit_id: '' });
+                  setFormData({ name: '', unitId: '' });
                 }}
                 className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-colors"
               >
@@ -353,8 +353,8 @@ export default function ManageUnitLocationsPage() {
                    <label className="block text-sm text-zinc-400 mb-1">Unit</label>
                    <select
                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white"
-                     value={formData.unit_id}
-                     onChange={(e) => setFormData({...formData, unit_id: e.target.value})}
+                     value={formData.unitId}
+                     onChange={(e) => setFormData({...formData, unitId: e.target.value})}
                    >
                      <option value="">Select Unit...</option>
                      {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
@@ -398,7 +398,7 @@ export default function ManageUnitLocationsPage() {
                            {loc.name}
                         </td>
                         <td className="py-3 text-zinc-300">{loc.units?.name || '-'}</td>
-                        <td className="py-3 text-zinc-300">{new Date(loc.created_at).toLocaleDateString()}</td>
+                        <td className="py-3 text-zinc-300">{new Date(loc.createdAt).toLocaleDateString()}</td>
                         <td className="py-3 flex gap-2">
                           <button onClick={() => startEdit(loc)} className="text-blue-400 hover:text-blue-300 flex items-center gap-1">
                             <Edit3 className="h-4 w-4" /> Edit
