@@ -148,15 +148,15 @@ export default function AdminDashboard() {
     { title: "Total Units", value: dashboardData?.totalUnits?.toString() || "0", icon: Building, color: "text-purple-500" },
   ];
 
-  // Prepare data for global stats chart - Using mock data since the simplified API doesn't provide this
+  // Prepare data for global stats chart - Using data from API
   const globalChartData = [
-    { name: 'Safe', value: 0, color: '#10B981' },
-    { name: 'Unsafe Action', value: 0, color: '#EF4444' },
-    { name: 'Unsafe Condition', value: 0, color: '#F59E0B' },
+    { name: 'Safe', value: dashboardData?.safetyStats?.safe || 0, color: '#10B981' },
+    { name: 'Unsafe Action', value: dashboardData?.safetyStats?.unsafeAction || 0, color: '#EF4444' },
+    { name: 'Unsafe Condition', value: dashboardData?.safetyStats?.unsafeCondition || 0, color: '#F59E0B' },
   ];
 
-  // Prepare data for unit ranking chart (top 5) - Using mock data since the simplified API doesn't provide this
-  const unitRankingData = [];
+  // Prepare data for unit ranking chart (top 5) - Using data from API
+  const unitRankingData = dashboardData?.unitRanking || [];
 
   // Colors for charts
   const COLORS = ['#10B981', '#EF4444', '#F59E0B'];
@@ -391,17 +391,17 @@ export default function AdminDashboard() {
                   <div className="space-y-4">
                     <div className="p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
                       <h4 className="font-medium text-green-400 mb-2">Safe Reports</h4>
-                      <p className="text-2xl font-bold">0</p>
+                      <p className="text-2xl font-bold">{dashboardData?.safetyStats?.safe || 0}</p>
                     </div>
 
                     <div className="p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
                       <h4 className="font-medium text-red-400 mb-2">Unsafe Actions</h4>
-                      <p className="text-2xl font-bold">0</p>
+                      <p className="text-2xl font-bold">{dashboardData?.safetyStats?.unsafeAction || 0}</p>
                     </div>
 
                     <div className="p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
                       <h4 className="font-medium text-yellow-400 mb-2">Unsafe Conditions</h4>
-                      <p className="text-2xl font-bold">0</p>
+                      <p className="text-2xl font-bold">{dashboardData?.safetyStats?.unsafeCondition || 0}</p>
                     </div>
                   </div>
                 </div>
@@ -451,10 +451,31 @@ export default function AdminDashboard() {
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Unit stats not available in simplified API */}
-                  <div className="col-span-full text-center py-8 text-zinc-500">
-                    Unit statistics not available in current view
-                  </div>
+                  {dashboardData?.unitRanking && dashboardData.unitRanking.length > 0 ? (
+                    dashboardData.unitRanking.map((unit: any, index: number) => (
+                      <div key={index} className="bg-zinc-800/50 rounded-lg border border-zinc-700 p-4">
+                        <h4 className="font-medium text-white mb-2">{unit.name}</h4>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-green-400">Safe:</span>
+                            <span className="font-medium">{unit.safe || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-red-400">Unsafe Action:</span>
+                            <span className="font-medium">{unit.unsafeAction || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-yellow-400">Unsafe Condition:</span>
+                            <span className="font-medium">{unit.unsafeCondition || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full text-center py-8 text-zinc-500">
+                      No unit statistics available
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

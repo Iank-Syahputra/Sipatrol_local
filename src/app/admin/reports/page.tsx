@@ -76,25 +76,43 @@ export default function ReportManagementPage() {
   // 1. ADD TRIGGER STATE
   const [filterTrigger, setFilterTrigger] = useState(0);
 
-  // 2. UPDATE FETCH LOGIC (no pagination in new API)
+  // 2. UPDATE FETCH LOGIC (now with pagination support)
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // Call API (the new API doesn't use pagination parameters)
-        const response = await fetch(`/api/admin/reports`);
+        // Build query parameters for API call
+        const params = new URLSearchParams({
+          page: currentPage.toString(),
+          limit: itemsPerPage.toString()
+        });
+
+        // Include date filters if present
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+
+        // Include other filters if needed
+        if (searchTerm) params.append('search', searchTerm);
+        if (selectedUnits.length > 0) params.append('units', selectedUnits.join(','));
+        if (selectedCategories.length > 0) params.append('categories', selectedCategories.join(','));
+        if (selectedLocations.length > 0) params.append('locations', selectedLocations.join(','));
+
+        // Call API with pagination parameters
+        const response = await fetch(`/api/admin/reports?${params.toString()}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const data = await response.json();
-        setReports(data || []); // Set reports (no pagination in new API)
-        setFilteredReports(data || []); // Set filtered reports
-        setTotalReports(data?.length || 0); // Set total count
-        setTotalPages(1); // Set to 1 since no pagination in new API
+        const result = await response.json();
 
-        // For units, categories, and locations, we need to fetch separately since new API doesn't return them
+        // Handle the new API response structure
+        setReports(result.reports || []); // Set reports
+        setFilteredReports(result.reports || []); // Set filtered reports
+        setTotalReports(result.pagination?.totalReports || 0); // Set total count
+        setTotalPages(result.pagination?.totalPages || 1); // Set total pages
+
+        // For units, categories, and locations, we need to fetch separately
         const unitsResponse = await fetch('/api/admin/units');
         if (unitsResponse.ok) {
           const unitsData = await unitsResponse.json();
@@ -108,7 +126,7 @@ export default function ReportManagementPage() {
         } else {
           // If categories endpoint doesn't exist, fetch from reports data
           const seenCategoryIds = new Set();
-          const uniqueCategories = data
+          const uniqueCategories = result.reports
             .map(item => item.category)
             .filter(cat => cat && !seenCategoryIds.has(cat.id) && seenCategoryIds.add(cat.id));
           setAllCategories(uniqueCategories);
@@ -121,7 +139,7 @@ export default function ReportManagementPage() {
         } else {
           // If locations endpoint doesn't exist, fetch from reports data
           const seenLocationIds = new Set();
-          const uniqueLocations = data
+          const uniqueLocations = result.reports
             .map(item => item.location)
             .filter(loc => loc && !seenLocationIds.has(loc.id) && seenLocationIds.add(loc.id));
           setAllLocations(uniqueLocations || []);
@@ -136,10 +154,11 @@ export default function ReportManagementPage() {
 
     fetchData();
     // ONLY RUN ON MOUNT OR WHEN TRIGGER CHANGES
-  }, [filterTrigger, currentPage]); // 3. UPDATE DEPENDENCY
+  }, [filterTrigger, currentPage, startDate, endDate, searchTerm, selectedUnits, selectedCategories, selectedLocations]); // 3. UPDATE DEPENDENCY
 
   // 3. HANDLER FUNCTIONS
   const handleApplyFilters = () => {
+    setCurrentPage(1); // Reset to first page when applying filters
     setFilterTrigger(prev => prev + 1);
   };
 
@@ -151,6 +170,7 @@ export default function ReportManagementPage() {
     // Reset kedua tanggal
     setStartDate('');
     setEndDate('');
+    setCurrentPage(1); // Reset to first page when resetting filters
     // Trigger fetch after state update (React batches these, so effect sees new state)
     setFilterTrigger(prev => prev + 1);
   };
@@ -347,7 +367,7 @@ export default function ReportManagementPage() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold">Reports List</h2>
               <div className="text-sm text-zinc-400">
-                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalReports)} - {Math.min(currentPage * itemsPerPage, totalReports)} of {totalReports} reports
+                Total: {totalReports} reports
               </div>
             </div>
 
@@ -420,7 +440,7 @@ export default function ReportManagementPage() {
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-6">
                 <div className="text-sm text-zinc-400">
-                  Page {currentPage} of {totalPages}
+                  Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalReports)} - {Math.min(currentPage * itemsPerPage, totalReports)} of {totalReports} reports
                 </div>
                 <div className="flex space-x-2">
                   <button
