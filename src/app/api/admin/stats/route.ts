@@ -13,9 +13,10 @@ export async function GET() {
     }
 
     // 2. Fetch Stats (Parallel execution for performance)
-    const [totalUsers, totalReports, recentReports] = await Promise.all([
+    const [totalUsers, totalReports, totalUnits, recentReports] = await Promise.all([
       prisma.profile.count(),
       prisma.report.count(),
+      prisma.unit.count(), // Count total units
       prisma.report.findMany({
         take: 5,
         orderBy: { capturedAt: 'desc' },
@@ -32,24 +33,11 @@ export async function GET() {
       })
     ]);
 
-    // 3. Calculate "Reports Today" manually to avoid timezone complexity for now
-    // (Or use a simple JS date filter if needed, but count is safer)
-    const startOfDay = new Date();
-    startOfDay.setHours(0,0,0,0);
-    
-    const reportsToday = await prisma.report.count({
-        where: {
-            capturedAt: {
-                gte: startOfDay
-            }
-        }
-    });
-
-    // 4. Return Data
+    // 3. Return Data
     return NextResponse.json({
       totalUsers,
       totalReports,
-      reportsToday,
+      totalUnits,
       recentReports
     });
 

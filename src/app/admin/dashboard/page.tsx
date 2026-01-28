@@ -145,7 +145,7 @@ export default function AdminDashboard() {
   const stats = [
     { title: "Total Users", value: dashboardData?.totalUsers?.toString() || "0", icon: Users, color: "text-blue-500" },
     { title: "Total Reports", value: dashboardData?.totalReports?.toString() || "0", icon: FileText, color: "text-orange-500" },
-    { title: "Today's Reports", value: dashboardData?.todayReports?.toString() || "0", icon: FileText, color: "text-purple-500" },
+    { title: "Total Units", value: dashboardData?.totalUnits?.toString() || "0", icon: Building, color: "text-purple-500" },
   ];
 
   // Prepare data for global stats chart - Using mock data since the simplified API doesn't provide this
