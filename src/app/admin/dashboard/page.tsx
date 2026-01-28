@@ -254,25 +254,30 @@ export default function AdminDashboard() {
                   >
                     <div className="flex items-start gap-4">
                       <div className="flex-shrink-0">
-                        {report?.image_path ? (
-                          <img
-                            src={report.image_path}
-                            alt="Report"
-                            className="w-16 h-16 rounded-xl object-cover border border-zinc-700 bg-zinc-800"
-                          />
+                        {report?.imagePath || report?.image_path ? (
+                          <div className="relative group">
+                            <img
+                              src={report.imagePath || report.image_path}
+                              alt="Report"
+                              className="w-24 h-24 rounded-xl object-cover border border-zinc-700 bg-zinc-800 transition-transform duration-200 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-xl flex items-center justify-center">
+                              <Eye className="h-6 w-6 text-white" />
+                            </div>
+                          </div>
                         ) : (
-                          <div className="w-16 h-16 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                          <div className="w-24 h-24 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center">
                             <FileText className="h-6 w-6 text-zinc-600" />
                           </div>
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 flex-grow">
                         <div className="flex items-center justify-between">
                           <h3 className="font-medium text-white truncate">
                             {report?.user?.fullName || 'Officer'} - {report?.unit?.name || 'Unit'}
                           </h3>
                           <span className="text-xs text-zinc-500">
-                            {report?.captured_at ? new Date(report.captured_at).toLocaleString() : 'N/A'}
+                            {report?.capturedAt ? new Date(report.capturedAt).toLocaleString() : 'N/A'}
                           </span>
                         </div>
                         <p className="text-sm text-zinc-400 mt-1 truncate">

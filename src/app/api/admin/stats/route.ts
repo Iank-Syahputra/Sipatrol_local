@@ -19,7 +19,13 @@ export async function GET() {
       prisma.report.findMany({
         take: 5,
         orderBy: { capturedAt: 'desc' },
-        include: {
+        select: {
+          id: true,
+          notes: true,
+          capturedAt: true,
+          latitude: true,
+          longitude: true,
+          imagePath: true, // Include the image path
           user: { select: { fullName: true } },
           unit: { select: { name: true } }
         }
