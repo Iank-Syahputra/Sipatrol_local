@@ -22,8 +22,8 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
   }
 
   // Handle coordinate mapping (database might use different field names)
-  const latitude = report.lat || report.latitude || report.profiles?.lat || report.profiles?.latitude;
-  const longitude = report.lng || report.longitude || report.profiles?.lng || report.profiles?.longitude;
+  const latitude = report.lat || report.latitude || report.profiles?.lat || report.profiles?.latitude || report.latitude;
+  const longitude = report.lng || report.longitude || report.profiles?.lng || report.profiles?.longitude || report.longitude;
 
   // Format the captured timestamp
   const formatDate = (dateString: string) => {
@@ -62,9 +62,9 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
                 Photo Evidence
               </h4>
               <div className="bg-zinc-800 border border-zinc-700 rounded-xl w-full h-64 flex items-center justify-center overflow-hidden">
-                {report.image_path || report.imageData || report.photo_url ? (
+                {report.image_path || report.imagePath || report.imageData || report.photo_url ? (
                   <img
-                    src={report.image_path || report.imageData || report.photo_url}
+                    src={report.image_path || report.imagePath || report.imageData || report.photo_url}
                     alt="Report evidence"
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -89,10 +89,10 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
                 <h4 className="font-semibold text-white mb-2">Officer Information</h4>
                 <div className="bg-zinc-800/50 rounded-lg p-3">
                   <p className="text-sm text-zinc-300">
-                    <span className="text-zinc-400">Name:</span> {report.profiles?.full_name || report.profiles?.name || 'N/A'}
+                    <span className="text-zinc-400">Name:</span> {report.profiles?.full_name || report.profiles?.name || report.user?.fullName || report.user?.name || 'N/A'}
                   </p>
                   <p className="text-sm text-zinc-300">
-                    <span className="text-zinc-400">Unit:</span> {report.units?.name || report.unit?.name || 'N/A'}
+                    <span className="text-zinc-400">Unit:</span> {report.units?.name || report.unit?.name || report.unit?.name || 'N/A'}
                   </p>
                 </div>
               </div>
@@ -101,35 +101,43 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
                 <h4 className="font-semibold text-white mb-2">Category & Location</h4>
                 <div className="space-y-3">
                   {/* Category */}
-                  {report.report_categories?.name && (
+                  {(report.report_categories?.name || report.category?.name) && (
                     <div className="bg-zinc-800/50 rounded-lg p-3">
                       <p className="text-sm text-zinc-400">Category</p>
                       <div className="mt-1">
                         <span
                           className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
                             // 1. Check RED/UNSAFE First (Priority!)
-                            report.report_categories.color === 'red' || report.report_categories.name.toLowerCase().includes('unsafe') || report.report_categories.name.toLowerCase().includes('tidak aman') || report.report_categories.name.toLowerCase().includes('bahaya')
+                            (report.report_categories?.color || report.category?.color) === 'red' ||
+                            (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('unsafe') ||
+                            (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('tidak aman') ||
+                            (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('bahaya')
                               ? 'bg-red-500/20 text-red-400'
                               // 2. Check YELLOW/WARNING
-                              : report.report_categories.color === 'yellow' || report.report_categories.name.toLowerCase().includes('maintenance') || report.report_categories.name.toLowerCase().includes('perbaikan') || report.report_categories.name.toLowerCase().includes('warning')
+                              : (report.report_categories?.color || report.category?.color) === 'yellow' ||
+                                (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('maintenance') ||
+                                (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('perbaikan') ||
+                                (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('warning')
                                 ? 'bg-yellow-500/20 text-yellow-400'
                                 // 3. Check GREEN/SAFE Last
-                                : report.report_categories.color === 'green' || report.report_categories.name.toLowerCase().includes('safe') || report.report_categories.name.toLowerCase().includes('aman')
+                                : (report.report_categories?.color || report.category?.color) === 'green' ||
+                                  (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('safe') ||
+                                  (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('aman')
                                   ? 'bg-green-500/20 text-green-400'
                                   : 'bg-blue-500/20 text-blue-400'
                           }`}
                         >
-                          {report.report_categories.name}
+                          {report.report_categories?.name || report.category?.name || 'N/A'}
                         </span>
                       </div>
                     </div>
                   )}
 
                   {/* Specific Location */}
-                  {report.unit_locations?.name && (
+                  {(report.unit_locations?.name || report.location?.name) && (
                     <div className="bg-zinc-800/50 rounded-lg p-3">
                       <p className="text-sm text-zinc-400">Specific Location</p>
-                      <p className="text-sm text-zinc-300 mt-1">{report.unit_locations.name}</p>
+                      <p className="text-sm text-zinc-300 mt-1">{report.unit_locations?.name || report.location?.name || 'N/A'}</p>
                     </div>
                   )}
 
@@ -165,7 +173,7 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
                 <h4 className="font-semibold text-white mb-2">Timestamp</h4>
                 <div className="bg-zinc-800/50 rounded-lg p-3">
                   <p className="text-sm text-zinc-300">
-                    {report.captured_at ? formatDate(report.captured_at) : 'N/A'}
+                    {report.captured_at || report.capturedAt ? formatDate(report.captured_at || report.capturedAt) : 'N/A'}
                   </p>
                 </div>
               </div>
