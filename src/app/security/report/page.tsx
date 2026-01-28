@@ -250,6 +250,8 @@ export default function CreateReportPage() {
   };
 
   // 2. UPDATE SUBMIT FUNCTION (Try-Catch Pattern)
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+
   const submitReport = async () => {
     // ... (Keep Validation Checks: session, image, location, etc. same as before) ...
     if (!session?.user) { alert('Anda harus masuk untuk mengirim laporan'); return; }
@@ -295,9 +297,8 @@ export default function CreateReportPage() {
         throw new Error(`SERVER_ERROR: ${errorText || response.statusText}`);
       }
 
-      // Success Online
-      alert('Laporan berhasil dikirim (Online)!');
-      router.push('/security');
+      // Success Online - Show success popup instead of alert
+      setShowSuccessPopup(true);
 
     } catch (error: any) {
       console.error('Submission Error:', error);
@@ -352,7 +353,7 @@ export default function CreateReportPage() {
   }, [imagePreview]);
 
   // Determine if submit button should be enabled
-  const isSubmitEnabled = isImageCaptured && location && assignedUnit && !isSubmitting;
+  const isSubmitEnabled = isImageCaptured && location && assignedUnit && category && locationRoom && !isSubmitting;
 
   return (
     <div className="container mx-auto py-6 max-w-2xl">
@@ -574,6 +575,39 @@ export default function CreateReportPage() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl border border-emerald-400/30 transform transition-all duration-300 scale-100">
+            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-12 h-12 text-white" />
+            </div>
+
+            <h2 className="text-2xl font-bold text-white mb-3">Laporan Terkirim!</h2>
+            <p className="text-emerald-100 mb-6">
+              Laporan keamanan Anda telah berhasil dikirim dan sedang diproses.
+            </p>
+
+            <div className="bg-white/10 rounded-lg p-4 mb-6">
+              <p className="text-white text-sm font-medium">Ringkasan Laporan:</p>
+              <p className="text-emerald-100 text-xs mt-1">
+                Kategori: {categories.find(c => c.value === category)?.label || 'Tidak diketahui'}
+              </p>
+              <p className="text-emerald-100 text-xs">
+                Lokasi: {locations.find(l => l.value === locationRoom)?.label || 'Tidak diketahui'}
+              </p>
+            </div>
+
+            <Button
+              onClick={() => router.push('/security')}
+              className="bg-white text-emerald-600 hover:bg-emerald-50 font-bold py-3 px-6 rounded-xl w-full transition-all duration-300 hover:scale-[1.02]"
+            >
+              Kembali ke Dashboard
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
