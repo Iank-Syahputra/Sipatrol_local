@@ -59,7 +59,7 @@ export default function AdminSidebar() {
             </span>
           </div>
           <button
-            onClick={() => signOut({ callbackUrl: '/' })}
+            onClick={() => signOut({ callbackUrl: '/login' })}
             type="button"
             className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white"
           >

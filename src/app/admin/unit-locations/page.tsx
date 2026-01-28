@@ -132,14 +132,18 @@ export default function ManageUnitLocationsPage() {
       const method = isEdit ? 'PUT' : 'POST';
       const body = isEdit ? { ...formData, id: editingLocation.id } : formData;
 
+      console.log(`${method} request body:`, body); // Debug logging
+
       const response = await fetch('/api/admin/unit-locations', {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
+      console.log(`${method} response status:`, response.status); // Debug logging
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Error response:', errorData); // Debug logging
         throw new Error(errorData.error || 'Failed to save location');
       }
 
@@ -153,6 +157,7 @@ export default function ManageUnitLocationsPage() {
       setFormData({ name: '', unitId: '' });
       setEditingLocation(null);
     } catch (err: any) {
+      console.error('Save location error:', err); // Debug logging
       alert(err.message || 'Error saving location');
     }
   };
@@ -179,8 +184,11 @@ export default function ManageUnitLocationsPage() {
   };
 
   const startEdit = (loc: any) => {
+    console.log('Editing location:', loc); // Debug logging
     setEditingLocation(loc);
-    setFormData({ name: loc.name, unitId: loc.unitId || loc.unit_id });
+    const unitId = loc.unitId || loc.unit_id || loc.unit?.id || "";
+    console.log('Setting form data:', { name: loc.name, unitId }); // Debug logging
+    setFormData({ name: loc.name, unitId });
     setShowEditForm(true);
     setShowAddForm(false);
   };
@@ -397,7 +405,7 @@ export default function ManageUnitLocationsPage() {
                            <MapPin className="h-4 w-4 text-blue-400" />
                            {loc.name}
                         </td>
-                        <td className="py-3 text-zinc-300">{loc.units?.name || '-'}</td>
+                        <td className="py-3 text-zinc-300">{loc.unit?.name || loc.units?.name || '-'}</td>
                         <td className="py-3 text-zinc-300">{new Date(loc.createdAt).toLocaleDateString()}</td>
                         <td className="py-3 flex gap-2">
                           <button onClick={() => startEdit(loc)} className="text-blue-400 hover:text-blue-300 flex items-center gap-1">

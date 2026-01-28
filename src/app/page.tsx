@@ -1,23 +1,7 @@
-import { getServerSession } from "next-auth/next";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Shield, Activity, Map, AlertTriangle, CircleGauge } from "lucide-react";
-import { authOptions } from "./api/auth/[...nextauth]/route";
 
-export default async function Home() {
-  // 1. Server-Side Auth Check
-  const session = await getServerSession(authOptions);
-
-  // 2. Role-Based Redirect Logic - redirect based on user role if session exists
-  if (session?.user) {
-    if (session.user.role === "admin") {
-      redirect("/admin/dashboard");
-    } else if (session.user.role === "security") {
-      redirect("/security");
-    }
-  }
-
-  // 3. Public Landing Page UI - Render if no session exists
+export default function Home() {
   return (
     <main className="flex min-h-screen flex-col bg-zinc-950 text-white">
       {/* Header */}

@@ -11,7 +11,7 @@ export default function ForceLogout() {
     // Immediately sign out the user when this component is rendered
     const performLogout = async () => {
       await signOut({
-        callbackUrl: '/', // Redirect to home page after logout
+        callbackUrl: '/login', // Redirect to login page after logout
       });
     };
 
