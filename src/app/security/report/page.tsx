@@ -251,45 +251,19 @@ export default function CreateReportPage() {
 
   // 2. UPDATE SUBMIT FUNCTION (Try-Catch Pattern)
   const submitReport = async () => {
-    if (!session?.user) {
-      alert('Anda harus masuk untuk mengirim laporan');
-      return;
-    }
-
-    if (!isImageCaptured) {
-      alert('Silakan ambil foto sebelum mengirim');
-      return;
-    }
-
-    if (!location) {
-      alert('Silakan dapatkan lokasi Anda sebelum mengirim');
-      return;
-    }
-
-    if (!assignedUnit) {
-      alert('Anda tidak ditugaskan ke unit manapun. Hubungi administrator untuk mendapatkan penugasan unit.');
-      return;
-    }
-
-    if (!category) {
-      alert('Silakan pilih kategori laporan sebelum mengirim');
-      return;
-    }
-
-    if (!locationRoom) {
-      alert('Silakan pilih lokasi/ruangan dari unit Anda sebelum mengirim');
-      return;
-    }
-
-    if (!imageFile) {
-      alert('Tidak ada file gambar ditemukan');
-      return;
-    }
+    // ... (Keep Validation Checks: session, image, location, etc. same as before) ...
+    if (!session?.user) { alert('Anda harus masuk untuk mengirim laporan'); return; }
+    if (!isImageCaptured) { alert('Silakan ambil foto sebelum mengirim'); return; }
+    if (!location) { alert('Silakan dapatkan lokasi Anda sebelum mengirim'); return; }
+    if (!assignedUnit) { alert('Anda tidak ditugaskan ke unit manapun. Hubungi administrator untuk mendapatkan penugasan unit.'); return; }
+    if (!category) { alert('Silakan pilih kategori laporan sebelum mengirim'); return; }
+    if (!locationRoom) { alert('Silakan pilih lokasi/ruangan dari unit Anda sebelum mengirim'); return; }
+    if (!imageFile) { alert('Tidak ada file gambar ditemukan'); return; }
 
     setIsSubmitting(true);
 
     try {
-      // FORCE CHECK: If browser says offline, throw error immediately to skip fetch
+      // 1. Check Offline Status First
       if (!navigator.onLine) {
         throw new Error('OFFLINE_MODE');
       }
@@ -301,9 +275,12 @@ export default function CreateReportPage() {
       formData.append('latitude', location.lat.toString());
       formData.append('longitude', location.lng.toString());
       formData.append('unitId', assignedUnit.id);
-      formData.append('userId', session.user.id as string);
+      // Note: userId is not sent in form data as it's retrieved from session on the server
       formData.append('categoryId', category);
       formData.append('locationId', locationRoom);
+
+      // TAMBAHAN WAJIB (FIX ERROR MISSING FIELDS):
+      formData.append('capturedAt', new Date().toISOString());
 
       // Attempt Upload
       const response = await fetch('/api/reports', {
@@ -311,8 +288,11 @@ export default function CreateReportPage() {
         body: formData,
       });
 
+      // 2. Handle Server Errors Explicitly
       if (!response.ok) {
-        throw new Error('SERVER_ERROR');
+        const errorText = await response.text();
+        // Throw with a special prefix to identify it's a server error, not network
+        throw new Error(`SERVER_ERROR: ${errorText || response.statusText}`);
       }
 
       // Success Online
@@ -320,27 +300,40 @@ export default function CreateReportPage() {
       router.push('/security');
 
     } catch (error: any) {
-      console.warn('Upload failed or Offline, switching to local storage...', error.message);
+      console.error('Submission Error:', error);
 
-      // FALLBACK: Save to IndexedDB
-      try {
-        await addOfflineReport({
-          userId: session.user.id as string,
-          unitId: assignedUnit.id,
-          imageData: imagePreview,
-          notes,
-          latitude: location.lat,
-          longitude: location.lng,
-          categoryId: category,
-          locationId: locationRoom,
-          capturedAt: new Date().toISOString()
-        });
+      // 3. Smart Error Handling
+      // Only go to Offline Mode if it's actually a network issue or forced offline
+      const isNetworkError = error.message === 'OFFLINE_MODE' ||
+                             error.message.includes('Failed to fetch') ||
+                             error.message.includes('NetworkError');
 
-        alert('Mode Offline: Laporan DISIMPAN di perangkat. Akan dikirim otomatis saat online.');
-        router.push('/security');
-      } catch (offlineError) {
-        console.error('Critical Error:', offlineError);
-        alert('Gagal mengirim dan gagal menyimpan laporan. Mohon coba lagi.');
+      if (isNetworkError) {
+        console.warn('Network issue detected, switching to offline save...');
+        try {
+          await addOfflineReport({
+            userId: session.user.id as string, // Still needed for offline storage
+            unitId: assignedUnit.id,
+            imageData: imagePreview,
+            notes,
+            latitude: location.lat,
+            longitude: location.lng,
+            categoryId: category,
+            locationId: locationRoom,
+            capturedAt: new Date().toISOString()
+          });
+
+          alert('Mode Offline: Internet tidak stabil. Laporan DISIMPAN di perangkat.');
+          router.push('/security');
+        } catch (offlineError) {
+          console.error('Critical Error:', offlineError);
+          alert('Gagal menyimpan laporan (Storage Error).');
+        }
+      } else {
+        // 4. It is a Server/Logic Error -> Show the REAL reason
+        // Strip the "SERVER_ERROR: " prefix for cleaner alert
+        const cleanMsg = error.message.replace('SERVER_ERROR: ', '');
+        alert(`Gagal mengirim laporan: ${cleanMsg}`);
       }
     } finally {
       setIsSubmitting(false);
