@@ -41,7 +41,7 @@ export default function RecentReportList({ reports }: { reports: any[] }) {
                 </p>
               </div>
               <Badge variant="secondary">
-                {new Date(report.captured_at).toLocaleDateString()}
+                {new Date(report.capturedAt).toLocaleDateString()}
               </Badge>
             </div>
 
@@ -60,10 +60,10 @@ export default function RecentReportList({ reports }: { reports: any[] }) {
             )}
 
             {/* Image Preview */}
-            {report.image_path && (
+            {report.imagePath && (
               <div className="mt-3">
                 <img
-                  src={report.image_path}
+                  src={report.imagePath}
                   alt="Evidence"
                   className="w-full h-32 object-cover rounded-md border border-zinc-700"
                 />
@@ -71,8 +71,8 @@ export default function RecentReportList({ reports }: { reports: any[] }) {
             )}
 
             <div className="mt-3 flex justify-between items-center text-xs text-muted-foreground">
-              <span>Submitted: {new Date(report.created_at).toLocaleString()}</span>
-              {report.is_offline_submission && (
+              <span>Submitted: {new Date(report.createdAt).toLocaleString()}</span>
+              {report.isOfflineSubmission && (
                 <Badge variant="outline">Offline</Badge>
               )}
             </div>

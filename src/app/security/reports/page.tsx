@@ -1,33 +1,105 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/user';
-import { getUserProfile, getUserReports } from '@/lib/sipatrol-db';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { prisma } from '@/lib/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ReportList from '@/components/security/report-list';
 
-// Tambahkan prop searchParams
-export default async function MyReportsPage({
-  searchParams,
-}: {
-  searchParams: { page?: string; startDate?: string; endDate?: string };
+// Define SearchParams type for Next.js 15
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function MyReportsPage(props: {
+  searchParams: SearchParams;
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/sign-in');
+  // 1. Await Params & Session
+  const searchParams = await props.searchParams;
+  const session = await getServerSession(authOptions);
 
-  const profile = await getUserProfile(user.id);
-  if (!profile || profile.role !== 'security') redirect('/');
+  // 2. Auth Check
+  if (!session || !session.user) {
+    redirect('/login'); // FIX: Redirect to correct login route
+  }
 
-  // 1. Parse Params
-  const currentPage = Number(searchParams?.page) || 1;
-  const startDate = searchParams?.startDate || '';
-  const endDate = searchParams?.endDate || '';
+  // 3. Direct DB Profile Check (Bypassing broken library)
+  const profile = await prisma.profile.findUnique({
+    where: { id: session.user.id }
+  });
+
+  // Role Validation
+  const role = profile?.role?.toLowerCase();
+  if (role !== 'security' && role !== 'admin') {
+    redirect('/');
+  }
+
+  // 4. Parse Filters & Pagination
+  const currentPage = Number(searchParams.page) || 1;
+  const startDate = typeof searchParams.startDate === 'string' ? searchParams.startDate : '';
+  const endDate = typeof searchParams.endDate === 'string' ? searchParams.endDate : '';
   const itemsPerPage = 10;
+  const skip = (currentPage - 1) * itemsPerPage;
 
-  // 2. Fetch data with Filters & Pagination
-  const { data: reports, totalCount } = await getUserReports(user.id, {
-    page: currentPage,
-    limit: itemsPerPage,
-    startDate,
-    endDate
+  // Build Date Filter
+  let dateFilter: any = {};
+  if (startDate && endDate) {
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59);
+    dateFilter = {
+      capturedAt: {
+        gte: new Date(startDate),
+        lte: end
+      }
+    };
+  } else if (startDate) {
+    dateFilter = {
+      capturedAt: { gte: new Date(startDate) }
+    };
+  }
+
+  // 5. Fetch Reports (Direct Prisma)
+  const rawReports = await prisma.report.findMany({
+    where: {
+      userId: session.user.id, // Only user's own reports
+      ...dateFilter
+    },
+    include: {
+      user: true,
+      unit: true,
+      category: true,
+      location: true
+    },
+    orderBy: {
+      capturedAt: 'desc'
+    },
+    skip: skip,
+    take: itemsPerPage
+  });
+
+  // Transform data to match expected structure
+  const reports = rawReports.map(report => ({
+    id: report.id,
+    userId: report.userId,
+    unitId: report.unitId,
+    imagePath: report.imagePath || undefined,
+    notes: report.notes || undefined,
+    latitude: report.latitude || undefined,
+    longitude: report.longitude || undefined,
+    categoryId: report.categoryId || undefined,
+    locationId: report.locationId || undefined,
+    capturedAt: report.capturedAt.toISOString(),
+    isOfflineSubmission: report.isOfflineSubmission,
+    createdAt: report.createdAt.toISOString(),
+    units: report.unit ? { name: report.unit.name } : undefined,
+    report_categories: report.category ? { name: report.category.name, color: report.category.color || undefined } : undefined,
+    unit_locations: report.location ? { name: report.location.name } : undefined,
+    profiles: report.user ? { full_name: report.user.fullName } : undefined
+  }));
+
+  // 6. Get Total Count
+  const totalCount = await prisma.report.count({
+    where: {
+      userId: session.user.id, // Only count user's own reports
+      ...dateFilter
+    }
   });
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
@@ -36,20 +108,20 @@ export default async function MyReportsPage({
     <div className="container mx-auto py-6 max-w-3xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">My Reports</h1>
-        <p className="text-muted-foreground">View your submitted security reports</p>
+        <p className="text-muted-foreground">Riwayat laporan keamanan yang Anda kirim</p>
       </div>
 
       <Card className="bg-zinc-900 border-zinc-800 text-white">
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
-            <span>Your Reports ({totalCount})</span>
+            <span>Total Laporan: {totalCount}</span>
             <span className="text-xs font-normal text-zinc-400">
-              Page {currentPage} of {totalPages || 1}
+              Halaman {currentPage} dari {totalPages || 1}
             </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Pass data & pagination info to Client Component */}
+          {/* Ensure ReportList component exists and accepts these props */}
           <ReportList
             reports={reports}
             totalPages={totalPages}

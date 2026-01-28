@@ -157,7 +157,7 @@ export default function ReportList({
                   </p>
                 </div>
                 <span className="text-xs font-mono text-zinc-500 bg-zinc-900 px-2 py-1 rounded">
-                  {new Date(report.captured_at).toLocaleString('id-ID')}
+                  {new Date(report.capturedAt).toLocaleString('id-ID')}
                 </span>
               </div>
 
@@ -170,10 +170,10 @@ export default function ReportList({
                 {report.notes || 'No notes provided.'}
               </p>
 
-              {report.image_path && (
+              {report.imagePath && (
                 <div className="relative w-full h-32 bg-zinc-900 rounded-md overflow-hidden border border-zinc-700">
                   <img
-                    src={report.image_path}
+                    src={report.imagePath}
                     alt="Evidence"
                     className="w-full h-full object-cover"
                     loading="lazy"
@@ -182,8 +182,8 @@ export default function ReportList({
               )}
 
               <div className="mt-3 text-xs text-zinc-500 pt-2 border-t border-zinc-700/50 flex justify-between">
-                 <span>Submitted: {new Date(report.created_at || report.captured_at).toLocaleDateString()}</span>
-                 {report.is_offline_submission && (
+                 <span>Submitted: {new Date(report.createdAt || report.capturedAt).toLocaleDateString()}</span>
+                 {report.isOfflineSubmission && (
                    <Badge variant="outline" className="text-xs">Offline</Badge>
                  )}
               </div>

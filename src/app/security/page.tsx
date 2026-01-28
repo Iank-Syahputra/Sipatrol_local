@@ -22,19 +22,46 @@ export default async function SecurityDashboardPage() {
   }
 
   // Fetch essential security data (e.g., today's reports) using prisma.report.findMany
-  const reports = await prisma.report.findMany({
-    where: {
-      userId: session.user.id as string,
-    },
-    include: {
-      user: true,
-      unit: true,
-    },
-    orderBy: {
-      capturedAt: 'desc',
-    },
-    take: 10, // Limit to 10 most recent reports
-  });
+  const [rawReports, totalReportsCount] = await Promise.all([
+    prisma.report.findMany({
+      where: {
+        userId: session.user.id as string,
+      },
+      include: {
+        user: true,
+        unit: true,
+      },
+      orderBy: {
+        capturedAt: 'desc',
+      },
+      take: 10, // Limit to 10 most recent reports for display
+    }),
+    prisma.report.count({
+      where: {
+        userId: session.user.id as string,
+      }
+    })
+  ]);
+
+  // Transform data to match expected structure in RecentReportList component
+  const reports = rawReports.map(report => ({
+    id: report.id,
+    userId: report.userId,
+    unitId: report.unitId,
+    imagePath: report.imagePath || undefined,
+    notes: report.notes || undefined,
+    latitude: report.latitude || undefined,
+    longitude: report.longitude || undefined,
+    categoryId: report.categoryId || undefined,
+    locationId: report.locationId || undefined,
+    capturedAt: report.capturedAt.toISOString(),
+    isOfflineSubmission: report.isOfflineSubmission,
+    createdAt: report.createdAt.toISOString(),
+    units: report.unit ? { name: report.unit.name } : undefined,
+    report_categories: report.category ? { name: report.category.name, color: report.category.color || undefined } : undefined,
+    unit_locations: report.location ? { name: report.location.name } : undefined,
+    profiles: report.user ? { full_name: report.user.fullName } : undefined
+  }));
 
   // Get user's assigned unit
   const assignedUnit = await prisma.unit.findUnique({
@@ -78,7 +105,7 @@ export default async function SecurityDashboardPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{reports.length}</div>
+            <div className="text-2xl font-bold">{totalReportsCount}</div>
             <p className="text-xs text-muted-foreground">Submitted reports</p>
           </CardContent>
         </Card>
