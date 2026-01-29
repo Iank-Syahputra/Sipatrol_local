@@ -129,7 +129,8 @@ export async function GET(request: Request) {
       include: {
         user: { select: { fullName: true } },
         unit: { select: { name: true } },
-        category: true
+        category: true,
+        location: { select: { name: true } }  // Include location information
       }
     });
 

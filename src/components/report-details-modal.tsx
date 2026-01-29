@@ -44,7 +44,7 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-zinc-800">
           <h3 className="text-xl font-bold text-white">Report Details</h3>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white"
           >
@@ -85,134 +85,110 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
 
             {/* Right Column - Details */}
             <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold text-white mb-2">Officer Information</h4>
+              {/* Full Name */}
+              <div className="bg-zinc-800/50 rounded-lg p-3">
+                <p className="text-sm text-zinc-400">Full Name</p>
+                <p className="text-sm text-zinc-300 mt-1">
+                  {report.profiles?.full_name || report.profiles?.name || report.user?.fullName || report.user?.name || 'N/A'}
+                </p>
+              </div>
+
+              {/* Unit */}
+              <div className="bg-zinc-800/50 rounded-lg p-3">
+                <p className="text-sm text-zinc-400">Unit</p>
+                <p className="text-sm text-zinc-300 mt-1">
+                  {report.units?.name || report.unit?.name || report.unit?.name || 'N/A'}
+                </p>
+              </div>
+
+              {/* Category */}
+              {(report.report_categories?.name || report.category?.name) && (
                 <div className="bg-zinc-800/50 rounded-lg p-3">
-                  <p className="text-sm text-zinc-300">
-                    <span className="text-zinc-400">Name:</span> {report.profiles?.full_name || report.profiles?.name || report.user?.fullName || report.user?.name || 'N/A'}
+                  <p className="text-sm text-zinc-400">Category</p>
+                  <div className="mt-1">
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                        // 1. Check RED/UNSAFE First (Priority!)
+                        (report.report_categories?.color || report.category?.color) === 'red' ||
+                        (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('action') 
+                          ? 'bg-red-500/20 text-red-400'
+                          // 2. Check YELLOW/WARNING
+                          : (report.report_categories?.color || report.category?.color) === 'yellow' ||
+                          (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('condition') ||
+                            (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('maintenance') ||
+                            (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('perbaikan') ||
+                            (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('warning')
+                            ? 'bg-yellow-500/20 text-yellow-400'
+                            // 3. Check GREEN/SAFE Last
+                            : (report.report_categories?.color || report.category?.color) === 'green' ||
+                              (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('safe') ||
+                              (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('aman')
+                              ? 'bg-green-500/20 text-green-400'
+                              : 'bg-blue-500/20 text-blue-400'
+                      }`}
+                    >
+                      {report.report_categories?.name || report.category?.name || 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Specific Location */}
+              {(report.unit_locations?.name || report.location?.name || report.locationNameCached) && (
+                <div className="bg-zinc-800/50 rounded-lg p-3">
+                  <p className="text-sm text-zinc-400">Specific Location</p>
+                  <p className="text-sm text-zinc-300 mt-1">
+                    {report.locationNameCached || report.unit_locations?.name || report.location?.name || 'N/A'}
                   </p>
-                  <p className="text-sm text-zinc-300">
-                    <span className="text-zinc-400">Unit:</span> {report.units?.name || report.unit?.name || report.unit?.name || 'N/A'}
-                  </p>
+                </div>
+              )}
+
+              {/* Coordinates */}
+              <div className="bg-zinc-800/50 rounded-lg p-3 flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-blue-400 mt-0.5" />
+                <div>
+                  {latitude && longitude ? (
+                    <>
+                      <p className="text-sm text-zinc-400">Coordinates</p>
+                      <p className="text-sm text-zinc-300 mt-1">
+                        {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                      </p>
+                      <a
+                        href={`https://www.google.com/maps?q=${latitude},${longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 mt-1"
+                      >
+                        Open in Maps <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-zinc-400">Coordinates</p>
+                      <p className="text-sm text-zinc-300 mt-1">
+                        Location not available
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
 
-              <div>
-                <h4 className="font-semibold text-white mb-2">Report Information</h4>
-                <div className="space-y-3">
-                  {/* Category */}
-                  {(report.report_categories?.name || report.category?.name) && (
-                    <div className="bg-zinc-800/50 rounded-lg p-3">
-                      <p className="text-sm text-zinc-400">Category</p>
-                      <div className="mt-1">
-                        <span
-                          className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                            // 1. Check RED/UNSAFE First (Priority!)
-                            (report.report_categories?.color || report.category?.color) === 'red' ||
-                            (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('unsafe') ||
-                            (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('tidak aman') ||
-                            (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('bahaya')
-                              ? 'bg-red-500/20 text-red-400'
-                              // 2. Check YELLOW/WARNING
-                              : (report.report_categories?.color || report.category?.color) === 'yellow' ||
-                                (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('maintenance') ||
-                                (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('perbaikan') ||
-                                (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('warning')
-                                ? 'bg-yellow-500/20 text-yellow-400'
-                                // 3. Check GREEN/SAFE Last
-                                : (report.report_categories?.color || report.category?.color) === 'green' ||
-                                  (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('safe') ||
-                                  (report.report_categories?.name || report.category?.name)?.toLowerCase().includes('aman')
-                                  ? 'bg-green-500/20 text-green-400'
-                                  : 'bg-blue-500/20 text-blue-400'
-                          }`}
-                        >
-                          {report.report_categories?.name || report.category?.name || 'N/A'}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Unit */}
-                  {(report.units?.name || report.unit?.name) && (
-                    <div className="bg-zinc-800/50 rounded-lg p-3">
-                      <p className="text-sm text-zinc-400">Unit</p>
-                      <p className="text-sm text-zinc-300 mt-1">{report.units?.name || report.unit?.name || 'N/A'}</p>
-                    </div>
-                  )}
-
-                  {/* Specific Location */}
-                  {(report.unit_locations?.name || report.location?.name) && (
-                    <div className="bg-zinc-800/50 rounded-lg p-3">
-                      <p className="text-sm text-zinc-400">Specific Location</p>
-                      <p className="text-sm text-zinc-300 mt-1">{report.unit_locations?.name || report.location?.name || 'N/A'}</p>
-                    </div>
-                  )}
-
-                  {/* GPS Location */}
-                  <div className="bg-zinc-800/50 rounded-lg p-3 flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-blue-400 mt-0.5" />
-                    <div>
-                      {latitude && longitude ? (
-                        <>
-                          <p className="text-sm text-zinc-300">
-                            {latitude.toFixed(6)}, {longitude.toFixed(6)}
-                          </p>
-                          <a
-                            href={`https://www.google.com/maps?q=${latitude},${longitude}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 mt-1"
-                          >
-                            Open in Maps <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </>
-                      ) : (
-                        <p className="text-sm text-zinc-300">
-                          Location not available
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Timestamp */}
-                  <div className="bg-zinc-800/50 rounded-lg p-3">
-                    <p className="text-sm text-zinc-400">Timestamp</p>
-                    <p className="text-sm text-zinc-300 mt-1">
-                      {report.captured_at || report.capturedAt ? formatDate(report.captured_at || report.capturedAt) : 'N/A'}
-                    </p>
-                  </div>
-
-                  {/* Created At */}
-                  {report.created_at || report.createdAt ? (
-                    <div className="bg-zinc-800/50 rounded-lg p-3">
-                      <p className="text-sm text-zinc-400">Created At</p>
-                      <p className="text-sm text-zinc-300 mt-1">
-                        {formatDate(report.created_at || report.createdAt)}
-                      </p>
-                    </div>
-                  ) : null}
-
-                  {/* Is Offline Submission */}
-                  {report.isOfflineSubmission !== undefined && (
-                    <div className="bg-zinc-800/50 rounded-lg p-3">
-                      <p className="text-sm text-zinc-400">Submission Type</p>
-                      <p className="text-sm text-zinc-300 mt-1">
-                        {report.isOfflineSubmission ? 'Offline Submission' : 'Online Submission'}
-                      </p>
-                    </div>
-                  )}
-                </div>
+              {/* Timestamp */}
+              <div className="bg-zinc-800/50 rounded-lg p-3">
+                <p className="text-sm text-zinc-400">Timestamp</p>
+                <p className="text-sm text-zinc-300 mt-1">
+                  {report.captured_at || report.capturedAt ? formatDate(report.captured_at || report.capturedAt) : 'N/A'}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Notes Section */}
+          {/* Description (Notes) Section */}
           <div className="mt-6">
-            <h4 className="font-semibold text-white mb-2">Officer Notes</h4>
+            <h4 className="font-semibold text-white mb-2">Description</h4>
             <div className="bg-zinc-800/50 rounded-lg p-4 min-h-[100px]">
               <p className="text-zinc-300">
-                {report.notes || 'No notes provided for this report.'}
+                {report.notes || 'No description provided for this report.'}
               </p>
             </div>
           </div>

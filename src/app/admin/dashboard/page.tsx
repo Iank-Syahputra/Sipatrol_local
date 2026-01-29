@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Activity, Map, Users, AlertTriangle, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, User, Calendar, RotateCcw } from "lucide-react";
+import { Activity, Map, MapPin, Users, AlertTriangle, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, User, Calendar, RotateCcw } from "lucide-react";
 import ReportDetailsModal from '@/components/report-details-modal';
 import {
   PieChart,
@@ -268,10 +268,10 @@ export default function AdminDashboard() {
                   >
                     <div className="flex items-start gap-4">
                       <div className="flex-shrink-0">
-                        {report?.imagePath || report?.image_path ? (
+                        {report?.imagePath || report?.imagePath ? (
                           <div className="relative group">
                             <img
-                              src={report.imagePath || report.image_path}
+                              src={report.imagePath || report.imagePath}
                               alt="Report"
                               className="w-24 h-24 rounded-xl object-cover border border-zinc-700 bg-zinc-800 transition-transform duration-200 group-hover:scale-105"
                             />
@@ -297,7 +297,43 @@ export default function AdminDashboard() {
                         <p className="text-sm text-zinc-400 mt-1 truncate">
                           {report?.notes || 'No notes provided'}
                         </p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-zinc-500">
+                        {/* --- BAGIAN INI YANG SAYA TAMBAHKAN (KATEGORI & LOKASI) --- */}
+                        <div className="flex flex-wrap items-center gap-2 mt-2 mb-2">
+                          {/* Badge Kategori Warna-Warni */}
+                          {report?.category && (
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
+                              // 1. Check RED/UNSAFE First (Priority!)
+                              report.category.color === 'red' ||
+                              report.category.name.toLowerCase().includes('action')
+                                ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                                // 2. Check YELLOW/WARNING
+                                : report.category.color === 'yellow' ||
+                                report.category.name.toLowerCase().includes('condition') ||
+                                  report.category.name.toLowerCase().includes('maintenance') ||
+                                  report.category.name.toLowerCase().includes('perbaikan') ||
+                                  report.category.name.toLowerCase().includes('warning')
+                                  ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                  // 3. Check GREEN/SAFE Last
+                                  : report.category.color === 'green' ||
+                                    report.category.name.toLowerCase().includes('safe') ||
+                                    report.category.name.toLowerCase().includes('aman')
+                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                    : 'bg-blue-500/10 text-blue-400 border-blue-500/20' // Default
+                            }`}>
+                              {report.category.name}
+                            </span>
+                          )}
+
+                          {/* Badge Lokasi Spesifik */}
+                          {report?.location?.name && (
+                            <span className="flex items-center gap-1 text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                              <MapPin className="h-3 w-3" />
+                              {report.location.name}
+                            </span>
+                          )}
+                        </div>
+                        {/* --------------------------------------------------------- */}
+                        <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-zinc-500">
                           <span className="flex items-center gap-1">
                             <Map className="h-3 w-3" />
                             {report?.latitude && report?.longitude
