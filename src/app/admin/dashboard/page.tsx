@@ -511,44 +511,66 @@ export default function AdminDashboard() {
                       ].filter(item => item.value > 0); // Only include items with values > 0
 
                       return (
-                        <div key={index} className="bg-zinc-800/50 rounded-lg border border-zinc-700 p-4">
-                          <h4 className="font-medium text-white mb-2 text-center">{unit.name}</h4>
-                          <div className="h-40 flex items-center justify-center">
+                        <div key={index} className="bg-zinc-800/50 rounded-lg border border-zinc-700 p-4 flex flex-col h-full">
+                          <h4 className="font-medium text-white mb-2 text-center text-sm truncate" title={unit.name}>{unit.name}</h4>
+                          
+                          {/* Chart Container */}
+                          <div className="h-40 flex items-center justify-center relative">
                             <ResponsiveContainer width="100%" height="100%">
                               <PieChart>
                                 <Pie
                                   data={unitChartData}
                                   cx="50%"
                                   cy="50%"
-                                  innerRadius={30}
-                                  outerRadius={50}
+                                  innerRadius={35}
+                                  outerRadius={55}
                                   paddingAngle={2}
                                   dataKey="value"
                                   nameKey="name"
+                                  stroke="none"
                                 >
                                   {unitChartData.map((entry, idx) => (
                                     <Cell key={`cell-${idx}`} fill={entry.color} />
                                   ))}
                                 </Pie>
-                                <Tooltip formatter={(value) => [value, 'Reports']} />
-                              </PieChart>
+                                <Tooltip 
+                                  formatter={(value) => [value, 'Reports']}
+                                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#fff', borderRadius: '8px' }}
+                                />
+                             </PieChart>
                             </ResponsiveContainer>
+                            
+                            {/* Total di Tengah Donut (Opsional, terlihat keren) */}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                               <span className="text-xl font-bold text-white">{unit.total || 0}</span>
+                            </div>
                           </div>
-                          <div className="space-y-1 mt-2">
+
+                          {/* Legend & Details */}
+                          <div className="space-y-2 mt-4 flex-grow">
                             {unitChartData.map((item, idx) => (
-                              <div key={idx} className="flex justify-between text-sm">
-                                <span className={`${item.color === '#10B981' ? 'text-green-400' : item.color === '#EF4444' ? 'text-red-400' : 'text-yellow-400'}`}>
-                                  {item.name}:
-                                </span>
-                                <span className="font-medium">{item.value}</span>
+                              <div key={idx} className="flex justify-between items-center text-xs">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
+                                  <span className="text-zinc-400">{item.name}</span>
+                                </div>
+                                <span className="font-medium text-white">{item.value}</span>
                               </div>
                             ))}
+                          </div>
+
+                          {/* Footer: Total Reports */}
+                          <div className="mt-4 pt-3 border-t border-zinc-700/50 flex justify-between items-center">
+                            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Total Reports</span>
+                            <span className="text-sm font-bold text-white bg-zinc-700/50 px-2 py-0.5 rounded">
+                              {unit.total || 0}
+                            </span>
                           </div>
                         </div>
                       );
                     })
                   ) : (
-                    <div className="col-span-full text-center py-8 text-zinc-500">
+                    <div className="col-span-full text-center py-8 text-zinc-500 border border-dashed border-zinc-800 rounded-xl">
                       No unit statistics available
                     </div>
                   )}
