@@ -30,6 +30,8 @@ export default async function SecurityDashboardPage() {
       include: {
         user: true,
         unit: true,
+        category: true,
+        location: true
       },
       orderBy: {
         capturedAt: 'desc',
@@ -60,7 +62,10 @@ export default async function SecurityDashboardPage() {
     units: report.unit ? { name: report.unit.name } : undefined,
     report_categories: report.category ? { name: report.category.name, color: report.category.color || undefined } : undefined,
     unit_locations: report.location ? { name: report.location.name } : undefined,
-    profiles: report.user ? { full_name: report.user.fullName } : undefined
+    profiles: report.user ? { full_name: report.user.fullName } : undefined,
+    category: report.category ? { name: report.category.name, color: report.category.color || undefined } : undefined,
+    location: report.location ? { name: report.location.name } : undefined,
+    locationNameCached: report.locationNameCached || undefined
   }));
 
   // Get user's assigned unit
