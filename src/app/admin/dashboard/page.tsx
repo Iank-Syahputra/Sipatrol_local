@@ -184,9 +184,9 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold">Central Dashboard</h1>
-              {!userLoading && userProfile?.full_name && (
+              {!userLoading && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  Halo, <span className="font-semibold text-white">{userProfile.full_name}</span>
+                  Halo, <span className="font-semibold text-white">{userProfile?.full_name || userProfile?.name || 'Admin'}</span>
                 </p>
               )}
             </div>
