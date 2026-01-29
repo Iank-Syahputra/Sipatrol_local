@@ -53,15 +53,31 @@ export default function AdminDashboard() {
   }, []);
 
   // Fetch dashboard data
-  useEffect(() => {
+ useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        const response = await fetch('/api/admin/stats');
+        // 1. SIAPKAN QUERY PARAMETER
+        const queryParams = new URLSearchParams();
+        
+        // Cek apakah user sudah memilih tanggal
+        if (dateRange.startDate) {
+          queryParams.append('startDate', dateRange.startDate);
+        }
+        if (dateRange.endDate) {
+          queryParams.append('endDate', dateRange.endDate);
+        }
+
+        // 2. GABUNGKAN KE URL
+        // Hasilnya jadi: /api/admin/stats?startDate=2023-10-01&endDate=2023-10-31
+        const url = `/api/admin/stats?${queryParams.toString()}`;
+
+        console.log("Fetching URL:", url); // Debugging di Console Browser
+
+        const response = await fetch(url);
 
         if (!response.ok) {
-          // Try to get error details from response
           let errorMessage = `HTTP error! status: ${response.status}`;
           try {
             const errorData = await response.json();
@@ -69,10 +85,8 @@ export default function AdminDashboard() {
               errorMessage = `${errorMessage} - ${errorData.error}`;
             }
           } catch (parseErr) {
-            // If we can't parse the error response, use the basic message
             console.warn('Could not parse error response:', parseErr);
           }
-
           throw new Error(errorMessage);
         }
 
@@ -452,25 +466,51 @@ export default function AdminDashboard() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {dashboardData?.unitRanking && dashboardData.unitRanking.length > 0 ? (
-                    dashboardData.unitRanking.map((unit: any, index: number) => (
-                      <div key={index} className="bg-zinc-800/50 rounded-lg border border-zinc-700 p-4">
-                        <h4 className="font-medium text-white mb-2">{unit.name}</h4>
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-green-400">Safe:</span>
-                            <span className="font-medium">{unit.safe || 0}</span>
+                    dashboardData.unitRanking.map((unit: any, index: number) => {
+                      // Prepare data for individual unit donut chart
+                      const unitChartData = [
+                        { name: 'Safe', value: unit.safe || 0, color: '#10B981' },
+                        { name: 'Unsafe Action', value: unit.unsafeAction || 0, color: '#EF4444' },
+                        { name: 'Unsafe Condition', value: unit.unsafeCondition || 0, color: '#F59E0B' },
+                      ].filter(item => item.value > 0); // Only include items with values > 0
+
+                      return (
+                        <div key={index} className="bg-zinc-800/50 rounded-lg border border-zinc-700 p-4">
+                          <h4 className="font-medium text-white mb-2 text-center">{unit.name}</h4>
+                          <div className="h-40 flex items-center justify-center">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={unitChartData}
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={30}
+                                  outerRadius={50}
+                                  paddingAngle={2}
+                                  dataKey="value"
+                                  nameKey="name"
+                                >
+                                  {unitChartData.map((entry, idx) => (
+                                    <Cell key={`cell-${idx}`} fill={entry.color} />
+                                  ))}
+                                </Pie>
+                                <Tooltip formatter={(value) => [value, 'Reports']} />
+                              </PieChart>
+                            </ResponsiveContainer>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-red-400">Unsafe Action:</span>
-                            <span className="font-medium">{unit.unsafeAction || 0}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-yellow-400">Unsafe Condition:</span>
-                            <span className="font-medium">{unit.unsafeCondition || 0}</span>
+                          <div className="space-y-1 mt-2">
+                            {unitChartData.map((item, idx) => (
+                              <div key={idx} className="flex justify-between text-sm">
+                                <span className={`${item.color === '#10B981' ? 'text-green-400' : item.color === '#EF4444' ? 'text-red-400' : 'text-yellow-400'}`}>
+                                  {item.name}:
+                                </span>
+                                <span className="font-medium">{item.value}</span>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <div className="col-span-full text-center py-8 text-zinc-500">
                       No unit statistics available

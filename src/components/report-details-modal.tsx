@@ -98,7 +98,7 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
               </div>
 
               <div>
-                <h4 className="font-semibold text-white mb-2">Category & Location</h4>
+                <h4 className="font-semibold text-white mb-2">Report Information</h4>
                 <div className="space-y-3">
                   {/* Category */}
                   {(report.report_categories?.name || report.category?.name) && (
@@ -130,6 +130,14 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
                           {report.report_categories?.name || report.category?.name || 'N/A'}
                         </span>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Unit */}
+                  {(report.units?.name || report.unit?.name) && (
+                    <div className="bg-zinc-800/50 rounded-lg p-3">
+                      <p className="text-sm text-zinc-400">Unit</p>
+                      <p className="text-sm text-zinc-300 mt-1">{report.units?.name || report.unit?.name || 'N/A'}</p>
                     </div>
                   )}
 
@@ -166,15 +174,34 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
                       )}
                     </div>
                   </div>
-                </div>
-              </div>
 
-              <div>
-                <h4 className="font-semibold text-white mb-2">Timestamp</h4>
-                <div className="bg-zinc-800/50 rounded-lg p-3">
-                  <p className="text-sm text-zinc-300">
-                    {report.captured_at || report.capturedAt ? formatDate(report.captured_at || report.capturedAt) : 'N/A'}
-                  </p>
+                  {/* Timestamp */}
+                  <div className="bg-zinc-800/50 rounded-lg p-3">
+                    <p className="text-sm text-zinc-400">Timestamp</p>
+                    <p className="text-sm text-zinc-300 mt-1">
+                      {report.captured_at || report.capturedAt ? formatDate(report.captured_at || report.capturedAt) : 'N/A'}
+                    </p>
+                  </div>
+
+                  {/* Created At */}
+                  {report.created_at || report.createdAt ? (
+                    <div className="bg-zinc-800/50 rounded-lg p-3">
+                      <p className="text-sm text-zinc-400">Created At</p>
+                      <p className="text-sm text-zinc-300 mt-1">
+                        {formatDate(report.created_at || report.createdAt)}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {/* Is Offline Submission */}
+                  {report.isOfflineSubmission !== undefined && (
+                    <div className="bg-zinc-800/50 rounded-lg p-3">
+                      <p className="text-sm text-zinc-400">Submission Type</p>
+                      <p className="text-sm text-zinc-300 mt-1">
+                        {report.isOfflineSubmission ? 'Offline Submission' : 'Online Submission'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
