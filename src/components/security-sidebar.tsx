@@ -82,7 +82,7 @@ export default function SecuritySidebar({
           <div className="p-2 border rounded-lg bg-zinc-900/30 border-zinc-800">
             <div className="flex items-center justify-between">
               <button
-                onClick={() => signOut({ callbackUrl: '/login' })}
+                onClick={() => signOut({ callbackUrl: '/' })}
                 className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors"
               >
                 Logout
@@ -156,7 +156,7 @@ export default function SecuritySidebar({
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => signOut({ callbackUrl: '/login' })}
+                onClick={() => signOut({ callbackUrl: '/' })}
                 className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors px-3 py-1 rounded-md hover:bg-red-900/30"
               >
                 Logout
