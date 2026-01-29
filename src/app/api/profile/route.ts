@@ -1,38 +1,48 @@
-import { NextRequest } from 'next/server';
-import { getServerSession } from 'next-auth/next';
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/[...nextauth]/route'; // Pastikan path ini benar
 import { prisma } from '@/lib/prisma';
 
-export async function POST(request: NextRequest) {
+// GET: Ambil data profile saat halaman dibuka
+export async function GET(request: Request) {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    // Verify the user is authenticated using NextAuth
-    const session = await getServerSession();
+    const profile = await prisma.profile.findUnique({
+      where: { id: session.user.id },
+      include: { assignedUnit: true }
+    });
+    return NextResponse.json(profile);
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 });
+  }
+}
+
+// PUT: Update Profile (No HP, dll)
+export async function PUT(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = session.user.id as string;
+    const { phone_number } = await request.json();
 
-    const { id, full_name, role, assigned_unit_id } = await request.json();
-
-    // Verify that the user ID matches the authenticated user
-    if (id !== userId) {
-      return Response.json({ error: 'Invalid user ID' }, { status: 400 });
-    }
-
-    // Insert the profile into the database using Prisma
-    const profile = await prisma.profile.create({
+    const updatedProfile = await prisma.profile.update({
+      where: { id: session.user.id },
       data: {
-        id,
-        full_name,
-        role,
-        assigned_unit_id
-      }
+        phone_number: phone_number || null,
+      },
     });
 
-    return Response.json({ success: true, data: profile });
+    return NextResponse.json(updatedProfile);
   } catch (error) {
-    console.error('Unexpected error in profile creation:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Error updating profile:', error);
+    return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
   }
 }

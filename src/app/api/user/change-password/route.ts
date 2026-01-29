@@ -1,45 +1,29 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '../../../api/auth/[...nextauth]/route'; // Path naik 3 level
 import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
-export async function PUT(request: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { phone_number } = await request.json();
-
-    // Update phone number in the database
-    const updatedProfile = await prisma.profile.update({
-      where: {
-        id: session.user.id,
-      },
-      data: {
-        phone_number: phone_number || null, // Store as null if empty string
-      },
-      select: {
-        id: true,
-        full_name: true,
-        username: true,
-        phone_number: true,
-        role: true,
-        assigned_unit_id: true,
-      },
-    });
-
-    return NextResponse.json(updatedProfile);
-  } catch (error) {
-    console.error('Error updating profile:', error);
-    return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
+// Helper: Validasi Password (VERSI BEBAS)
+function validatePasswordStrength(password: string): string | null {
+  // Cek jika kosong
+  if (!password || password.length === 0) {
+    return 'Password baru wajib diisi';
   }
+
+  // Opsional: Minimal 4 karakter (Saran minimal keamanan)
+  if (password.length < 4) {
+    return 'Password minimal 4 karakter';
+  }
+
+  // Tidak ada syarat huruf besar, angka, atau simbol. Langsung lolos.
+  return null;
 }
 
+// POST: Endpoint khusus ganti password
 export async function POST(request: Request) {
+  console.log('API Ganti Password dipanggil!'); // Cek terminal VS Code Anda nanti
+
   try {
     const session = await getServerSession(authOptions);
 
@@ -49,74 +33,45 @@ export async function POST(request: Request) {
 
     const { currentPassword, newPassword } = await request.json();
 
-    // Get user profile to verify current password
+    // 1. Ambil User
     const user = await prisma.profile.findUnique({
-      where: {
-        id: session.user.id,
-      },
+      where: { id: session.user.id },
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: 'User tidak ditemukan' }, { status: 404 });
     }
 
-    // Verify current password
-    const isValidPassword = await bcrypt.compare(currentPassword, user.password || '');
+    // 2. Cek Password Lama
+    let isValidPassword = false;
+    try {
+      isValidPassword = await bcrypt.compare(currentPassword, user.password || '');
+    } catch (e) {
+      // Fallback untuk password lama (plain text)
+      isValidPassword = currentPassword === user.password;
+    }
 
     if (!isValidPassword) {
-      return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 });
+      return NextResponse.json({ error: 'Password lama salah!' }, { status: 400 });
     }
 
-    // Validate new password strength
+    // 3. Validasi Password Baru
     const passwordValidation = validatePasswordStrength(newPassword);
     if (passwordValidation !== null) {
       return NextResponse.json({ error: passwordValidation }, { status: 400 });
     }
 
-    // Hash new password
+    // 4. Hash & Update
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update password in the database
     await prisma.profile.update({
-      where: {
-        id: session.user.id,
-      },
-      data: {
-        password: hashedNewPassword,
-      },
+      where: { id: session.user.id },
+      data: { password: hashedNewPassword },
     });
 
-    // Return success response without sending back the password
-    return NextResponse.json({ message: 'Password changed successfully' });
+    return NextResponse.json({ message: 'Password berhasil diubah' });
   } catch (error) {
-    console.error('Error changing password:', error);
-    return NextResponse.json({ error: 'Failed to change password' }, { status: 500 });
+    console.error('Error ganti password:', error);
+    return NextResponse.json({ error: 'Gagal mengubah password' }, { status: 500 });
   }
-}
-
-// Password validation function
-function validatePasswordStrength(password: string): string | null {
-  const minLength = 8;
-  const hasUpperCase = /[A-Z]/.test(password);
-  const hasLowerCase = /[a-z]/.test(password);
-  const hasNumbers = /\d/.test(password);
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-  if (password.length < minLength) {
-    return 'Password must be at least 8 characters long';
-  }
-  if (!hasUpperCase) {
-    return 'Password must contain at least one uppercase letter';
-  }
-  if (!hasLowerCase) {
-    return 'Password must contain at least one lowercase letter';
-  }
-  if (!hasNumbers) {
-    return 'Password must contain at least one number';
-  }
-  if (!hasSpecialChar) {
-    return 'Password must contain at least one special character';
-  }
-
-  return null;
 }

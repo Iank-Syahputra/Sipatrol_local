@@ -98,30 +98,19 @@ export default function SecurityProfilePage() {
     return null;
   };
 
-  // Validate password strength
+  // Validate password strength (VERSI BEBAS)
   const validatePassword = (password: string) => {
-    const minLength = 8;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-    if (password.length < minLength) {
-      return 'Password must be at least 8 characters long';
-    }
-    if (!hasUpperCase) {
-      return 'Password must contain at least one uppercase letter';
-    }
-    if (!hasLowerCase) {
-      return 'Password must contain at least one lowercase letter';
-    }
-    if (!hasNumbers) {
-      return 'Password must contain at least one number';
-    }
-    if (!hasSpecialChar) {
-      return 'Password must contain at least one special character';
+    // Hanya cek jika kosong
+    if (!password || password.length === 0) {
+      return 'Password tidak boleh kosong';
     }
 
+    // Opsional: Minimal 3 atau 4 karakter agar tidak terlalu pendek
+    if (password.length < 4) {
+       return 'Password minimal 4 karakter';
+    }
+
+    // Lolos semua pengecekan
     return null;
   };
 
@@ -336,7 +325,15 @@ export default function SecurityProfilePage() {
               <CardTitle>Change Password</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handlePasswordChange} className="space-y-4">
+              <form
+                onSubmit={(e) => {
+                  console.log('Password change form submit event triggered');
+                  console.log('Form submit event type:', e.type);
+                  console.log('Native event present:', !!e.nativeEvent);
+                  handlePasswordChange(e);
+                }}
+                className="space-y-4"
+              >
                 <div className="space-y-2">
                   <Label htmlFor="currentPassword">Current Password</Label>
                   <Input
@@ -344,7 +341,6 @@ export default function SecurityProfilePage() {
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    required
                   />
                 </div>
 
@@ -355,7 +351,6 @@ export default function SecurityProfilePage() {
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    required
                   />
                   <p className="text-sm text-gray-500 mt-1">
                     Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.
@@ -369,13 +364,32 @@ export default function SecurityProfilePage() {
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
                   />
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-                  <Button type="submit" disabled={saving} className="w-full sm:w-auto">
-                    {saving ? 'Changing...' : 'Change Password'}
+                  <Button
+                    type="submit"
+                    disabled={saving}
+                    className="w-full sm:w-auto"
+                    onClick={(e) => {
+                      console.log('Change Password button clicked');
+                      console.log('Current password value:', currentPassword);
+                      console.log('New password value:', newPassword);
+                      console.log('Confirm password value:', confirmPassword);
+                      console.log('Saving state:', saving);
+                      console.log('Form validity check - all fields have values:', currentPassword && newPassword && confirmPassword);
+                    }}
+                  >
+                    {saving ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Changing...
+                      </>
+                    ) : 'Change Password'}
                   </Button>
                 </div>
                 {showPasswordSuccess && (
