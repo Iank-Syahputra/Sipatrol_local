@@ -33,6 +33,7 @@ export default function SecuritySidebar({
     { href: '/security/report', label: 'New Report', icon: Camera },
     { href: '/security/map', label: 'My Map', icon: MapPin },
     { href: '/security/reports', label: 'My Reports', icon: FileText },
+    { href: '/security/profile', label: 'Profile', icon: Shield },
   ];
 
   return (
