@@ -111,7 +111,7 @@ export default async function MyReportsPage(props: {
         <p className="text-muted-foreground">Riwayat laporan keamanan yang Anda kirim</p>
       </div>
 
-      <Card className="bg-zinc-900 border-zinc-800 text-white">
+      <Card className="bg-white border-slate-200 text-slate-900">
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
             <span>Total Laporan: {totalCount}</span>
