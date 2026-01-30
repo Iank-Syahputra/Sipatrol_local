@@ -110,10 +110,10 @@ export default function ReportList({
             <button
               onClick={handleApplyFilter}
               disabled={isLoading}
-              className="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-400 rounded-lg text-sm font-bold text-white transition-all shadow-md shadow-cyan-200/50 flex items-center gap-2 flex-1 md:flex-none justify-center disabled:opacity-50"
+              className="px-6 py-2.5 bg-[#00F7FF] hover:bg-cyan-400 rounded-lg text-sm font-bold text-slate-900 transition-all shadow-md shadow-cyan-200/50 flex items-center gap-2 flex-1 md:flex-none justify-center disabled:opacity-50"
             >
               {isLoading ? (
-                <div className="h-4 w-4 border-2 border-white/30 border-t-white animate-spin rounded-full" />
+                <div className="h-4 w-4 border-2 border-slate-900/30 border-t-slate-900 animate-spin rounded-full" />
               ) : (
                 <><Filter className="w-3 h-3" /> Apply</>
               )}
