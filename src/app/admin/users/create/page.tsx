@@ -121,10 +121,10 @@ export default function CreateUserPage() {
 
   if (checkingAuth) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-          <p>Checking authorization...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-amber-500 border-r-transparent mb-4"></div>
+          <p className="font-medium text-slate-500">Checking authorization...</p>
         </div>
       </div>
     );
@@ -135,151 +135,159 @@ export default function CreateUserPage() {
   }
 
   return (
-    <div className="container mx-auto py-6 max-w-2xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Create Security Officer Account</h1>
-        <p className="text-muted-foreground">
-          Admin-only provisioning system - Invite new security officers
-        </p>
-      </div>
+    <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen">
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5" />
-            New Officer Registration
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-500 text-sm">
-                {error}
+      {/* Header - Sticky & Responsive */}
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Create Security Officer Account</h1>
+            <p className="text-xs font-medium text-slate-500 hidden sm:block mt-1">Admin-only provisioning system - Invite new security officers</p>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex-1 p-6 overflow-y-auto">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm max-w-2xl mx-auto">
+          <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h2 className="font-bold text-slate-900 text-lg flex items-center gap-2">
+                <UserPlus className="h-5 w-5 text-amber-600" /> New Officer Registration
+            </h2>
+          </div>
+
+          <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                  {error}
+                </div>
+              )}
+
+              {success && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-600 text-sm">
+                  {success}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="fullName" className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                  Full Name (Nama Lengkap)
+                </Label>
+                <div className="relative">
+                  <UserPlus className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="fullName"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Enter full name"
+                    className="w-full bg-white border border-slate-300 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    required
+                  />
+                </div>
               </div>
-            )}
 
-            {success && (
-              <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg text-green-500 text-sm">
-                {success}
+              <div className="space-y-2">
+                <Label htmlFor="username" className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                  Username (for Login)
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter username"
+                    className="w-full bg-white border border-slate-300 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    required
+                  />
+                </div>
               </div>
-            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="fullName">
-                Full Name (Nama Lengkap)
-              </Label>
-              <div className="relative">
-                <UserPlus className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="fullName"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Enter full name"
-                  className="pl-10"
-                  required
-                />
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                  Initial Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter initial password"
+                    className="w-full bg-white border border-slate-300 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    required
+                    minLength={6}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="username">
-                Username (for Login)
-              </Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter username"
-                  className="pl-10"
-                  required
-                />
+              <div className="space-y-2">
+                <Label htmlFor="phoneNumber" className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                  Phone Number (optional)
+                </Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="phoneNumber"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="Enter phone number (optional)"
+                    className="w-full bg-white border border-slate-300 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">
-                Initial Password
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter initial password"
-                  className="pl-10"
-                  required
-                  minLength={6}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phoneNumber">
-                Phone Number (optional)
-              </Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phoneNumber"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="Enter phone number (optional)"
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="unit">
-                Assigned Unit <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative">
-                <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+  
+              <div className="relative [&_button]:pl-10">
+                {/* 1. pointer-events-none: Agar icon bisa diklik tembus (tidak menghalangi klik user)
+                    2. top-1/2 -translate-y-1/2: Agar icon persis di tengah secara vertikal (center vertical)
+                */}
+                <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 z-10 pointer-events-none" />
+                
                 <Combobox
                   options={units}
                   value={selectedUnit}
                   onValueChange={setSelectedUnit}
-                  placeholder="Select unit..."
+                  placeholder="Select unit..." /* Hapus spasi manual, biarkan CSS yang atur */
                   emptyMessage="No units available"
+                  /* className="pl-10" <-- Hapus ini, kita pindahkan logicnya ke parent div */
                 />
               </div>
-            </div>
 
-            <div className="flex gap-4 pt-4">
-              <Button
-                type="submit"
-                disabled={loading}
-                className="flex-1"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Account...
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Create Security Officer Account
-                  </>
-                )}
-              </Button>
+              <div className="flex gap-4 pt-4">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl transition-colors shadow-md hover:shadow-lg"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating Account...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Create Security Officer Account
+                    </>
+                  )}
+                </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.back()}
+                  disabled={loading}
+                  className="py-2.5 text-sm font-bold text-slate-600 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 rounded-xl transition-colors"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -31,6 +31,7 @@ interface ComboboxProps {
   placeholder?: string;
   disabled?: boolean;
   emptyMessage?: string;
+  className?: string;
 }
 
 export function Combobox({
@@ -40,6 +41,7 @@ export function Combobox({
   placeholder = 'Pilih opsi...',
   disabled = false,
   emptyMessage = 'Tidak ditemukan.',
+  className = '',
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -50,27 +52,27 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className={cn("w-full justify-between border-slate-300 bg-white text-slate-900 hover:bg-slate-50 hover:border-slate-400 rounded-xl py-2.5", className)}
           disabled={disabled}
         >
           {/* PERUBAHAN 1: Kondisi warna teks pada Button */}
-          <span className={cn("truncate", !value ? "text-black" : "")}>
+          <span className={cn("truncate", !value ? "text-slate-900" : "text-slate-900")}>
             {value
               ? options.find((option) => option.value === value)?.label
               : placeholder}
           </span>
-          <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50 text-slate-400" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
-        <Command>
+      <PopoverContent className="w-full p-0 bg-white border border-slate-200 rounded-xl shadow-xl">
+        <Command className="bg-white">
           {/* PERUBAHAN 2: Menambahkan class placeholder:text-black */}
-          <CommandInput 
-            placeholder="Cari..." 
-            className="placeholder:text-black" 
+          <CommandInput
+            placeholder="Cari..."
+            className="placeholder:text-slate-500 h-10 px-3 py-2"
           />
-          <CommandList>
-            <CommandEmpty>{emptyMessage}</CommandEmpty>
+          <CommandList className="bg-white">
+            <CommandEmpty className="py-3 text-center text-sm text-slate-500">{emptyMessage}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
@@ -80,6 +82,7 @@ export function Combobox({
                     onValueChange(currentValue === value ? '' : currentValue);
                     setOpen(false);
                   }}
+                  className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   <CheckIcon
                     className={cn(
