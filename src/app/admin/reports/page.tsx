@@ -1,12 +1,24 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-// 1. IMPORT XLSX
 import * as XLSX from 'xlsx';
-import { Activity, Map, Users, AlertTriangle, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, User, Download, Printer, ChevronDown, Check, ImageIcon } from "lucide-react";
+import { 
+  Download, 
+  Printer, 
+  ChevronDown, 
+  Check, 
+  ImageIcon, 
+  Eye, 
+  Filter, 
+  Search, 
+  RotateCcw,
+  Calendar,
+  MoreHorizontal,
+  FileText
+} from "lucide-react";
 import ReportDetailsModal from '@/components/report-details-modal';
 
-// Custom Multi-Select Component
+// Custom Multi-Select Component (Light Mode)
 const MultiSelectDropdown = ({ options, selected, onChange, placeholder }: any) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -19,30 +31,38 @@ const MultiSelectDropdown = ({ options, selected, onChange, placeholder }: any) 
   };
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 px-3 text-left text-sm text-white flex justify-between items-center"
+        className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-left text-sm text-slate-700 flex justify-between items-center hover:bg-slate-50 transition-colors focus:ring-2 focus:ring-amber-500 focus:outline-none"
       >
-        <span className="truncate">{selected.length ? `${selected.length} Selected` : placeholder}</span>
-        <ChevronDown className="h-4 w-4 text-zinc-400" />
+        <span className="truncate pr-2 font-medium">
+          {selected.length ? `${selected.length} Selected` : placeholder}
+        </span>
+        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-full bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-          {options.map((opt: any) => (
-            <div
-              key={opt.id}
-              onClick={() => toggleOption(opt.id)}
-              className="px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700 cursor-pointer flex items-center gap-2"
-            >
-              <div className={`w-4 h-4 rounded border flex items-center justify-center ${selected.includes(opt.id) ? 'bg-blue-600 border-blue-600' : 'border-zinc-500'}`}>
-                {selected.includes(opt.id) && <Check className="h-3 w-3 text-white" />}
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto custom-scrollbar">
+            {options.map((opt: any) => (
+              <div
+                key={opt.id}
+                onClick={() => toggleOption(opt.id)}
+                className="px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b border-slate-100 last:border-0 transition-colors"
+              >
+                <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${selected.includes(opt.id) ? 'bg-amber-500 border-amber-500' : 'border-slate-300'}`}>
+                  {selected.includes(opt.id) && <Check className="h-3 w-3 text-white" />}
+                </div>
+                <span className="truncate font-medium">{opt.name}</span>
               </div>
-              {opt.name}
-            </div>
-          ))}
-        </div>
+            ))}
+            {options.length === 0 && (
+              <div className="px-3 py-4 text-sm text-slate-500 text-center">No options available</div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
@@ -52,114 +72,74 @@ export default function ReportManagementPage() {
   const [reports, setReports] = useState<any[]>([]);
   const [allUnits, setAllUnits] = useState<any[]>([]);
   const [allCategories, setAllCategories] = useState<any[]>([]);
-  const [allLocations, setAllLocations] = useState<any[]>([]); // New State for Options
+  const [allLocations, setAllLocations] = useState<any[]>([]);
   const [filteredReports, setFilteredReports] = useState<any[]>([]);
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  // 1. CHANGE STATE TO ARRAYS
+  
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedLocations, setSelectedLocations] = useState<string[]>([]); // New State for Filter
-  // PERUBAHAN 1: Menggunakan Start Date dan End Date
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // PAGINATION STATES
+  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalReports, setTotalReports] = useState(0);
-  const itemsPerPage = 10; // Maximum 10 rows per page
-
-  // 1. ADD TRIGGER STATE
+  const itemsPerPage = 10;
+  
   const [filterTrigger, setFilterTrigger] = useState(0);
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false); 
 
-  // 2. UPDATE FETCH LOGIC (now with pagination support)
+  // --- FETCHING LOGIC ---
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
-        // Build query parameters for API call
         const params = new URLSearchParams({
           page: currentPage.toString(),
           limit: itemsPerPage.toString()
         });
 
-        // Include date filters if present
         if (startDate) params.append('startDate', startDate);
         if (endDate) params.append('endDate', endDate);
-
-        // Include other filters if needed
         if (searchTerm) params.append('search', searchTerm);
         if (selectedUnits.length > 0) params.append('units', selectedUnits.join(','));
         if (selectedCategories.length > 0) params.append('categories', selectedCategories.join(','));
         if (selectedLocations.length > 0) params.append('locations', selectedLocations.join(','));
 
-        // Call API with pagination parameters
         const response = await fetch(`/api/admin/reports?${params.toString()}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const result = await response.json();
 
-        // Handle the new API response structure
-        setReports(result.reports || []); // Set reports
-        setFilteredReports(result.reports || []); // Set filtered reports
-        setTotalReports(result.pagination?.totalReports || 0); // Set total count
-        setTotalPages(result.pagination?.totalPages || 1); // Set total pages
+        setReports(result.reports || []);
+        setFilteredReports(result.reports || []);
+        setTotalReports(result.pagination?.totalReports || 0);
+        setTotalPages(result.pagination?.totalPages || 1);
 
-        // For units, categories, and locations, we need to fetch separately
         const unitsResponse = await fetch('/api/admin/units');
-        if (unitsResponse.ok) {
-          const unitsData = await unitsResponse.json();
-          setAllUnits(unitsData || []);
-        }
+        if (unitsResponse.ok) setAllUnits(await unitsResponse.json());
 
-        const categoriesResponse = await fetch('/api/admin/categories'); // Assuming this endpoint exists
-        if (categoriesResponse.ok) {
-          const categoriesData = await categoriesResponse.json();
-          setAllCategories(categoriesData || []);
-        } else {
-          // If categories endpoint doesn't exist, fetch from reports data
-          const seenCategoryIds = new Set();
-          const uniqueCategories = result.reports
-            .map(item => item.category)
-            .filter(cat => cat && !seenCategoryIds.has(cat.id) && seenCategoryIds.add(cat.id));
-          setAllCategories(uniqueCategories);
-        }
-
-        const locationsResponse = await fetch('/api/admin/unit-locations'); // Assuming this endpoint exists
-        if (locationsResponse.ok) {
-          const locationsData = await locationsResponse.json();
-          setAllLocations(locationsData || []);
-        } else {
-          // If locations endpoint doesn't exist, fetch from reports data
-          const seenLocationIds = new Set();
-          const uniqueLocations = result.reports
-            .map(item => item.location)
-            .filter(loc => loc && !seenLocationIds.has(loc.id) && seenLocationIds.add(loc.id));
-          setAllLocations(uniqueLocations || []);
-        }
       } catch (err) {
-        console.error('Error fetching reports:', err);
+        console.error(err);
         setError('Failed to load reports');
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
-    // ONLY RUN ON MOUNT OR WHEN TRIGGER CHANGES
-  }, [filterTrigger, currentPage, startDate, endDate, searchTerm, selectedUnits, selectedCategories, selectedLocations]); // 3. UPDATE DEPENDENCY
+  }, [filterTrigger, currentPage, startDate, endDate, searchTerm, selectedUnits, selectedCategories, selectedLocations]);
 
-  // 3. HANDLER FUNCTIONS
+  // --- HANDLERS ---
   const handleApplyFilters = () => {
-    setCurrentPage(1); // Reset to first page when applying filters
+    setCurrentPage(1);
     setFilterTrigger(prev => prev + 1);
+    setIsFilterExpanded(false);
   };
 
   const handleResetFilters = () => {
@@ -167,11 +147,9 @@ export default function ReportManagementPage() {
     setSelectedUnits([]);
     setSelectedCategories([]);
     setSelectedLocations([]);
-    // Reset kedua tanggal
     setStartDate('');
     setEndDate('');
-    setCurrentPage(1); // Reset to first page when resetting filters
-    // Trigger fetch after state update (React batches these, so effect sees new state)
+    setCurrentPage(1);
     setFilterTrigger(prev => prev + 1);
   };
 
@@ -180,47 +158,47 @@ export default function ReportManagementPage() {
     setIsModalOpen(true);
   };
 
-  // 2. EXPORT FUNCTION LOGIC
   const handleExport = () => {
-    if (reports.length === 0) {
-      alert("Tidak ada data laporan untuk diexport.");
-      return;
-    }
-
-    // Mapping data agar sesuai dengan kolom Excel yang diinginkan
+    if (reports.length === 0) return alert("Tidak ada data laporan untuk diexport.");
+    
     const dataToExport = reports.map(report => ({
-      "Tanggal & Waktu": new Date(report.capturedAt).toLocaleString('id-ID'),
+      "Tanggal": new Date(report.capturedAt).toLocaleDateString('id-ID'),
+      "Waktu": new Date(report.capturedAt).toLocaleTimeString('id-ID'),
       "Nama Petugas": report.user?.fullName || 'N/A',
       "Unit": report.unit?.name || 'N/A',
       "Kategori": report.category?.name || 'N/A',
-      "Lokasi Spesifik": report.location?.name || '-',
-      "Catatan Petugas": report.notes || '-', // Mengambil Notes
-      "Latitude": report.latitude,
-      "Longitude": report.longitude,
-      "Link Foto": report.imagePath || 'Tidak ada foto',
-      "Status": "Completed"
+      "Lokasi": report.location?.name || '-',
+      "Catatan": report.notes || '-',
+      "Link Foto": report.imagePath || '-'
     }));
 
-    // Membuat Worksheet dan Workbook
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Security");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Reports");
+    XLSX.writeFile(workbook, `Reports_${new Date().toISOString().slice(0,10)}.xlsx`);
+  };
 
-    // Auto-width columns (Sedikit styling biar rapi)
-    const max_width = dataToExport.reduce((w, r) => Math.max(w, r["Catatan Petugas"].length), 10);
-    worksheet["!cols"] = [ { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: max_width }, { wch: 15 }, { wch: 15 }, { wch: 50 } ];
+  // --- RENDER HELPERS ---
+  const CategoryBadge = ({ category }: { category: any }) => {
+    if (!category) return null;
+    let style = 'bg-slate-100 text-slate-600 border-slate-200';
+    
+    if (category.color === 'red' || category.name.toLowerCase().includes('unsafe')) 
+        style = 'bg-red-50 text-red-600 border-red-200';
+    else if (category.color === 'yellow' || category.name.toLowerCase().includes('cond')) 
+        style = 'bg-amber-50 text-amber-600 border-amber-200';
+    else if (category.color === 'green') 
+        style = 'bg-emerald-50 text-emerald-600 border-emerald-200';
 
-    // Generate file name dengan timestamp
-    const timestamp = new Date().toISOString().slice(0,10);
-    XLSX.writeFile(workbook, `Laporan_Security_${timestamp}.xlsx`);
+    return <span className={`px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase tracking-wider border ${style}`}>{category.name}</span>;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-          <p>Loading reports...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-amber-500 border-r-transparent mb-4"></div>
+          <p className="font-medium text-slate-500">Loading reports...</p>
         </div>
       </div>
     );
@@ -228,13 +206,13 @@ export default function ReportManagementPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-        <div className="text-center p-6 bg-zinc-900 border border-zinc-800 rounded-xl max-w-md">
-          <h2 className="text-xl font-bold mb-2">Error Loading Reports</h2>
-          <p className="text-zinc-400 mb-4">{error}</p>
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center">
+        <div className="text-center p-8 bg-white border border-red-200 rounded-2xl shadow-lg max-w-md">
+          <h2 className="text-xl font-bold mb-2 text-slate-900">Error Loading Reports</h2>
+          <p className="text-slate-500 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg"
+            className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-colors"
           >
             Retry
           </button>
@@ -243,249 +221,231 @@ export default function ReportManagementPage() {
     );
   }
 
-  // Prepare units for the dropdown
-  const units = [
-    { id: 'all', name: 'All Units' },
-    ...allUnits
-  ];
-
   return (
     <>
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="border-b border-zinc-800 bg-zinc-900/50 p-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">Report Management</h1>
-            <div className="flex items-center gap-4">
-              {/* 3. ATTACH EXPORT FUNCTION */}
-              <button
-                onClick={handleExport}
-                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700 transition-colors"
-              >
+      <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen">
+        
+        {/* Header - Sticky & Responsive */}
+        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Report Management</h1>
+              <p className="text-xs font-medium text-slate-500 hidden sm:block mt-1">Manage and analyze security reports</p>
+            </div>
+            
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-emerald-100 transition-colors shadow-sm">
                 <Download className="h-4 w-4" />
-                Export Excel
-              </button>
-
-              <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700 transition-colors">
-                <Printer className="h-4 w-4" />
-                Print
+                <span className="hidden sm:inline">Export to Excel</span>
+                <span className="sm:hidden">Export</span>
               </button>
             </div>
           </div>
         </header>
 
         <div className="flex-1 p-6 overflow-y-auto">
-          {/* Filters Area */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
+          {/* Mobile Filter Toggle */}
+          <button 
+            onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+            className="w-full md:hidden flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-xl mb-4 text-sm font-bold text-slate-700 shadow-sm"
+          >
+            <span className="flex items-center gap-2"><Filter className="h-4 w-4 text-amber-600" /> Filters</span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${isFilterExpanded ? 'rotate-180' : ''}`} />
+          </button>
 
-            {/* PERUBAHAN 3: Grid Layout 6 Kolom agar presisi memenuhi layar */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
-
-              {/* 1. Search Name */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Search Name</label>
+          {/* Filters Area - Light Mode */}
+          <div className={`${isFilterExpanded ? 'block' : 'hidden'} md:block bg-white border border-slate-200 rounded-2xl p-6 mb-8 shadow-sm transition-all`}>
+            <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <Filter className="h-4 w-4 text-amber-600" /> Filter Options
+            </h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-5">
+              
+              {/* Search */}
+              <div className="col-span-1 sm:col-span-2 xl:col-span-2">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Search</label>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search..."
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Search officer, notes..."
+                    className="w-full bg-white border border-slate-300 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 </div>
               </div>
 
-              {/* 2. Filter Units */}
+              {/* Units */}
               <div>
-                <label className="block text-sm text-zinc-400 mb-2">Units</label>
-                <MultiSelectDropdown
-                  options={allUnits}
-                  selected={selectedUnits}
-                  onChange={setSelectedUnits}
-                  placeholder="Select Units"
-                />
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Units</label>
+                <MultiSelectDropdown options={allUnits} selected={selectedUnits} onChange={setSelectedUnits} placeholder="All Units" />
               </div>
 
-              {/* 3. Filter Categories */}
+              {/* Categories */}
               <div>
-                <label className="block text-sm text-zinc-400 mb-2">Categories</label>
-                <MultiSelectDropdown
-                  options={allCategories}
-                  selected={selectedCategories}
-                  onChange={setSelectedCategories}
-                  placeholder="Select Categories"
-                />
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Categories</label>
+                <MultiSelectDropdown options={allCategories} selected={selectedCategories} onChange={setSelectedCategories} placeholder="All Categories" />
               </div>
 
-              {/* 4. Start Date */}
+              {/* Date Range */}
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Start Date</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Start Date</label>
                 <input
                   type="date"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                 />
               </div>
-
-              {/* 5. End Date */}
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">End Date</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">End Date</label>
                 <input
                   type="date"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                 />
               </div>
 
-              {/* 6. Buttons (Apply & Reset) */}
-              <div className="flex items-center gap-2 h-10"> {/* h-10 agar tinggi sama dengan input */}
-                <button
-                  onClick={handleApplyFilters}
-                  className="flex-1 h-full flex items-center justify-center gap-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
-                >
-                  <Filter className="h-4 w-4" />
-                  Apply
+              {/* Action Buttons */}
+              <div className="col-span-1 sm:col-span-2 xl:col-span-6 flex flex-col sm:flex-row justify-end gap-3 mt-4 sm:mt-0 pt-4 border-t border-slate-100 xl:border-0 xl:pt-0">
+                <button onClick={handleResetFilters} className="px-6 py-2.5 text-sm font-bold text-slate-600 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 rounded-xl transition-colors flex items-center justify-center gap-2">
+                  <RotateCcw className="h-4 w-4" /> Reset
                 </button>
-                <button
-                  onClick={handleResetFilters}
-                  className="h-full px-4 bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-lg text-sm transition-colors"
-                  title="Reset Filters"
-                >
-                  Reset
+                <button onClick={handleApplyFilters} className="px-8 py-2.5 text-sm font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                  <Filter className="h-4 w-4" /> Apply Filters
                 </button>
               </div>
-
             </div>
           </div>
 
-          {/* Reports Table */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold">Reports List</h2>
-              <div className="text-sm text-zinc-400">
-                Total: {totalReports} reports
-              </div>
+          {/* Reports Content */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h2 className="font-bold text-slate-900 text-lg flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-amber-600" /> Reports List
+              </h2>
+              <span className="text-xs font-bold px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-500 shadow-sm">Total: {totalReports}</span>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-zinc-800 text-left text-sm text-zinc-400">
-                    <th className="pb-3 pl-2">Evidence</th>
-                    <th className="pb-3">Officer</th>
-                    <th className="pb-3">Unit</th>
-                    <th className="pb-3">Category</th>
-                    <th className="pb-3">Specific Loc</th>
-                    <th className="pb-3">Date/Time</th>
-                    <th className="pb-3">Status</th>
-                    <th className="pb-3">Actions</th>
+            {/* Desktop View (Table) - Light Mode */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-500 tracking-wider border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-4">Evidence</th>
+                    <th className="px-6 py-4">Details</th>
+                    <th className="px-6 py-4">Category</th>
+                    <th className="px-6 py-4">Location</th>
+                    <th className="px-6 py-4">Date/Time</th>
+                    <th className="px-6 py-4 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800">
-                  {reports.map((report: any) => (
-                    <tr key={report.id} className="text-sm hover:bg-zinc-800/30 transition-colors">
-                      <td className="py-3 pl-2">
-                        <div className="h-10 w-16 bg-zinc-800 rounded-md overflow-hidden border border-zinc-700 flex items-center justify-center">
+                <tbody className="divide-y divide-slate-100 text-sm">
+                  {reports.map((report) => (
+                    <tr key={report.id} className="hover:bg-amber-50/30 transition-colors group">
+                      <td className="px-6 py-4 w-24">
+                        <div className="h-14 w-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative shadow-sm">
                           {report.imagePath ? (
-                            <img src={report.imagePath} alt="Evd" className="h-full w-full object-cover" loading="lazy" />
+                            <img src={report.imagePath} alt="Evd" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
                           ) : (
-                            <ImageIcon className="h-4 w-4 text-zinc-600" />
+                            <div className="h-full w-full flex items-center justify-center text-slate-400"><ImageIcon size={20} /></div>
                           )}
                         </div>
                       </td>
-                      <td className="py-3 font-medium text-white">{report.user?.fullName || 'N/A'}</td>
-                      <td className="py-3 text-zinc-300">{report.unit?.name || 'N/A'}</td>
-                      <td className="py-3">
-                        {report.category && (
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            (report.category.color === 'red' ||
-                             report.category.name.toLowerCase().includes('unsafe') ||
-                             report.category.name.toLowerCase().includes('tidak aman'))
-                              ? 'bg-red-500/20 text-red-400'
-                              : report.category.color === 'yellow' ||
-                                report.category.name.toLowerCase().includes('maintenance')
-                                  ? 'bg-yellow-500/20 text-yellow-400'
-                                  : 'bg-green-500/20 text-green-400'
-                          }`}>
-                            {report.category.name}
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-slate-900">{report.user?.fullName || 'Unknown'}</div>
+                        <div className="text-xs font-medium text-slate-500 mt-0.5">{report.unit?.name || 'Unknown Unit'}</div>
+                      </td>
+                      <td className="px-6 py-4"><CategoryBadge category={report.category} /></td>
+                      <td className="px-6 py-4">
+                          <span className="font-medium text-slate-700 bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs">
+                              {report.location?.name || '-'}
                           </span>
-                        )}
                       </td>
-                      <td className="py-3 text-zinc-300">{report.location?.name || '-'}</td>
-                      <td className="py-3 text-zinc-300">{new Date(report.capturedAt).toLocaleString()}</td>
-                      <td className="py-3">
-                        <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-full">Completed</span>
+                      <td className="px-6 py-4 text-slate-600 whitespace-nowrap">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-800">{new Date(report.capturedAt).toLocaleDateString('en-GB')}</span>
+                          <span className="text-xs text-slate-500 mt-0.5">{new Date(report.capturedAt).toLocaleTimeString('en-GB')}</span>
+                        </div>
                       </td>
-                      <td className="py-3">
-                        <button onClick={() => handleViewReport(report)} className="flex items-center gap-1 text-blue-400 hover:text-blue-300 text-sm">
-                          <Eye className="h-4 w-4" />View
+                      <td className="px-6 py-4 text-right">
+                        <button onClick={() => handleViewReport(report)} className="p-2 bg-white border border-slate-200 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50 rounded-lg text-slate-400 transition-all shadow-sm">
+                          <Eye size={18} />
                         </button>
                       </td>
                     </tr>
                   ))}
-                  {reports.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className="py-8 text-center text-zinc-500">No reports found matching your criteria</td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6">
-                <div className="text-sm text-zinc-400">
-                  Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalReports)} - {Math.min(currentPage * itemsPerPage, totalReports)} of {totalReports} reports
+            {/* Mobile View (Cards) - Light Mode */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {reports.map((report) => (
+                <div key={report.id} onClick={() => handleViewReport(report)} className="p-5 active:bg-slate-50 cursor-pointer">
+                  <div className="flex gap-4">
+                    {/* Image */}
+                    <div className="h-20 w-20 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 shadow-sm">
+                       {report.imagePath ? (
+                        <img src={report.imagePath} alt="Evd" className="h-full w-full object-cover" loading="lazy" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-slate-400"><ImageIcon size={24} /></div>
+                      )}
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="font-bold text-sm text-slate-900 truncate pr-2">{report.user?.fullName}</h3>
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 whitespace-nowrap">
+                            {new Date(report.capturedAt).toLocaleDateString('en-GB')}
+                        </span>
+                      </div>
+                      
+                      <div className="text-xs font-medium text-slate-500 mb-2 truncate flex items-center gap-1">
+                          <span className="text-amber-700">{report.unit?.name}</span> • {report.location?.name}
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-2">
+                        <CategoryBadge category={report.category} />
+                        <button className="text-xs text-amber-600 font-bold flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-md">
+                          Details <MoreHorizontal size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              ))}
+            </div>
+
+            {reports.length === 0 && (
+              <div className="p-16 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4 text-slate-400 border border-slate-200">
+                  <Search size={32} />
+                </div>
+                <h3 className="text-slate-900 font-bold text-lg mb-1">No reports found</h3>
+                <p className="text-sm text-slate-500 font-medium">Try adjusting your filters or search terms.</p>
+              </div>
+            )}
+
+            {/* Footer Pagination */}
+            {totalPages > 1 && (
+              <div className="p-5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Page {currentPage} of {totalPages}</span>
+                <div className="flex gap-2">
+                  <button 
                     disabled={currentPage === 1}
-                    className={`px-3 py-1.5 rounded-lg ${currentPage === 1 ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    className="px-4 py-2 text-xs font-bold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                   >
                     Previous
                   </button>
-
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      // Show all pages if total is 5 or less
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      // Show first 5 pages if current page is 1-3
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      // Show last 5 pages if current page is near the end
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      // Show current page in the middle
-                      pageNum = currentPage - 2 + i;
-                    }
-
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`px-3 py-1.5 rounded-lg min-w-[36px] ${
-                          currentPage === pageNum
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-zinc-800 text-white hover:bg-zinc-700'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  <button 
                     disabled={currentPage === totalPages}
-                    className={`px-3 py-1.5 rounded-lg ${currentPage === totalPages ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    className="px-4 py-2 text-xs font-bold bg-amber-500 border border-amber-600 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
                   >
                     Next
                   </button>
@@ -496,7 +456,6 @@ export default function ReportManagementPage() {
         </div>
       </div>
 
-      {/* Report Details Modal */}
       {isModalOpen && selectedReport && (
         <ReportDetailsModal
           report={selectedReport}

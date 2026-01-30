@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Camera, MapPin, Wifi, WifiOff, Loader2, CheckCircle, RotateCcw } from 'lucide-react';
+import { Camera, MapPin, Wifi, WifiOff, Loader2, CheckCircle, RotateCcw, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { useOfflineReports } from '@/hooks/use-offline-reports';
 import { useSession } from 'next-auth/react';
 import { Combobox } from '@/components/ui/combobox';
@@ -15,7 +15,7 @@ import { getReportCategories, getUnitLocations } from '@/actions/report-actions'
 
 export default function CreateReportPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const { addOfflineReport } = useOfflineReports();
   const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -37,49 +37,35 @@ export default function CreateReportPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // 1. UPDATE STATE & EFFECT (Inside Component)
+  // --- STATE & EFFECTS (Sama seperti sebelumnya) ---
   useEffect(() => {
-    // Check status immediately on mount
     setIsOnline(navigator.onLine);
-
-    const handleStatusChange = () => {
-      setIsOnline(navigator.onLine);
-    };
-
+    const handleStatusChange = () => setIsOnline(navigator.onLine);
     window.addEventListener('online', handleStatusChange);
     window.addEventListener('offline', handleStatusChange);
-
     return () => {
       window.removeEventListener('online', handleStatusChange);
       window.removeEventListener('offline', handleStatusChange);
     };
   }, []);
 
-  // Fetch categories and locations on component mount using server actions
   useEffect(() => {
     const fetchData = async () => {
       if (session?.user) {
         try {
-          // Fetch report categories
           const categoriesData = await getReportCategories();
           setCategories(categoriesData);
-
-          // Fetch unit locations for the user's assigned unit
           const locationsData = await getUnitLocations(session.user.id as string);
           setLocations(locationsData);
         } catch (error) {
-          console.error('Error fetching dropdown data:', error);
-          // Set empty arrays if there's an error
           setCategories([]);
           setLocations([]);
         }
       }
     };
-
     fetchData();
   }, [session]);
 
-  // Fetch user's assigned unit on component mount
   useEffect(() => {
     const fetchAssignedUnit = async () => {
       if (session?.user) {
@@ -88,94 +74,39 @@ export default function CreateReportPage() {
           if (response.ok) {
             const data = await response.json();
             setAssignedUnit(data.assignedUnit);
-            if (!data.assignedUnit) {
-              setUnitError('Anda tidak ditugaskan ke unit manapun. Hubungi administrator untuk mendapatkan penugasan unit.');
-            } else {
-              setUnitError(null);
-            }
-          } else {
-            setUnitError('Gagal memuat penugasan unit Anda. Silakan coba lagi.');
-          }
+            if (!data.assignedUnit) setUnitError('No unit assigned to your account.');
+            else setUnitError(null);
+          } else setUnitError('Failed to load unit assignment.');
         } catch (error) {
-          console.error('Error fetching assigned unit:', error);
-          setUnitError('Terjadi kesalahan saat menghubungi server. Silakan coba lagi.');
+          setUnitError('Connection error while fetching unit.');
         }
       }
     };
-
     fetchAssignedUnit();
   }, [session]);
 
-  // Initialize camera with simplified approach to fix DOM timing issue
+  // --- CAMERA LOGIC ---
   const startCamera = async () => {
-    console.log('🎬 startCamera() called');
-
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      console.error('❌ Browser does not support mediaDevices');
-      setCameraError('Browser Anda tidak mendukung akses kamera. Silakan gunakan browser yang kompatibel.');
-      setTimeout(() => setCameraError(null), 5000);
+      setCameraError('Camera not supported by browser.');
       return;
     }
-
     try {
-      console.log('📹 Requesting camera access...');
-
-      // First, set camera as active to show the video element
       setIsCameraActive(true);
-
-      // Small delay to ensure video element is in DOM
       await new Promise(resolve => setTimeout(resolve, 100));
-
       if (!videoRef.current) {
-        console.error('❌ videoRef.current is still null after delay');
-        setCameraError('Gagal menginisialisasi tampilan kamera. Silakan coba lagi.');
         setIsCameraActive(false);
         return;
       }
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment'
-        }
-      });
-
-      console.log('✅ Camera stream obtained successfully:', stream);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       streamRef.current = stream;
       videoRef.current.srcObject = stream;
-      console.log('✅ Camera is now active!');
-
     } catch (error: any) {
-      console.error('❌ Error accessing camera:', error);
-      setIsCameraActive(false); // Reset state on error
-
-      let errorMessage = 'Tidak dapat mengakses kamera.';
-
-      switch (error.name) {
-        case 'NotAllowedError':
-          errorMessage = 'Izin akses kamera ditolak. Harap aktifkan izin kamera di pengaturan browser Anda.';
-          break;
-        case 'NotFoundError':
-          errorMessage = 'Perangkat kamera tidak ditemukan pada perangkat ini.';
-          break;
-        case 'NotReadableError':
-          errorMessage = 'Kamera sedang digunakan oleh aplikasi lain.';
-          break;
-        case 'OverconstrainedError':
-          errorMessage = 'Kamera tidak mendukung konfigurasi yang diminta.';
-          break;
-        case 'SecurityError':
-          errorMessage = 'Akses kamera diblokir karena alasan keamanan. Pastikan Anda menggunakan HTTPS.';
-          break;
-        default:
-          errorMessage += ` Detail: ${error.message || 'Kesalahan tidak diketahui'}`;
-      }
-
-      setCameraError(errorMessage);
-      setTimeout(() => setCameraError(null), 5000);
+      setIsCameraActive(false);
+      setCameraError('Camera access denied: ' + error.message);
     }
   };
 
-  // Stop camera
   const stopCamera = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -184,35 +115,26 @@ export default function CreateReportPage() {
     setIsCameraActive(false);
   };
 
-  // Capture photo from camera
   const capturePhoto = () => {
     if (!videoRef.current || !canvasRef.current) return;
-
     const video = videoRef.current;
     const canvas = canvasRef.current;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const imageData = canvas.toDataURL('image/jpeg');
-      
-      // Convert data URL to File object
-      fetch(imageData)
-        .then(res => res.blob())
-        .then(blob => {
-          const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-          setImageFile(file);
-          setImagePreview(imageData);
-          setIsImageCaptured(true);
-          stopCamera();
-        });
+      fetch(imageData).then(res => res.blob()).then(blob => {
+        const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        setImageFile(file);
+        setImagePreview(imageData);
+        setIsImageCaptured(true);
+        stopCamera();
+      });
     }
   };
 
-
-  // Clear the current photo and return to selection mode
   const clearPhoto = () => {
     setImagePreview(undefined);
     setImageFile(null);
@@ -220,100 +142,63 @@ export default function CreateReportPage() {
     stopCamera();
   };
 
-  // Get current location
+  // --- LOCATION LOGIC ---
   const getLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation tidak didukung oleh browser Anda');
+      alert('Geolocation not supported.');
       return;
     }
-
     setIsLocationLoading(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
+        setLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
         setIsLocationLoading(false);
       },
       (error) => {
-        console.error('Error getting location:', error);
-        alert('Tidak dapat mendapatkan lokasi Anda. Pastikan layanan lokasi diaktifkan.');
+        alert('Failed to retrieve GPS coordinates.');
         setIsLocationLoading(false);
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000
-      }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
   };
 
-  // 2. UPDATE SUBMIT FUNCTION (Try-Catch Pattern)
+  // --- SUBMIT LOGIC ---
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const submitReport = async () => {
-    // ... (Keep Validation Checks: session, image, location, etc. same as before) ...
-    if (!session?.user) { alert('Anda harus masuk untuk mengirim laporan'); return; }
-    if (!isImageCaptured) { alert('Silakan ambil foto sebelum mengirim'); return; }
-    if (!location) { alert('Silakan dapatkan lokasi Anda sebelum mengirim'); return; }
-    if (!assignedUnit) { alert('Anda tidak ditugaskan ke unit manapun. Hubungi administrator untuk mendapatkan penugasan unit.'); return; }
-    if (!category) { alert('Silakan pilih kategori laporan sebelum mengirim'); return; }
-    if (!locationRoom) { alert('Silakan pilih lokasi/ruangan dari unit Anda sebelum mengirim'); return; }
-    if (!imageFile) { alert('Tidak ada file gambar ditemukan'); return; }
+    if (!session?.user) { alert('Authentication required.'); return; }
+    if (!isImageCaptured) { alert('Evidence photo is mandatory.'); return; }
+    if (!location) { alert('GPS coordinates required.'); return; }
+    if (!assignedUnit) { alert('Unit assignment missing.'); return; }
+    if (!category || !locationRoom) { alert('Please complete all form fields.'); return; }
+    if (!imageFile) { alert('Image file missing.'); return; }
 
     setIsSubmitting(true);
 
     try {
-      // 1. Check Offline Status First
-      if (!navigator.onLine) {
-        throw new Error('OFFLINE_MODE');
-      }
+      if (!navigator.onLine) throw new Error('OFFLINE_MODE');
 
-      // Prepare Data
       const formData = new FormData();
       formData.append('image', imageFile);
       formData.append('notes', notes);
       formData.append('latitude', location.lat.toString());
       formData.append('longitude', location.lng.toString());
       formData.append('unitId', assignedUnit.id);
-      // Note: userId is not sent in form data as it's retrieved from session on the server
       formData.append('categoryId', category);
       formData.append('locationId', locationRoom);
-
-      // TAMBAHAN WAJIB (FIX ERROR MISSING FIELDS):
       formData.append('capturedAt', new Date().toISOString());
 
-      // Attempt Upload
-      const response = await fetch('/api/reports', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetch('/api/reports', { method: 'POST', body: formData });
+      if (!response.ok) throw new Error(await response.text());
 
-      // 2. Handle Server Errors Explicitly
-      if (!response.ok) {
-        const errorText = await response.text();
-        // Throw with a special prefix to identify it's a server error, not network
-        throw new Error(`SERVER_ERROR: ${errorText || response.statusText}`);
-      }
-
-      // Success Online - Show success popup instead of alert
       setShowSuccessPopup(true);
 
     } catch (error: any) {
-      console.error('Submission Error:', error);
-
-      // 3. Smart Error Handling
-      // Only go to Offline Mode if it's actually a network issue or forced offline
-      const isNetworkError = error.message === 'OFFLINE_MODE' ||
-                             error.message.includes('Failed to fetch') ||
-                             error.message.includes('NetworkError');
-
+      const isNetworkError = error.message === 'OFFLINE_MODE' || error.message.includes('Failed to fetch');
       if (isNetworkError) {
-        console.warn('Network issue detected, switching to offline save...');
         try {
           await addOfflineReport({
-            userId: session.user.id as string, // Still needed for offline storage
+            userId: session.user.id as string,
             unitId: assignedUnit.id,
             imageData: imagePreview,
             notes,
@@ -323,287 +208,250 @@ export default function CreateReportPage() {
             locationId: locationRoom,
             capturedAt: new Date().toISOString()
           });
-
-          alert('Mode Offline: Internet tidak stabil. Laporan DISIMPAN di perangkat.');
+          alert('Offline Mode: Report saved locally.');
           router.push('/security');
-        } catch (offlineError) {
-          console.error('Critical Error:', offlineError);
-          alert('Gagal menyimpan laporan (Storage Error).');
-        }
+        } catch (e) { alert('Failed to save offline report.'); }
       } else {
-        // 4. It is a Server/Logic Error -> Show the REAL reason
-        // Strip the "SERVER_ERROR: " prefix for cleaner alert
-        const cleanMsg = error.message.replace('SERVER_ERROR: ', '');
-        alert(`Gagal mengirim laporan: ${cleanMsg}`);
+        alert('Submission failed: ' + error.message);
       }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      stopCamera();
-      // Revoke object URLs to free memory
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview);
-      }
-    };
+    return () => { stopCamera(); if (imagePreview) URL.revokeObjectURL(imagePreview); };
   }, [imagePreview]);
 
-  // Determine if submit button should be enabled
   const isSubmitEnabled = isImageCaptured && location && assignedUnit && category && locationRoom && !isSubmitting;
 
   return (
-    <div className="container mx-auto py-6 max-w-2xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Buat Laporan Keamanan</h1>
-        <p className="text-muted-foreground">
-          Ambil bukti dengan foto dan data lokasi
-        </p>
+    <div className="w-full px-6 py-8 space-y-6">
+      
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border-l-4 border-l-[#00F7FF] shadow-md hover:shadow-lg transition-shadow duration-300">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Create Report</h1>
+          <p className="text-slate-600 font-semibold text-sm mt-1">
+            Real-time Field Reporting System
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+            <div className={`h-3 w-3 rounded-full animate-pulse ${isOnline ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+            <span className="text-sm font-bold text-slate-800 uppercase tracking-wider">{isOnline ? 'SYSTEM ONLINE' : 'OFFLINE MODE'}</span>
+        </div>
       </div>
 
       {unitError && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-500 text-sm">
-          {unitError}
+        <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-xl shadow-sm flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+          <AlertTriangle className="h-5 w-5 text-red-600" /> 
+          <span className="text-red-700 font-bold">{unitError}</span>
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Detail Laporan</span>
-            <Badge variant={isOnline ? "default" : "destructive"}>
-              {isOnline ? (
-                <>
-                  <Wifi className="mr-1 h-3 w-3" /> Online
-                </>
-              ) : (
-                <>
-                  <WifiOff className="mr-1 h-3 w-3" /> Offline
-                </>
-              )}
-            </Badge>
+      {/* --- FORM CONTAINER --- */}
+      <Card className="bg-white border-0 shadow-xl overflow-hidden border-t-4 border-t-cyan-400">
+        <CardHeader className="border-b border-slate-100 pb-4 bg-white pt-6">
+           <CardTitle className="text-xl font-black text-slate-900 flex items-center gap-2">
+            <ShieldCheck className="h-6 w-6 text-cyan-600" /> Patrol Form
           </CardTitle>
-          {cameraError && (
-            <div className="mt-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-500 text-sm">
-              {cameraError}
-            </div>
-          )}
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Camera Only Selection */}
-          <div className="space-y-2">
-            <Label>Foto Bukti (Wajib Kamera)</Label> {/* Updated Label */}
-            {!isImageCaptured && !isCameraActive ? (
-              <div className="w-full"> {/* Changed from grid to full width */}
-                <Button
-                  type="button"
-                  onClick={startCamera}
-                  variant="outline"
-                  className="flex flex-col items-center justify-center h-48 w-full border-2 border-dashed border-zinc-700 hover:border-blue-500 hover:bg-zinc-800/50 transition-all"
-                >
-                  <div className="bg-zinc-800 p-4 rounded-full mb-3">
-                     <Camera className="h-8 w-8 text-blue-500" />
+        
+        <CardContent className="p-6 md:p-8 bg-slate-50/30">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+            
+            {/* === LEFT COLUMN: CAMERA === */}
+            <div className="flex flex-col gap-3 h-full">
+               <Label className="text-slate-900 font-extrabold text-base flex items-center gap-2">
+                 <div className="w-6 h-6 rounded-full bg-slate-900 text-cyan-400 flex items-center justify-center text-xs">1</div>
+                 Upload Photo <span className="text-red-500 text-xs"></span>
+               </Label>
+               
+               <div className="flex-1 p-1 rounded-2xl border-2 border-dashed border-cyan-200 bg-white shadow-sm hover:shadow-md hover:border-cyan-400 transition-all duration-300 min-h-[450px] flex flex-col">
+                  <div className="flex-1 flex flex-col p-4">
+                      {!isImageCaptured && !isCameraActive ? (
+                        <div className="flex-1 flex flex-col items-center justify-center gap-4 py-10">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-cyan-200 blur-xl opacity-20 rounded-full"></div>
+                                <Button
+                                type="button"
+                                onClick={startCamera}
+                                className="relative w-32 h-32 rounded-full bg-white border-4 border-cyan-100 hover:border-cyan-400 hover:scale-105 transition-all shadow-lg flex items-center justify-center group"
+                                >
+                                    <Camera className="h-12 w-12 text-slate-700 group-hover:text-cyan-600 transition-colors" />
+                                </Button>
+                            </div>
+                            <div className="text-center space-y-1">
+                                <h3 className="text-lg font-black text-slate-800">Activate Camera</h3>
+                                <p className="text-sm font-semibold text-slate-500">Capture photo directly at location</p>
+                            </div>
+                        </div>
+                      ) : isImageCaptured ? (
+                        <div className="relative w-full h-full min-h-[300px] bg-slate-900 rounded-xl overflow-hidden shadow-inner group border-2 border-slate-200">
+                          {imagePreview && (
+                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                          )}
+                          <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                            <Button onClick={clearPhoto} variant="secondary" className="font-bold shadow-xl border border-white/20 text-slate-900">
+                              <RotateCcw className="mr-2 h-4 w-4" /> Retake Photo
+                            </Button>
+                          </div>
+                          <div className="absolute bottom-3 right-3">
+                             <Badge className="bg-emerald-500 hover:bg-emerald-600 border-0"><CheckCircle className="w-3 h-3 mr-1" /> Captured</Badge>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {/* Camera Live View */}
+                      <div className={`relative flex-1 bg-black rounded-xl overflow-hidden shadow-2xl ring-4 ring-slate-200 ${isCameraActive ? 'block' : 'hidden'}`}>
+                        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                        <canvas ref={canvasRef} className="hidden" />
+                        {isCameraActive && (
+                          <>
+                             {/* Overlay Grid */}
+                             <div className="absolute inset-0 pointer-events-none opacity-30 grid grid-cols-3 grid-rows-3">
+                                 <div className="border-r border-b border-white/30"></div>
+                                 <div className="border-r border-b border-white/30"></div>
+                                 <div className="border-b border-white/30"></div>
+                                 <div className="border-r border-b border-white/30"></div>
+                                 <div className="border-r border-b border-white/30"></div>
+                                 <div className="border-r border-b border-white/30"></div>
+                                 <div className="border-r border-white/30"></div>
+                                 <div className="border-r border-white/30"></div>
+                                 <div></div>
+                             </div>
+
+                             <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent flex flex-col items-center gap-4 z-20">
+                                <Button onClick={capturePhoto} className="bg-white hover:bg-slate-200 rounded-full w-20 h-20 shadow-lg border-[6px] border-slate-300 p-0 transform active:scale-95 transition-transform">
+                                <div className="w-16 h-16 bg-red-600 rounded-full border-2 border-white"></div>
+                                </Button>
+                                <Button onClick={stopCamera} size="sm" variant="ghost" className="text-white hover:bg-white/20">Cancel</Button>
+                             </div>
+                          </>
+                        )}
+                      </div>
+                      
+                      {cameraError && (
+                          <div className="mt-3 p-3 bg-red-100 text-red-700 text-sm font-bold rounded-lg text-center border border-red-200">
+                              {cameraError}
+                          </div>
+                      )}
                   </div>
-                  <span className="font-medium text-lg">Buka Kamera</span>
-                  <span className="text-sm text-muted-foreground mt-1">Ambil foto langsung di lokasi</span>
-                </Button>
+               </div>
+            </div>
 
-                {/* GALLERY BUTTON & INPUT REMOVED */}
-              </div>
-            ) : isImageCaptured ? (
-              <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-                {imagePreview && (
-                  <img
-                    src={imagePreview}
-                    alt="Pratinjau bukti"
-                    className="w-full h-full object-cover"
-                  />
-                )}
+            {/* === RIGHT COLUMN: INPUT FORM === */}
+            <div className="flex flex-col gap-3 h-full">
+               <Label className="text-slate-900 font-extrabold text-base flex items-center gap-2">
+                 <div className="w-6 h-6 rounded-full bg-slate-900 text-cyan-400 flex items-center justify-center text-xs">2</div>
+                 Patrol Information
+               </Label>
+               
+               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-lg flex flex-col gap-6 h-full hover:border-cyan-200 transition-colors">
+                  
+                  {/* Category & Location */}
+                  <div className="grid grid-cols-1 gap-5">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black text-slate-700 uppercase tracking-wide">Report Category</Label>
+                      <div className="relative group">
+                        <Combobox
+                            options={categories}
+                            value={category}
+                            onValueChange={setCategory}
+                            placeholder="Select category..."
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black text-slate-700 uppercase tracking-wide">Area / Location</Label>
+                      <div className="relative group">
+                         <Combobox
+                            options={locations}
+                            value={locationRoom}
+                            onValueChange={setLocationRoom}
+                            placeholder="Select location..."
+                         />
+                      </div>
+                    </div>
+                  </div>
 
-                {/* Overlay controls */}
-                <div className="absolute inset-0 flex items-center justify-center gap-2">
-                  <Button
+                  {/* GPS Section */}
+                  <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-xs font-black text-slate-700 uppercase tracking-wide">GPS Coordinates</Label>
+                      {location ? (
+                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-bold"><CheckCircle className="w-3 h-3 mr-1"/> Locked</Badge>
+                      ) : (
+                          <Badge variant="outline" className="bg-slate-100 text-slate-500 border-slate-200 font-bold">Pending</Badge>
+                      )}
+                    </div>
+                    
+                    <Button
                     type="button"
-                    onClick={clearPhoto}
-                    variant="secondary"
-                    className="bg-background/80 backdrop-blur"
-                  >
-                    <RotateCcw className="mr-2 h-4 w-4" />
-                    Ganti Foto
-                  </Button>
-                </div>
-              </div>
-            ) : null}
-
-            {/* Camera View - Always render video element but control visibility */}
-            <div className={`relative aspect-video bg-muted rounded-lg overflow-hidden mt-4 ${isCameraActive ? 'block' : 'hidden'}`}>
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover"
-              />
-              <canvas ref={canvasRef} className="hidden" />
-
-              {isCameraActive && (
-                <>
-                  <div className="absolute inset-0 flex items-center justify-center z-20">
-                    <Button
-                      type="button"
-                      onClick={capturePhoto}
-                      className="bg-red-500 hover:bg-red-600 rounded-full w-16 h-16 flex items-center justify-center"
+                    onClick={getLocation}
+                    disabled={isLocationLoading}
+                    variant="outline"
+                    className={`w-full h-12 border-2 font-bold ${location ? 'border-cyan-200 bg-cyan-50 text-cyan-800 hover:bg-cyan-100' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}
                     >
-                      <div className="w-12 h-12 bg-white rounded-full"></div>
+                    {isLocationLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <MapPin className="mr-2 h-5 w-5" />}
+                    {location ? 'Update Location' : 'Get Current Location'}
+                    </Button>
+                    
+                    {location && (
+                        <div className="text-center">
+                             <span className="font-mono text-xs font-bold text-slate-500 bg-white px-2 py-1 rounded border border-slate-200">
+                                {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+                             </span>
+                        </div>
+                    )}
+                  </div>
+
+                  {/* Notes */}
+                  <div className="space-y-2 flex-1">
+                    <Label className="text-xs font-black text-slate-700 uppercase tracking-wide">Officer Notes</Label>
+                    <Textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Describe incident details or observations..."
+                      rows={4}
+                      className="bg-white border-2 border-slate-200 focus:border-cyan-500 focus:ring-0 text-slate-800 font-medium resize-none h-full min-h-[120px]"
+                    />
+                  </div>
+
+                  <div className="pt-2 mt-auto">
+                    <Button
+                      onClick={submitReport}
+                      disabled={!isSubmitEnabled}
+                      className={`w-full py-6 text-lg font-black tracking-wide shadow-lg transform transition-all active:scale-[0.98] rounded-xl ${
+                          !isSubmitEnabled 
+                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
+                          : isOnline 
+                              ? 'bg-[#00F7FF] text-slate-900 hover:bg-cyan-400 hover:shadow-cyan-200/50 border-b-4 border-cyan-600 active:border-b-0 active:translate-y-1' 
+                              : 'bg-orange-500 text-white border-b-4 border-orange-700 active:border-b-0 active:translate-y-1'
+                      }`}
+                    >
+                      {isSubmitting ? <><Loader2 className="mr-2 h-6 w-6 animate-spin" /> SENDING DATA...</> : isOnline ? 'SUBMIT REPORT' : 'SAVE OFFLINE'}
                     </Button>
                   </div>
 
-                  <div className="absolute bottom-4 left-0 right-0 flex justify-center z-20">
-                    <Button
-                      type="button"
-                      onClick={stopCamera}
-                      variant="secondary"
-                      className="bg-background/80 backdrop-blur"
-                    >
-                      Batalkan
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Location Section */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <Label>Lokasi</Label>
-              {location && (
-                <Badge variant="secondary">
-                  <MapPin className="mr-1 h-3 w-3" />
-                  Terekam
-                </Badge>
-              )}
+               </div>
             </div>
 
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                onClick={getLocation}
-                disabled={isLocationLoading}
-                variant="outline"
-                className="flex-1"
-              >
-                {isLocationLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Mendapatkan Lokasi...
-                  </>
-                ) : (
-                  <>
-                    <MapPin className="mr-2 h-4 w-4" />
-                    Dapatkan Lokasi Saat Ini
-                  </>
-                )}
-              </Button>
-
-              {location && (
-                <div className="flex-1 p-3 border rounded-md bg-muted flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">
-                    {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
-                  </span>
-                </div>
-              )}
-            </div>
           </div>
-
-          {/* Category Dropdown */}
-          <div className="space-y-2">
-            <Label htmlFor="category">Kategori Laporan</Label>
-            <Combobox
-              options={categories}
-              value={category}
-              onValueChange={setCategory}
-              placeholder="Pilih kategori..."
-              emptyMessage="Kategori tidak ditemukan."
-            />
-          </div>
-
-          {/* Location Room Dropdown */}
-          <div className="space-y-2">
-            <Label htmlFor="locationRoom">Lokasi/Ruangan</Label>
-            <Combobox
-              options={locations}
-              value={locationRoom}
-              onValueChange={setLocationRoom}
-              placeholder="Pilih lokasi/ruangan..."
-              emptyMessage="Lokasi tidak ditemukan."
-            />
-          </div>
-
-          {/* Notes Section */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Catatan Tambahan</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Jelaskan situasi, insiden, atau detail penting lainnya..."
-              rows={4}
-            />
-          </div>
-
-          {/* Submit Button */}
-          <Button
-            onClick={submitReport}
-            disabled={!isSubmitEnabled}
-            className="w-full"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Mengirim Laporan...
-              </>
-            ) : isOnline ? (
-              'Kirim Laporan'
-            ) : (
-              'Simpan Laporan Offline'
-            )}
-          </Button>
         </CardContent>
       </Card>
 
       {/* Success Popup */}
       {showSuccessPopup && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl border border-emerald-400/30 transform transition-all duration-300 scale-100">
-            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-12 h-12 text-white" />
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl border-4 border-emerald-400 transform scale-100 animate-in fade-in zoom-in duration-300">
+            <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-emerald-200">
+              <CheckCircle className="w-12 h-12 text-emerald-600" />
             </div>
-
-            <h2 className="text-2xl font-bold text-white mb-3">Laporan Terkirim!</h2>
-            <p className="text-emerald-100 mb-6">
-              Laporan keamanan Anda telah berhasil dikirim dan sedang diproses.
-            </p>
-
-            <div className="bg-white/10 rounded-lg p-4 mb-6">
-              <p className="text-white text-sm font-medium">Ringkasan Laporan:</p>
-              <p className="text-emerald-100 text-xs mt-1">
-                Kategori: {categories.find(c => c.value === category)?.label || 'Tidak diketahui'}
-              </p>
-              <p className="text-emerald-100 text-xs">
-                Lokasi: {locations.find(l => l.value === locationRoom)?.label || 'Tidak diketahui'}
-              </p>
-            </div>
-
-            <Button
-              onClick={() => router.push('/security')}
-              className="bg-white text-emerald-600 hover:bg-emerald-50 font-bold py-3 px-6 rounded-xl w-full transition-all duration-300 hover:scale-[1.02]"
-            >
-              Kembali ke Dashboard
+            <h2 className="text-3xl font-black text-slate-900 mb-2">SUCCESS!</h2>
+            <p className="text-slate-600 font-bold mb-8">Report has been successfully submitted.</p>
+            <Button onClick={() => router.push('/security')} className="bg-slate-900 text-white font-bold py-4 px-6 rounded-xl w-full hover:bg-slate-800 shadow-lg border-b-4 border-black active:border-b-0 active:translate-y-1">
+              RETURN TO DASHBOARD
             </Button>
           </div>
         </div>

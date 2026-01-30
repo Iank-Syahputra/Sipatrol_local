@@ -1,12 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-// 1. IMPORT XLSX
+import { useState, useEffect, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { Search, Filter, Download, Printer, Plus, Edit3, Trash2, MapPin, ChevronDown, Check } from "lucide-react";
+import { 
+  Search, 
+  Filter, 
+  Download, 
+  Printer, 
+  Plus, 
+  Edit3, 
+  Trash2, 
+  MapPin, 
+  ChevronDown, 
+  Check,
+  Calendar,
+  Building
+} from "lucide-react";
 
-// --- REUSABLE MULTI-SELECT COMPONENT ---
-const MultiSelectDropdown = ({ options, selected, onChange, placeholder, onPageChange }: any) => {
+// --- REUSABLE MULTI-SELECT COMPONENT (Responsive Width) ---
+const MultiSelectDropdown = ({ options, selected, onChange, placeholder }: any) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleOption = (id: string) => {
@@ -18,121 +30,116 @@ const MultiSelectDropdown = ({ options, selected, onChange, placeholder, onPageC
   };
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 px-3 text-left text-sm text-white flex justify-between items-center"
+        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 px-3 text-left text-sm text-white flex justify-between items-center hover:bg-zinc-750 transition-colors"
       >
-        <span className="truncate">{selected.length ? `${selected.length} Selected` : placeholder}</span>
-        <ChevronDown className="h-4 w-4 text-zinc-400" />
+        <span className="truncate pr-2">{selected.length ? `${selected.length} Selected` : placeholder}</span>
+        <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-full bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-          {options.map((opt: any) => (
-            <div
-              key={opt.id}
-              onClick={() => toggleOption(opt.id)}
-              className="px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700 cursor-pointer flex items-center gap-2"
-            >
-              <div className={`w-4 h-4 rounded border flex items-center justify-center ${selected.includes(opt.id) ? 'bg-blue-600 border-blue-600' : 'border-zinc-500'}`}>
-                {selected.includes(opt.id) && <Check className="h-3 w-3 text-white" />}
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          <div className="absolute z-20 mt-1 w-full bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl max-h-60 overflow-y-auto custom-scrollbar">
+            {options.map((opt: any) => (
+              <div
+                key={opt.id}
+                onClick={() => toggleOption(opt.id)}
+                className="px-3 py-2.5 text-sm text-zinc-300 hover:bg-zinc-700 cursor-pointer flex items-center gap-3 border-b border-zinc-700/50 last:border-0"
+              >
+                <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${selected.includes(opt.id) ? 'bg-blue-600 border-blue-600' : 'border-zinc-500'}`}>
+                  {selected.includes(opt.id) && <Check className="h-3 w-3 text-white" />}
+                </div>
+                <span className="truncate">{opt.name}</span>
               </div>
-              {opt.name}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
 };
 
 export default function ManageUnitLocationsPage() {
-  const [locations, setLocations] = useState<any[]>([]);
+  const [allLocations, setAllLocations] = useState<any[]>([]); // Raw Data
   const [units, setUnits] = useState<any[]>([]);
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  // Form States (Controlled Inputs)
+  // Form States
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingLocation, setEditingLocation] = useState<any>(null);
-
-  // Add/Edit Form Data
   const [formData, setFormData] = useState({ name: '', unitId: '' });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // PAGINATION STATES
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const itemsPerPage = 10; // Maximum 10 rows per page
-
-  // FETCH DATA (no pagination in new API)
+  // --- FETCH DATA ---
   const fetchData = async () => {
     try {
       setLoading(true);
-
-      // Call API (the new API doesn't use pagination parameters)
       const response = await fetch(`/api/admin/unit-locations`);
       if (!response.ok) throw new Error('Failed to fetch data');
-
       const data = await response.json();
-        setLocations(data || []); // Set locations (no pagination in new API)
-        // For units, we need to fetch separately since new API doesn't return units
-        const unitsResponse = await fetch('/api/admin/units');
-        if (unitsResponse.ok) {
-          const unitsData = await unitsResponse.json();
-          setUnits(unitsData || []);
-        }
-        setTotalCount(data?.length || 0); // Set total count
-        setTotalPages(1); // Set to 1 since no pagination in new API
+      setAllLocations(data || []); 
+
+      const unitsResponse = await fetch('/api/admin/units');
+      if (unitsResponse.ok) {
+        setUnits(await unitsResponse.json() || []);
+      }
     } catch (err) {
       console.error(err);
-      setError('Failed to load locations and units');
+      setError('Failed to load data');
     } finally {
       setLoading(false);
     }
   };
 
-  // Effect to fetch data when currentPage changes only
-  useEffect(() => {
-    fetchData();
-  }, [currentPage]);
+  useEffect(() => { fetchData(); }, []);
 
-  // Effect to fetch data once when component mounts
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // --- CLIENT-SIDE FILTERING & PAGINATION LOGIC ---
+  const filteredLocations = useMemo(() => {
+    return allLocations.filter(loc => {
+      // 1. Filter by Search Term
+      const matchesSearch = loc.name.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // 2. Filter by Selected Units
+      const locUnitId = loc.unitId || loc.unit?.id; // Handle naming inconsistencies
+      const matchesUnit = selectedUnits.length === 0 || selectedUnits.includes(locUnitId);
 
-  // HANDLERS
-  const handleApplyFilters = () => {
-    setCurrentPage(1); // Reset to first page when applying filters
-    fetchData(); // Explicitly fetch data when Apply is clicked
-  };
+      return matchesSearch && matchesUnit;
+    });
+  }, [allLocations, searchTerm, selectedUnits]);
 
+  // Calculate Pagination based on Filtered Data
+  const totalPages = Math.ceil(filteredLocations.length / itemsPerPage);
+  const currentData = filteredLocations.slice(
+    (currentPage - 1) * itemsPerPage, 
+    currentPage * itemsPerPage
+  );
+
+  // --- HANDLERS ---
   const handleResetFilters = () => {
     setSearchTerm('');
     setSelectedUnits([]);
-    setCurrentPage(1); // Reset to first page when resetting filters
-    fetchData(); // Explicitly fetch data when Reset is clicked
+    setCurrentPage(1);
   };
 
   const handleSaveLocation = async (isEdit: boolean) => {
-    if (!formData.name || !formData.unitId) {
-      alert('Please fill in all fields');
-      return;
-    }
+    if (!formData.name || !formData.unitId) return alert('Please fill in all fields');
 
     try {
       const method = isEdit ? 'PUT' : 'POST';
       const body = isEdit ? { ...formData, id: editingLocation.id } : formData;
-
-      console.log(`${method} request body:`, body); // Debug logging
 
       const response = await fetch('/api/admin/unit-locations', {
         method,
@@ -140,26 +147,14 @@ export default function ManageUnitLocationsPage() {
         body: JSON.stringify(body),
       });
 
-      console.log(`${method} response status:`, response.status); // Debug logging
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error response:', errorData); // Debug logging
-        throw new Error(errorData.error || 'Failed to save location');
-      }
+      if (!response.ok) throw new Error((await response.json()).error || 'Failed to save');
 
-      // Reset to first page and refresh data
-      setCurrentPage(1);
-      await fetchData();
-
-      // Reset & Close
+      await fetchData(); // Refresh Data
       setShowAddForm(false);
       setShowEditForm(false);
       setFormData({ name: '', unitId: '' });
       setEditingLocation(null);
-    } catch (err: any) {
-      console.error('Save location error:', err); // Debug logging
-      alert(err.message || 'Error saving location');
-    }
+    } catch (err: any) { alert(err.message); }
   };
 
   const handleDeleteLocation = async (id: string) => {
@@ -170,65 +165,30 @@ export default function ManageUnitLocationsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete location');
-      }
-
-      // Refresh data
+      if (!response.ok) throw new Error('Failed to delete');
       await fetchData();
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete location');
-    }
+    } catch (err: any) { alert(err.message); }
   };
 
   const startEdit = (loc: any) => {
-    console.log('Editing location:', loc); // Debug logging
     setEditingLocation(loc);
     const unitId = loc.unitId || loc.unit_id || loc.unit?.id || "";
-    console.log('Setting form data:', { name: loc.name, unitId }); // Debug logging
     setFormData({ name: loc.name, unitId });
     setShowEditForm(true);
     setShowAddForm(false);
   };
 
-  // 2. EXPORT FUNCTION LOGIC - Fetch all locations for export
-  const handleExport = async () => {
-    try {
-      // Fetch all locations (the new API returns all locations without pagination)
-      const response = await fetch('/api/admin/unit-locations');
-      const data = await response.json();
-
-      if (!data || data.length === 0) {
-        alert("Tidak ada data lokasi unit untuk diexport.");
-        return;
-      }
-
-      // Mapping data agar sesuai dengan kolom Excel yang diinginkan
-      const dataToExport = data.map(location => ({
-        "Nama Lokasi": location.name || 'N/A',
-        "Unit": location.unit?.name || 'N/A',
-        "Tanggal Dibuat": new Date(location.createdAt).toLocaleString('id-ID'),
-        "ID Lokasi": location.id,
-        "ID Unit": location.unitId
-      }));
-
-      // Membuat Worksheet dan Workbook
-      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Daftar Lokasi Unit");
-
-      // Auto-width columns (Sedikit styling biar rapi)
-      worksheet["!cols"] = [ { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 30 }, { wch: 30 } ];
-
-      // Generate file name dengan timestamp
-      const timestamp = new Date().toISOString().slice(0,10);
-      XLSX.writeFile(workbook, `Daftar_Lokasi_Unit_${timestamp}.xlsx`);
-    } catch (error) {
-      console.error('Error exporting locations:', error);
-      alert("Gagal melakukan export data lokasi unit.");
-    }
+  const handleExport = () => {
+    if (allLocations.length === 0) return alert("No data");
+    const dataToExport = allLocations.map(loc => ({
+      "Nama Lokasi": loc.name,
+      "Unit": loc.unit?.name || 'N/A',
+      "Tanggal Dibuat": new Date(loc.createdAt).toLocaleDateString()
+    }));
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Lokasi");
+    XLSX.writeFile(wb, `Lokasi_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
 
   if (loading) {
@@ -260,231 +220,183 @@ export default function ManageUnitLocationsPage() {
   }
 
   return (
-    <>
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="border-b border-zinc-800 bg-zinc-900/50 p-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">Manage Unit Locations</h1>
-            <div className="flex gap-2">
-              <button
-                onClick={handleExport}
-                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700 transition-colors"
-              >
-                <Download className="h-4 w-4" />
-                Export Excel
-              </button>
-              <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700 transition-colors">
-                <Printer className="h-4 w-4" />
-                Print
-              </button>
-              <button
-                onClick={() => {
-                  setShowAddForm(true);
-                  setShowEditForm(false);
-                  setFormData({ name: '', unitId: '' });
-                }}
-                className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-colors"
-              >
-                <Plus className="h-4 w-4" /> Add Location
-              </button>
-            </div>
+    <div className="flex-1 flex flex-col w-full bg-zinc-950 text-white min-h-screen">
+      
+      {/* --- HEADER --- */}
+      <header className="sticky top-0 z-30 border-b border-zinc-800 bg-zinc-900/90 backdrop-blur-md px-4 py-3 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h1 className="text-lg sm:text-xl font-bold">Manage Unit Locations</h1>
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <button onClick={handleExport} className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs sm:text-sm transition-colors border border-zinc-700">
+              <Download className="h-4 w-4" /> Export
+            </button>
+            <button 
+              onClick={() => { setShowAddForm(true); setShowEditForm(false); setFormData({ name: '', unitId: '' }); }}
+              className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs sm:text-sm transition-colors shadow-lg shadow-blue-900/20"
+            >
+              <Plus className="h-4 w-4" /> Add Location
+            </button>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <div className="flex-1 p-6 overflow-y-auto">
+      <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
 
-          {/* FILTER SECTION */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-
-              {/* Search */}
-              <div className="md:col-span-2">
-                <label className="block text-sm text-zinc-400 mb-2">Search Location</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search by name..."
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 pl-10 pr-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
-                </div>
-              </div>
-
-              {/* Multi-Select Unit */}
-              <div>
-                <label className="block text-sm text-zinc-400 mb-2">Filter Units</label>
-                <MultiSelectDropdown
-                  options={units}
-                  selected={selectedUnits}
-                  onChange={setSelectedUnits}
-                  placeholder="Select Units"
+        {/* --- FILTERS --- */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 sm:p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            {/* Search */}
+            <div className="md:col-span-5">
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Search Location</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search by name..."
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={searchTerm}
+                  onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                 />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
               </div>
+            </div>
 
-              {/* Buttons */}
-              <div className="flex items-end gap-2">
-                <button
-                  onClick={handleApplyFilters}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
-                >
-                  <Filter className="h-4 w-4" /> Apply
-                </button>
-                <button
-                  onClick={handleResetFilters}
-                  className="px-3 py-2 bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-lg text-sm transition-colors"
-                >
-                  Reset
-                </button>
-              </div>
+            {/* Unit Filter */}
+            <div className="md:col-span-5">
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Filter Units</label>
+              <MultiSelectDropdown options={units} selected={selectedUnits} onChange={(val: any) => { setSelectedUnits(val); setCurrentPage(1); }} placeholder="All Units" />
+            </div>
 
+            {/* Reset Button */}
+            <div className="md:col-span-2">
+              <button onClick={handleResetFilters} className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 rounded-lg text-sm transition-colors">
+                Reset
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* ADD/EDIT FORM SECTION */}
-          {(showAddForm || showEditForm) && (
-            <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-6 mb-6">
-              <h3 className="font-bold text-white mb-4">{showEditForm ? 'Edit Location' : 'Add New Location'}</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                   <label className="block text-sm text-zinc-400 mb-1">Location Name</label>
-                   <input
-                     type="text"
-                     className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white"
-                     value={formData.name}
-                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                   />
+        {/* --- FORM (ADD/EDIT) --- */}
+        {(showAddForm || showEditForm) && (
+          <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-4 sm:p-6 mb-6 animate-in fade-in slide-in-from-top-2">
+            <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+              {showEditForm ? <Edit3 className="h-4 w-4 text-blue-400"/> : <Plus className="h-4 w-4 text-blue-400"/>}
+              {showEditForm ? 'Edit Location' : 'Add New Location'}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                 <label className="block text-xs text-zinc-400 mb-1.5">Location Name</label>
+                 <input type="text" className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                   value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="e.g. Lobby Utama"
+                 />
+              </div>
+              <div>
+                 <label className="block text-xs text-zinc-400 mb-1.5">Unit</label>
+                 <select className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                   value={formData.unitId} onChange={(e) => setFormData({...formData, unitId: e.target.value})}
+                 >
+                   <option value="">Select Unit...</option>
+                   {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                 </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-zinc-700/50">
+              <button onClick={() => { setShowAddForm(false); setShowEditForm(false); }} className="px-4 py-2 bg-transparent hover:bg-zinc-700 rounded-lg text-sm text-zinc-300">Cancel</button>
+              <button onClick={() => handleSaveLocation(showEditForm)} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm text-white shadow-lg">Save</button>
+            </div>
+          </div>
+        )}
+
+        {/* --- DATA LIST --- */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+          <div className="p-4 border-b border-zinc-800 bg-zinc-900/50 flex justify-between items-center">
+            <h2 className="font-semibold text-white">Locations List</h2>
+            <span className="text-xs px-2 py-1 bg-zinc-800 rounded border border-zinc-700 text-zinc-400">Total: {filteredLocations.length}</span>
+          </div>
+
+          {/* VIEW 1: DESKTOP TABLE (Hidden on Mobile) */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-zinc-900/50 text-xs uppercase text-zinc-500">
+                <tr>
+                  <th className="px-6 py-4">Location Name</th>
+                  <th className="px-6 py-4">Unit</th>
+                  <th className="px-6 py-4">Created At</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800 text-sm">
+                {currentData.map((loc: any) => (
+                  <tr key={loc.id} className="hover:bg-zinc-800/40 transition-colors group">
+                    <td className="px-6 py-4 font-medium text-white flex items-center gap-2">
+                       <div className="p-1.5 bg-blue-500/10 rounded text-blue-400"><MapPin size={16} /></div>
+                       {loc.name}
+                    </td>
+                    <td className="px-6 py-4 text-zinc-400">{loc.unit?.name || '-'}</td>
+                    <td className="px-6 py-4 text-zinc-500 tabular-nums">{new Date(loc.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => startEdit(loc)} className="p-2 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white"><Edit3 size={16} /></button>
+                        <button onClick={() => handleDeleteLocation(loc.id)} className="p-2 hover:bg-zinc-700 rounded text-zinc-400 hover:text-red-400"><Trash2 size={16} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* VIEW 2: MOBILE CARDS (Visible only on Mobile) */}
+          <div className="md:hidden divide-y divide-zinc-800">
+            {currentData.map((loc: any) => (
+              <div key={loc.id} className="p-4 bg-zinc-900 hover:bg-zinc-800/20 active:bg-zinc-800/40 transition-colors">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-zinc-800 rounded-lg text-blue-400 mt-0.5"><MapPin size={18} /></div>
+                    <div>
+                      <h3 className="font-medium text-white text-base">{loc.name}</h3>
+                      <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
+                        <Building size={12} /> {loc.unit?.name || '-'}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                   <label className="block text-sm text-zinc-400 mb-1">Unit</label>
-                   <select
-                     className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white"
-                     value={formData.unitId}
-                     onChange={(e) => setFormData({...formData, unitId: e.target.value})}
-                   >
-                     <option value="">Select Unit...</option>
-                     {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                   </select>
+                
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-zinc-800/50">
+                   <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                     <Calendar size={12} /> {new Date(loc.createdAt).toLocaleDateString()}
+                   </div>
+                   <div className="flex gap-3">
+                     <button onClick={() => startEdit(loc)} className="text-xs font-medium text-blue-400 flex items-center gap-1"><Edit3 size={14} /> Edit</button>
+                     <button onClick={() => handleDeleteLocation(loc.id)} className="text-xs font-medium text-red-400 flex items-center gap-1"><Trash2 size={14} /> Delete</button>
+                   </div>
                 </div>
               </div>
-              <div className="flex gap-2 mt-4">
-                <button onClick={() => handleSaveLocation(showEditForm)} className="px-4 py-2 bg-blue-600 rounded-lg text-sm">Save</button>
-                <button onClick={() => { setShowAddForm(false); setShowEditForm(false); }} className="px-4 py-2 bg-zinc-700 rounded-lg text-sm">Cancel</button>
+            ))}
+          </div>
+
+          {filteredLocations.length === 0 && (
+             <div className="p-12 text-center text-zinc-500 text-sm">No locations found.</div>
+          )}
+
+          {/* Pagination Footer */}
+          {totalPages > 1 && (
+            <div className="p-4 border-t border-zinc-800 bg-zinc-900 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <span className="text-xs text-zinc-500">Page {currentPage} of {totalPages}</span>
+              <div className="flex gap-2">
+                <button 
+                  disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                  className="px-3 py-1.5 text-xs bg-zinc-800 border border-zinc-700 rounded hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed text-white"
+                >Previous</button>
+                <button 
+                  disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                  className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >Next</button>
               </div>
             </div>
           )}
-
-          {/* TABLE SECTION */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold">Locations List</h2>
-              <div className="text-sm text-zinc-400">
-                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} - {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} locations
-              </div>
-            </div>
-
-            {loading ? (
-               <div className="text-center py-10 text-zinc-500">Loading...</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-zinc-800 text-left text-sm text-zinc-400">
-                      <th className="pb-3 pl-2">Location Name</th>
-                      <th className="pb-3">Unit</th>
-                      <th className="pb-3">Created At</th>
-                      <th className="pb-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-800">
-                    {locations.map((loc: any) => (
-                      <tr key={loc.id} className="text-sm hover:bg-zinc-800/50 transition-colors">
-                        <td className="py-3 pl-2 font-medium text-white flex items-center gap-2">
-                           <MapPin className="h-4 w-4 text-blue-400" />
-                           {loc.name}
-                        </td>
-                        <td className="py-3 text-zinc-300">{loc.unit?.name || loc.units?.name || '-'}</td>
-                        <td className="py-3 text-zinc-300">{new Date(loc.createdAt).toLocaleDateString()}</td>
-                        <td className="py-3 flex gap-2">
-                          <button onClick={() => startEdit(loc)} className="text-blue-400 hover:text-blue-300 flex items-center gap-1">
-                            <Edit3 className="h-4 w-4" /> Edit
-                          </button>
-                          <button onClick={() => handleDeleteLocation(loc.id)} className="text-red-400 hover:text-red-300 flex items-center gap-1">
-                            <Trash2 className="h-4 w-4" /> Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {locations.length === 0 && (
-                      <tr><td colSpan={4} className="py-8 text-center text-zinc-500">No locations found.</td></tr>
-                    )}
-                  </tbody>
-                </table>
-
-                {/* Pagination Controls */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-6">
-                    <div className="text-sm text-zinc-400">
-                      Page {currentPage} of {totalPages}
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className={`px-3 py-1.5 rounded-lg ${currentPage === 1 ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}
-                      >
-                        Previous
-                      </button>
-
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          // Show all pages if total is 5 or less
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          // Show first 5 pages if current page is 1-3
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          // Show last 5 pages if current page is near the end
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          // Show current page in the middle
-                          pageNum = currentPage - 2 + i;
-                        }
-
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => setCurrentPage(pageNum)}
-                            className={`px-3 py-1.5 rounded-lg min-w-[36px] ${
-                              currentPage === pageNum
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-zinc-800 text-white hover:bg-zinc-700'
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      })}
-
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className={`px-3 py-1.5 rounded-lg ${currentPage === totalPages ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
         </div>
+
       </div>
-    </>
+    </div>
   );
 }

@@ -26,11 +26,12 @@ export default async function AdminLayout({
     return <AdminForbidden />;
   }
 
-  // User is Admin -> Show Dashboard with sidebar
+  // User is Admin -> Show Dashboard with sidebar as WRAPPER
+  // Perbaikan: AdminSidebar sekarang membungkus children
+  // agar layout full-width berfungsi dengan benar
   return (
-    <div className="flex h-screen bg-zinc-950 text-zinc-100">
-      <AdminSidebar />
-      <main className="flex-1 overflow-y-auto p-8">{children}</main>
-    </div>
+    <AdminSidebar>
+      {children}
+    </AdminSidebar>
   );
 }

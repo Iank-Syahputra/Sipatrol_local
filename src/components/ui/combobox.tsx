@@ -53,7 +53,8 @@ export function Combobox({
           className="w-full justify-between"
           disabled={disabled}
         >
-          <span className="truncate">
+          {/* PERUBAHAN 1: Kondisi warna teks pada Button */}
+          <span className={cn("truncate", !value ? "text-black" : "")}>
             {value
               ? options.find((option) => option.value === value)?.label
               : placeholder}
@@ -63,7 +64,11 @@ export function Combobox({
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command>
-          <CommandInput placeholder="Cari..." />
+          {/* PERUBAHAN 2: Menambahkan class placeholder:text-black */}
+          <CommandInput 
+            placeholder="Cari..." 
+            className="placeholder:text-black" 
+          />
           <CommandList>
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
