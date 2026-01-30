@@ -44,14 +44,22 @@ export async function GET(request: Request) {
       whereClause.capturedAt = { lte: end };
     }
 
-    // Search filter (for officer name)
-    if (search) {
-      whereClause.user = {
-        fullName: {
-          contains: search,
-          mode: 'insensitive'
+    // Search filter (for officer name and notes)
+    if (search && search.trim().length > 0) {
+      whereClause.OR = [
+        {
+          user: {
+            fullName: {
+              contains: search.trim()
+            }
+          }
+        },
+        {
+          notes: {
+            contains: search.trim()
+          }
         }
-      };
+      ];
     }
 
     // Units filter
@@ -115,8 +123,11 @@ export async function GET(request: Request) {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to fetch reports:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({
+      error: "Internal Server Error",
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 500 });
   }
 }

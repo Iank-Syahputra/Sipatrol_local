@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { 
   Download, 
@@ -87,14 +87,52 @@ export default function ReportManagementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Refs to hold current filter values
+  const searchTermRef = useRef(searchTerm);
+  const selectedUnitsRef = useRef(selectedUnits);
+  const selectedCategoriesRef = useRef(selectedCategories);
+  const selectedLocationsRef = useRef(selectedLocations);
+  const startDateRef = useRef(startDate);
+  const endDateRef = useRef(endDate);
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalReports, setTotalReports] = useState(0);
   const itemsPerPage = 10;
-  
+
   const [filterTrigger, setFilterTrigger] = useState(0);
-  const [isFilterExpanded, setIsFilterExpanded] = useState(false); 
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+
+  // Update refs when state changes
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
+
+  useEffect(() => {
+    selectedUnitsRef.current = selectedUnits;
+  }, [selectedUnits]);
+
+  useEffect(() => {
+    selectedCategoriesRef.current = selectedCategories;
+  }, [selectedCategories]);
+
+  useEffect(() => {
+    selectedLocationsRef.current = selectedLocations;
+  }, [selectedLocations]);
+
+  useEffect(() => {
+    startDateRef.current = startDate;
+  }, [startDate]);
+
+  useEffect(() => {
+    endDateRef.current = endDate;
+  }, [endDate]);
+
+  // Initial data load on component mount
+  useEffect(() => {
+    setFilterTrigger(prev => prev + 1); // Trigger initial load
+  }, []);
 
   // --- FETCHING LOGIC ---
   useEffect(() => {
@@ -106,12 +144,13 @@ export default function ReportManagementPage() {
           limit: itemsPerPage.toString()
         });
 
-        if (startDate) params.append('startDate', startDate);
-        if (endDate) params.append('endDate', endDate);
-        if (searchTerm) params.append('search', searchTerm);
-        if (selectedUnits.length > 0) params.append('units', selectedUnits.join(','));
-        if (selectedCategories.length > 0) params.append('categories', selectedCategories.join(','));
-        if (selectedLocations.length > 0) params.append('locations', selectedLocations.join(','));
+        // Use ref values instead of state values
+        if (startDateRef.current) params.append('startDate', startDateRef.current);
+        if (endDateRef.current) params.append('endDate', endDateRef.current);
+        if (searchTermRef.current) params.append('search', searchTermRef.current);
+        if (selectedUnitsRef.current.length > 0) params.append('units', selectedUnitsRef.current.join(','));
+        if (selectedCategoriesRef.current.length > 0) params.append('categories', selectedCategoriesRef.current.join(','));
+        if (selectedLocationsRef.current.length > 0) params.append('locations', selectedLocationsRef.current.join(','));
 
         const response = await fetch(`/api/admin/reports?${params.toString()}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -122,8 +161,24 @@ export default function ReportManagementPage() {
         setTotalReports(result.pagination?.totalReports || 0);
         setTotalPages(result.pagination?.totalPages || 1);
 
-        const unitsResponse = await fetch('/api/admin/units');
-        if (unitsResponse.ok) setAllUnits(await unitsResponse.json());
+        // Fetch additional data (units, categories, locations) in parallel
+        const [unitsResponse, categoriesResponse, locationsResponse] = await Promise.allSettled([
+          fetch('/api/admin/units'),
+          fetch('/api/admin/categories'),
+          fetch('/api/admin/locations')
+        ]);
+
+        if (unitsResponse.status === 'fulfilled' && unitsResponse.value.ok) {
+          setAllUnits(await unitsResponse.value.json());
+        }
+
+        if (categoriesResponse.status === 'fulfilled' && categoriesResponse.value.ok) {
+          setAllCategories(await categoriesResponse.value.json());
+        }
+
+        if (locationsResponse.status === 'fulfilled' && locationsResponse.value.ok) {
+          setAllLocations(await locationsResponse.value.json());
+        }
 
       } catch (err) {
         console.error(err);
@@ -133,7 +188,7 @@ export default function ReportManagementPage() {
       }
     };
     fetchData();
-  }, [filterTrigger, currentPage, startDate, endDate, searchTerm, selectedUnits, selectedCategories, selectedLocations]);
+  }, [currentPage, filterTrigger]); // Only re-run when currentPage or filterTrigger changes (filters applied)
 
   // --- HANDLERS ---
   const handleApplyFilters = () => {
@@ -183,9 +238,9 @@ export default function ReportManagementPage() {
     if (!category) return null;
     let style = 'bg-slate-100 text-slate-600 border-slate-200';
     
-    if (category.color === 'red' || category.name.toLowerCase().includes('unsafe')) 
+    if (category.color === 'red' || category.name.toLowerCase().includes('action')) 
         style = 'bg-red-50 text-red-600 border-red-200';
-    else if (category.color === 'yellow' || category.name.toLowerCase().includes('cond')) 
+    else if (category.color === 'yellow' || category.name.toLowerCase().includes('condition')) 
         style = 'bg-amber-50 text-amber-600 border-amber-200';
     else if (category.color === 'green') 
         style = 'bg-emerald-50 text-emerald-600 border-emerald-200';
