@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Activity, Map, MapPin, Users, AlertTriangle, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, User, Calendar, RotateCcw } from "lucide-react";
+import { Activity, MapPin, Users, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, RotateCcw, BarChart3, TrendingUp, AlertTriangle, LayoutDashboard } from "lucide-react";
 import ReportDetailsModal from '@/components/report-details-modal';
 import {
   PieChart,
@@ -37,7 +37,6 @@ export default function AdminDashboard() {
     const fetchUserProfile = async () => {
       try {
         const response = await fetch('/api/user/profile');
-
         if (response.ok) {
           const profileData = await response.json();
           setUserProfile(profileData);
@@ -48,46 +47,24 @@ export default function AdminDashboard() {
         setUserLoading(false);
       }
     };
-
     fetchUserProfile();
   }, []);
 
   // Fetch dashboard data
- useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
-        // 1. SIAPKAN QUERY PARAMETER
         const queryParams = new URLSearchParams();
         
-        // Cek apakah user sudah memilih tanggal
-        if (dateRange.startDate) {
-          queryParams.append('startDate', dateRange.startDate);
-        }
-        if (dateRange.endDate) {
-          queryParams.append('endDate', dateRange.endDate);
-        }
+        if (dateRange.startDate) queryParams.append('startDate', dateRange.startDate);
+        if (dateRange.endDate) queryParams.append('endDate', dateRange.endDate);
 
-        // 2. GABUNGKAN KE URL
-        // Hasilnya jadi: /api/admin/stats?startDate=2023-10-01&endDate=2023-10-31
         const url = `/api/admin/stats?${queryParams.toString()}`;
-
-        console.log("Fetching URL:", url); // Debugging di Console Browser
-
         const response = await fetch(url);
 
         if (!response.ok) {
-          let errorMessage = `HTTP error! status: ${response.status}`;
-          try {
-            const errorData = await response.json();
-            if (errorData.error) {
-              errorMessage = `${errorMessage} - ${errorData.error}`;
-            }
-          } catch (parseErr) {
-            console.warn('Could not parse error response:', parseErr);
-          }
-          throw new Error(errorMessage);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
@@ -119,10 +96,10 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-          <p>Loading dashboard...</p>
+          <div className="inline-block animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-t-4 border-amber-500 border-r-transparent mb-4"></div>
+          <p className="text-sm sm:text-base font-medium text-slate-600">Initializing Operation Center...</p>
         </div>
       </div>
     );
@@ -130,15 +107,18 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-        <div className="text-center p-6 bg-zinc-900 border border-zinc-800 rounded-xl max-w-md">
-          <h2 className="text-xl font-bold mb-2">Error Loading Dashboard</h2>
-          <p className="text-zinc-400 mb-4">{error}</p>
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-4">
+        <div className="text-center p-8 bg-white border border-red-200 rounded-2xl shadow-lg max-w-md w-full">
+          <div className="bg-red-100 p-3 rounded-full w-fit mx-auto mb-4">
+             <AlertTriangle className="h-8 w-8 text-red-600" />
+          </div>
+          <h2 className="text-xl font-bold mb-2 text-slate-900">Connection Error</h2>
+          <p className="text-slate-500 mb-6 text-sm">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg"
+            className="w-full sm:w-auto px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-colors shadow-md"
           >
-            Retry
+            Reconnect
           </button>
         </div>
       </div>
@@ -147,69 +127,74 @@ export default function AdminDashboard() {
 
   if (!dashboardData) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <p>No data available</p>
+          <p className="text-slate-500 font-medium">No operational data available.</p>
         </div>
       </div>
     );
   }
 
-  // Stats data - Updated to match new API response
+  // TECHNICAL COPYWRITING UPDATES
   const stats = [
-    { title: "Total Users", value: dashboardData?.totalUsers?.toString() || "0", icon: Users, color: "text-blue-500" },
-    { title: "Total Reports", value: dashboardData?.totalReports?.toString() || "0", icon: FileText, color: "text-orange-500" },
-    { title: "Total Units", value: dashboardData?.totalUnits?.toString() || "0", icon: Building, color: "text-purple-500" },
+    { title: "Total Personnel", value: dashboardData?.totalUsers?.toString() || "0", icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+    { title: "Incoming Reports", value: dashboardData?.totalReports?.toString() || "0", icon: FileText, color: "text-amber-600", bg: "bg-amber-50" },
+    { title: "Operational Units", value: dashboardData?.totalUnits?.toString() || "0", icon: Building, color: "text-emerald-600", bg: "bg-emerald-50" },
   ];
 
-  // Prepare data for global stats chart - Using data from API
   const globalChartData = [
-    { name: 'Safe', value: dashboardData?.safetyStats?.safe || 0, color: '#10B981' },
-    { name: 'Unsafe Action', value: dashboardData?.safetyStats?.unsafeAction || 0, color: '#EF4444' },
-    { name: 'Unsafe Condition', value: dashboardData?.safetyStats?.unsafeCondition || 0, color: '#F59E0B' },
+    { name: 'Safe Condition', value: dashboardData?.safetyStats?.safe || 0, color: '#10B981' },
+    { name: 'Unsafe Action (UA)', value: dashboardData?.safetyStats?.unsafeAction || 0, color: '#EF4444' },
+    { name: 'Unsafe Condition (UC)', value: dashboardData?.safetyStats?.unsafeCondition || 0, color: '#F59E0B' },
   ];
 
-  // Prepare data for unit ranking chart (top 5) - Using data from API
   const unitRankingData = dashboardData?.unitRanking || [];
-
-  // Colors for charts
-  const COLORS = ['#10B981', '#EF4444', '#F59E0B'];
 
   return (
     <>
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="border-b border-zinc-800 bg-zinc-900/50 p-4">
-          <div className="flex items-center justify-between">
+      {/* Main Content - Light Mode Background & Full Width */}
+      <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen">
+        
+        {/* Scrollable Content Container */}
+        <div className="w-full px-6 py-8 space-y-8">
+          
+          {/* Header Section */}
+          <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-xl font-bold">Central Dashboard</h1>
+              <div className="flex items-center gap-2 mb-1">
+                 <div className="p-2 bg-amber-50 rounded-lg border border-amber-100">
+                    <LayoutDashboard className="h-6 w-6 text-amber-600" />
+                 </div>
+                 <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Operation Command Center</h1>
+              </div>
               {!userLoading && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Halo, <span className="font-semibold text-white">{userProfile?.full_name || userProfile?.name || 'Admin'}</span>
+                <p className="text-sm text-slate-500 font-medium ml-1">
+                  System Administrator: <span className="font-bold text-amber-700">{userProfile?.full_name || userProfile?.name || 'Admin'}</span>
                 </p>
               )}
             </div>
+            
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">
-                <div className="h-2 w-2 bg-emerald-500 rounded-full"></div>
-                <span className="text-sm font-medium">Live Monitoring</span>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 shadow-sm">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">System Online</span>
               </div>
             </div>
           </div>
-        </header>
 
-        <div className="flex-1 p-6 overflow-y-auto">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Stats Grid - Responsive */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {stats.map((stat, index) => (
-              <div key={index} className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+              <div key={index} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-zinc-400 text-sm font-medium">{stat.title}</p>
-                    <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">{stat.title}</p>
+                    <p className="text-3xl font-black text-slate-900">{stat.value}</p>
                   </div>
-                  <div className="p-3 bg-zinc-800 rounded-lg">
+                  <div className={`p-4 rounded-xl ${stat.bg}`}>
                     <stat.icon className={`h-6 w-6 ${stat.color}`} />
                   </div>
                 </div>
@@ -218,132 +203,113 @@ export default function AdminDashboard() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex border-b border-zinc-800 mb-6">
+          <div className="grid grid-cols-2 gap-2 sm:gap-0 sm:flex sm:border-b sm:border-slate-200 bg-slate-100/50 p-1 sm:p-0 rounded-xl sm:rounded-none">
             <button
-              className={`px-4 py-2 font-medium text-sm ${
+              className={`px-6 py-3 text-center text-sm font-bold rounded-lg sm:rounded-none sm:rounded-t-lg transition-all ${
                 activeTab === 'live'
-                  ? 'text-white border-b-2 border-blue-500'
-                  : 'text-zinc-400 hover:text-white'
+                  ? 'bg-white sm:bg-transparent text-amber-700 shadow-sm sm:shadow-none sm:border-b-4 border-amber-500'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50 sm:hover:bg-transparent'
               }`}
               onClick={() => setActiveTab('live')}
             >
-              Live Monitor
+              <div className="flex items-center justify-center gap-2">
+                 <Eye className="h-4 w-4" /> Live Monitoring
+              </div>
             </button>
             <button
-              className={`px-4 py-2 font-medium text-sm ${
+              className={`px-6 py-3 text-center text-sm font-bold rounded-lg sm:rounded-none sm:rounded-t-lg transition-all ${
                 activeTab === 'stats'
-                  ? 'text-white border-b-2 border-blue-500'
-                  : 'text-zinc-400 hover:text-white'
+                  ? 'bg-white sm:bg-transparent text-amber-700 shadow-sm sm:shadow-none sm:border-b-4 border-amber-500'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50 sm:hover:bg-transparent'
               }`}
               onClick={() => setActiveTab('stats')}
             >
-              Statistik & Analisa
+              <div className="flex items-center justify-center gap-2">
+                 <BarChart3 className="h-4 w-4" /> HSE Analytics
+              </div>
             </button>
           </div>
 
           {/* Tab Content */}
           {activeTab === 'live' ? (
             /* Live Feed Section */
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-blue-500" />
-                  Live Feed
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-amber-600" />
+                  Real-time Incident Feed
                 </h2>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 text-sm text-zinc-400">
-                    <Clock className="h-4 w-4" />
-                    Live
-                  </div>
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+                  <Clock className="h-3 w-3" />
+                  Live Stream
                 </div>
               </div>
 
               {/* Reports List */}
-              <div className="space-y-4">
+              <div className="p-6 space-y-4">
                 {(dashboardData?.recentReports || []).map((report: any) => (
                   <div
                     key={report?.id}
-                    className="p-4 bg-zinc-800/30 rounded-lg border border-zinc-700 hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                    className="p-4 bg-white rounded-xl border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all cursor-pointer group"
                     onClick={() => handleViewReport(report)}
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0">
-                        {report?.imagePath || report?.imagePath ? (
-                          <div className="relative group">
+                    <div className="flex flex-col sm:flex-row items-start gap-4">
+                      {/* Image Thumbnail */}
+                      <div className="flex-shrink-0 w-full sm:w-auto">
+                        {report?.imagePath ? (
+                          <div className="relative w-full sm:w-28 aspect-video sm:aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 shadow-sm">
                             <img
-                              src={report.imagePath || report.imagePath}
-                              alt="Report"
-                              className="w-24 h-24 rounded-xl object-cover border border-zinc-700 bg-zinc-800 transition-transform duration-200 group-hover:scale-105"
+                              src={report.imagePath}
+                              alt="Evidence"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-xl flex items-center justify-center">
-                              <Eye className="h-6 w-6 text-white" />
+                            <div className="absolute inset-0 bg-amber-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                              <Eye className="h-8 w-8 text-white drop-shadow-md" />
                             </div>
                           </div>
                         ) : (
-                          <div className="w-24 h-24 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center">
-                            <FileText className="h-6 w-6 text-zinc-600" />
+                          <div className="w-full sm:w-28 h-20 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
+                            <FileText className="h-8 w-8" />
                           </div>
                         )}
                       </div>
-                      <div className="flex-1 min-w-0 flex-grow">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-medium text-white truncate">
-                            {report?.user?.fullName || 'Officer'} - {report?.unit?.name || 'Unit'}
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0 w-full space-y-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                          <h3 className="font-bold text-slate-900 text-base truncate">
+                            {report?.user?.fullName || 'Officer'} 
+                            <span className="text-slate-400 font-normal mx-2">|</span> 
+                            <span className="text-amber-700">{report?.unit?.name || 'Unassigned Unit'}</span>
                           </h3>
-                          <span className="text-xs text-zinc-500">
-                            {report?.capturedAt ? new Date(report.capturedAt).toLocaleString() : 'N/A'}
+                          <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded">
+                            {report?.capturedAt ? new Date(report.capturedAt).toLocaleString('en-GB') : '-'}
                           </span>
                         </div>
-                        <p className="text-sm text-zinc-400 mt-1 truncate">
-                          {report?.notes || 'No notes provided'}
+                        
+                        <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
+                          {report?.notes || 'No description provided.'}
                         </p>
-                        {/* --- BAGIAN INI YANG SAYA TAMBAHKAN (KATEGORI & LOKASI) --- */}
-                        <div className="flex flex-wrap items-center gap-2 mt-2 mb-2">
-                          {/* Badge Kategori Warna-Warni */}
+
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
                           {report?.category && (
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
-                              // 1. Check RED/UNSAFE First (Priority!)
-                              report.category.color === 'red' ||
-                              report.category.name.toLowerCase().includes('action')
-                                ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                                // 2. Check YELLOW/WARNING
-                                : report.category.color === 'yellow' ||
-                                report.category.name.toLowerCase().includes('condition') ||
-                                  report.category.name.toLowerCase().includes('maintenance') ||
-                                  report.category.name.toLowerCase().includes('perbaikan') ||
-                                  report.category.name.toLowerCase().includes('warning')
-                                  ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                                  // 3. Check GREEN/SAFE Last
-                                  : report.category.color === 'green' ||
-                                    report.category.name.toLowerCase().includes('safe') ||
-                                    report.category.name.toLowerCase().includes('aman')
-                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                    : 'bg-blue-500/10 text-blue-400 border-blue-500/20' // Default
+                            <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide border ${
+                              report.category.color === 'red' || report.category.name.toLowerCase().includes('action')
+                                ? 'bg-red-50 text-red-700 border-red-200'
+                                : report.category.color === 'yellow' || report.category.name.toLowerCase().includes('condition')
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                  : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             }`}>
                               {report.category.name}
                             </span>
                           )}
 
-                          {/* Badge Lokasi Spesifik */}
                           {report?.location?.name && (
-                            <span className="flex items-center gap-1 text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                            <span className="flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200">
                               <MapPin className="h-3 w-3" />
                               {report.location.name}
                             </span>
                           )}
-                        </div>
-                        {/* --------------------------------------------------------- */}
-                        <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-zinc-500">
-                          <span className="flex items-center gap-1">
-                            <Map className="h-3 w-3" />
-                            {report?.latitude && report?.longitude
-                              ? `${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}`
-                              : 'Location not available'}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Eye className="h-3 w-3" />
-                            View Details
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -351,8 +317,11 @@ export default function AdminDashboard() {
                 ))}
 
                 {(dashboardData?.recentReports?.length || 0) === 0 && (
-                  <div className="text-center py-8 text-zinc-500">
-                    No reports available
+                  <div className="text-center py-12">
+                    <div className="bg-slate-50 p-4 rounded-full w-fit mx-auto mb-3">
+                        <FileText className="h-8 w-8 text-slate-400" />
+                    </div>
+                    <p className="text-slate-500 font-medium">No incoming reports available.</p>
                   </div>
                 )}
               </div>
@@ -361,44 +330,44 @@ export default function AdminDashboard() {
             /* Statistics & Analysis Tab */
             <div className="space-y-8">
               {/* Filters */}
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <Filter className="h-5 w-5 text-blue-500" />
-                  Filters
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
+                  <Filter className="h-5 w-5 text-amber-600" />
+                  Data Filter Parameters
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-zinc-400 mb-2">Start Date</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Start Date</label>
                     <input
                       type="date"
                       value={dateRange.startDate}
                       onChange={(e) => setDateRange({...dateRange, startDate: e.target.value})}
-                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-zinc-400 mb-2">End Date</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">End Date</label>
                     <input
                       type="date"
                       value={dateRange.endDate}
                       onChange={(e) => setDateRange({...dateRange, endDate: e.target.value})}
-                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm transition-all"
                     />
                   </div>
 
-                  <div className="flex items-end space-x-2">
+                  <div className="flex flex-col sm:flex-row items-end gap-3">
                     <button
                       onClick={handleApplyFilters}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm"
+                      className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition-colors shadow-md hover:shadow-lg"
                     >
                       <Search className="h-4 w-4" />
-                      Apply
+                      Apply Filter
                     </button>
                     <button
                       onClick={handleResetFilters}
-                      className="flex items-center gap-2 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-sm"
+                      className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-600 font-bold rounded-xl text-sm transition-colors"
                     >
                       <RotateCcw className="h-4 w-4" />
                       Reset
@@ -408,125 +377,147 @@ export default function AdminDashboard() {
               </div>
 
               {/* Global Overview */}
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <CircleGauge className="h-5 w-5 text-blue-500" />
-                  Global Safety Status
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
+                  <CircleGauge className="h-5 w-5 text-amber-600" />
+                  HSE Compliance Overview
                 </h3>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="h-64">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                  <div className="h-64 sm:h-80 relative">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={globalChartData}
                           cx="50%"
                           cy="50%"
-                          labelLine={true}
-                          outerRadius={80}
-                          fill="#8884d8"
+                          labelLine={false}
+                          outerRadius={100}
+                          innerRadius={60}
                           dataKey="value"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          paddingAngle={5}
                         >
                           {globalChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                            <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value) => [value, 'Reports']} />
-                        <Legend />
+                        <Tooltip 
+                          formatter={(value) => [value, 'Entries']} 
+                          contentStyle={{ backgroundColor: '#fff', borderColor: '#e2e8f0', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', color: '#0f172a' }}
+                          itemStyle={{ color: '#0f172a' }}
+                        />
+                        <Legend 
+                            verticalAlign="bottom" 
+                            height={36} 
+                            iconType="circle"
+                            formatter={(value) => <span className="text-slate-600 font-semibold ml-1">{value}</span>}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
+                    {/* Center Text */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
+                        <span className="text-3xl font-black text-slate-900">{dashboardData?.totalReports || 0}</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase">Total Entries</span>
+                    </div>
                   </div>
 
                   <div className="space-y-4">
-                    <div className="p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
-                      <h4 className="font-medium text-green-400 mb-2">Safe Reports</h4>
-                      <p className="text-2xl font-bold">{dashboardData?.safetyStats?.safe || 0}</p>
+                    <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100 flex justify-between items-center hover:shadow-sm transition-shadow">
+                      <div>
+                          <h4 className="font-bold text-emerald-800 text-sm">Safe Condition</h4>
+                          <p className="text-xs text-emerald-600 mt-1">Compliant with HSE standards</p>
+                      </div>
+                      <p className="text-3xl font-black text-emerald-600">{dashboardData?.safetyStats?.safe || 0}</p>
                     </div>
 
-                    <div className="p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
-                      <h4 className="font-medium text-red-400 mb-2">Unsafe Actions</h4>
-                      <p className="text-2xl font-bold">{dashboardData?.safetyStats?.unsafeAction || 0}</p>
+                    <div className="p-5 bg-red-50 rounded-xl border border-red-100 flex justify-between items-center hover:shadow-sm transition-shadow">
+                      <div>
+                          <h4 className="font-bold text-red-800 text-sm">Unsafe Action (UA)</h4>
+                          <p className="text-xs text-red-600 mt-1">Violation of safety procedures</p>
+                      </div>
+                      <p className="text-3xl font-black text-red-600">{dashboardData?.safetyStats?.unsafeAction || 0}</p>
                     </div>
 
-                    <div className="p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
-                      <h4 className="font-medium text-yellow-400 mb-2">Unsafe Conditions</h4>
-                      <p className="text-2xl font-bold">{dashboardData?.safetyStats?.unsafeCondition || 0}</p>
+                    <div className="p-5 bg-amber-50 rounded-xl border border-amber-100 flex justify-between items-center hover:shadow-sm transition-shadow">
+                      <div>
+                          <h4 className="font-bold text-amber-800 text-sm">Unsafe Condition (UC)</h4>
+                          <p className="text-xs text-amber-600 mt-1">Hazardous environment/equipment</p>
+                      </div>
+                      <p className="text-3xl font-black text-amber-600">{dashboardData?.safetyStats?.unsafeCondition || 0}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Unit Ranking */}
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <Building className="h-5 w-5 text-blue-500" />
-                  Unit Ranking (Top 5)
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
+                  <TrendingUp className="h-5 w-5 text-amber-600" />
+                  Top Performing Units (HSE Compliance)
                 </h3>
 
-                <div className="h-80">
+                <div className="h-80 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={unitRankingData}
                       layout="vertical"
-                      margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
+                      margin={{ top: 20, right: 30, left: 40, bottom: 5 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis type="number" stroke="#9CA3AF" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={true} vertical={false} />
+                      <XAxis type="number" stroke="#94a3b8" hide />
                       <YAxis
                         dataKey="name"
                         type="category"
-                        stroke="#9CA3AF"
-                        width={90}
-                        tick={{ fontSize: 12 }}
+                        stroke="#64748b"
+                        width={120}
+                        tick={{ fontSize: 12, fontWeight: 600, fill: '#475569' }}
+                        interval={0}
                       />
                       <Tooltip
-                        contentStyle={{ backgroundColor: '#1F2937', borderColor: '#374151' }}
-                        itemStyle={{ color: '#fff' }}
+                        contentStyle={{ backgroundColor: '#fff', borderColor: '#e2e8f0', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        itemStyle={{ color: '#0f172a', fontWeight: 'bold' }}
+                        cursor={{fill: '#f1f5f9'}}
                       />
-                      <Legend />
-                      <Bar dataKey="safe" stackId="a" name="Safe" fill="#10B981" />
-                      <Bar dataKey="unsafeAction" stackId="a" name="Unsafe Action" fill="#EF4444" />
-                      <Bar dataKey="unsafeCondition" stackId="a" name="Unsafe Condition" fill="#F59E0B" />
+                      <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                      <Bar dataKey="safe" stackId="a" name="Safe" fill="#10B981" barSize={24} radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="unsafeAction" stackId="a" name="Unsafe Action" fill="#EF4444" barSize={24} radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="unsafeCondition" stackId="a" name="Unsafe Condition" fill="#F59E0B" barSize={24} radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
               {/* Unit Breakdown */}
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-blue-500" />
-                  Unit Breakdown
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
+                  <Shield className="h-5 w-5 text-amber-600" />
+                  Unit Performance Distribution
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {dashboardData?.unitRanking && dashboardData.unitRanking.length > 0 ? (
                     dashboardData.unitRanking.map((unit: any, index: number) => {
-                      // Prepare data for individual unit donut chart
                       const unitChartData = [
                         { name: 'Safe', value: unit.safe || 0, color: '#10B981' },
                         { name: 'Unsafe Action', value: unit.unsafeAction || 0, color: '#EF4444' },
                         { name: 'Unsafe Condition', value: unit.unsafeCondition || 0, color: '#F59E0B' },
-                      ].filter(item => item.value > 0); // Only include items with values > 0
+                      ].filter(item => item.value > 0);
 
                       return (
-                        <div key={index} className="bg-zinc-800/50 rounded-lg border border-zinc-700 p-4 flex flex-col h-full">
-                          <h4 className="font-medium text-white mb-2 text-center text-sm truncate" title={unit.name}>{unit.name}</h4>
+                        <div key={index} className="bg-slate-50 rounded-xl border border-slate-200 p-5 flex flex-col hover:border-amber-200 transition-colors">
+                          <h4 className="font-bold text-slate-900 mb-3 text-center text-base truncate" title={unit.name}>{unit.name}</h4>
                           
-                          {/* Chart Container */}
-                          <div className="h-40 flex items-center justify-center relative">
+                          <div className="h-48 flex items-center justify-center relative">
                             <ResponsiveContainer width="100%" height="100%">
                               <PieChart>
                                 <Pie
                                   data={unitChartData}
                                   cx="50%"
                                   cy="50%"
-                                  innerRadius={35}
-                                  outerRadius={55}
-                                  paddingAngle={2}
+                                  innerRadius={40}
+                                  outerRadius={65}
+                                  paddingAngle={4}
                                   dataKey="value"
-                                  nameKey="name"
                                   stroke="none"
                                 >
                                   {unitChartData.map((entry, idx) => (
@@ -534,44 +525,35 @@ export default function AdminDashboard() {
                                   ))}
                                 </Pie>
                                 <Tooltip 
-                                  formatter={(value) => [value, 'Reports']}
-                                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#fff', borderRadius: '8px' }}
+                                  formatter={(value) => [value, 'Entries']}
+                                  contentStyle={{ backgroundColor: '#fff', borderColor: '#e2e8f0', borderRadius: '8px', fontSize: '12px', color: '#0f172a' }}
+                                  itemStyle={{ color: '#0f172a' }}
                                 />
-                             </PieChart>
+                              </PieChart>
                             </ResponsiveContainer>
-                            
-                            {/* Total di Tengah Donut (Opsional, terlihat keren) */}
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                               <span className="text-xl font-bold text-white">{unit.total || 0}</span>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-4">
+                               <span className="text-2xl font-black text-slate-800">{unit.total || 0}</span>
+                               <span className="text-[10px] font-bold text-slate-400 uppercase">Total</span>
                             </div>
                           </div>
 
-                          {/* Legend & Details */}
-                          <div className="space-y-2 mt-4 flex-grow">
+                          <div className="space-y-3 mt-2 flex-grow border-t border-slate-200 pt-3">
                             {unitChartData.map((item, idx) => (
                               <div key={idx} className="flex justify-between items-center text-xs">
                                 <div className="flex items-center gap-2">
-                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
-                                  <span className="text-zinc-400">{item.name}</span>
+                                  <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: item.color }}></div>
+                                  <span className="text-slate-600 font-medium truncate max-w-[120px]">{item.name}</span>
                                 </div>
-                                <span className="font-medium text-white">{item.value}</span>
+                                <span className="font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">{item.value}</span>
                               </div>
                             ))}
-                          </div>
-
-                          {/* Footer: Total Reports */}
-                          <div className="mt-4 pt-3 border-t border-zinc-700/50 flex justify-between items-center">
-                            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Total Reports</span>
-                            <span className="text-sm font-bold text-white bg-zinc-700/50 px-2 py-0.5 rounded">
-                              {unit.total || 0}
-                            </span>
                           </div>
                         </div>
                       );
                     })
                   ) : (
-                    <div className="col-span-full text-center py-8 text-zinc-500 border border-dashed border-zinc-800 rounded-xl">
-                      No unit statistics available
+                    <div className="col-span-full text-center py-12 text-slate-500 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
+                      No unit analytics data available.
                     </div>
                   )}
                 </div>
@@ -581,7 +563,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Report Details Modal */}
       {isModalOpen && selectedReport && (
         <ReportDetailsModal
           report={selectedReport}

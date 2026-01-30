@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, MapPin, Camera, FileText, Shield } from 'lucide-react';
+import { Clock, MapPin, Camera, FileText, Shield, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { OnlineStatusIndicator } from '@/components/online-status-indicator';
@@ -21,7 +21,7 @@ export default async function SecurityDashboardPage() {
     redirect('/access-denied');
   }
 
-  // Fetch essential security data (e.g., today's reports) using prisma.report.findMany
+  // Fetch essential security data
   const [rawReports, totalReportsCount] = await Promise.all([
     prisma.report.findMany({
       where: {
@@ -36,7 +36,7 @@ export default async function SecurityDashboardPage() {
       orderBy: {
         capturedAt: 'desc',
       },
-      take: 10, // Limit to 10 most recent reports for display
+      take: 10, 
     }),
     prisma.report.count({
       where: {
@@ -45,7 +45,7 @@ export default async function SecurityDashboardPage() {
     })
   ]);
 
-  // Transform data to match expected structure in RecentReportList component
+  // Transform data
   const reports = rawReports.map(report => ({
     id: report.id,
     userId: report.userId,
@@ -76,106 +76,153 @@ export default async function SecurityDashboardPage() {
   });
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    // Layout Fix: Full width background, light mode forced
+    <div className="min-h-screen bg-slate-50 w-full text-slate-900">
+      
+      {/* PERBAIKAN LEBAR & PADDING:
+         - px-4: Padding kiri-kanan dikecilkan agar content lebih 'menabrak' ke sisi sidebar.
+         - w-full: Memastikan div mengambil 100% width parent.
+      */}
+      <div className="w-full px-3 py-2 space-y-6">
+        
+        {/* Header Section */}
+        <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Security Dashboard</h1>
-            <p className="text-muted-foreground">Welcome, {session.user.name}</p>
+            <div className="flex items-center gap-2 mb-1">
+               <Shield className="h-6 w-6 text-cyan-600" />
+               <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Security Dashboard</h1>
+            </div>
+            <p className="text-slate-500 font-medium">
+              Welcome back, <span className="text-cyan-700 font-bold">{session.user.name}</span>. Ready for patrol?
+            </p>
           </div>
-          <OnlineStatusIndicator />
+          <div className="bg-slate-100 p-2 rounded-lg border border-slate-200">
+            <OnlineStatusIndicator />
+          </div>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Assigned Unit</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {assignedUnit ? assignedUnit.name : 'Unassigned'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {assignedUnit ? assignedUnit.district : 'Contact admin for assignment'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Reports</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalReportsCount}</div>
-            <p className="text-xs text-muted-foreground">Submitted reports</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {reports.length > 0
-                ? new Date(reports[0].capturedAt).toLocaleDateString()
-                : 'None'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Last report submitted
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Camera className="h-5 w-5" />
-              Create New Report
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              Submit a new security report with photo evidence and location data.
-            </p>
-            <Button asChild className="w-full">
-              <Link href="/security/report">Create Report</Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Recent Reports */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Recent Reports</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {reports.length > 0 ? (
-              <div className="space-y-4">
-                {/* Replace static map with Interactive Component */}
-                {/* Pass only the first 3 reports */}
-                <RecentReportList reports={reports.slice(0, 3)} />
-
-                {/* Keep the View All button */}
-                {reports.length > 3 && (
-                  <Button variant="outline" className="w-full mt-4" asChild>
-                    <Link href="/security/reports">View All Reports</Link>
-                  </Button>
-                )}
+        {/* Stats Cards Grid - Full Width Responsive */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1: Unit Info */}
+          <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-all border-l-4 border-l-cyan-400">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-bold text-slate-600 uppercase tracking-wider">Assigned Unit</CardTitle>
+              <div className="p-2 bg-cyan-50 rounded-full">
+                <MapPin className="h-5 w-5 text-cyan-600" />
               </div>
-            ) : (
-              <p className="text-muted-foreground text-center py-4">No reports submitted yet</p>
-            )}
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-black text-slate-900 mt-2">
+                {assignedUnit ? assignedUnit.name : 'Unassigned'}
+              </div>
+              <p className="text-xs font-semibold text-slate-500 mt-1">
+                {assignedUnit ? assignedUnit.district : 'Contact admin for assignment'}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Card 2: Total Reports */}
+          <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-all border-l-4 border-l-blue-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-bold text-slate-600 uppercase tracking-wider">Total Reports</CardTitle>
+              <div className="p-2 bg-blue-50 rounded-full">
+                <FileText className="h-5 w-5 text-blue-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-black text-slate-900 mt-2">{totalReportsCount}</div>
+              <p className="text-xs font-semibold text-slate-500 mt-1">Submitted reports lifetime</p>
+            </CardContent>
+          </Card>
+
+          {/* Card 3: Recent Activity */}
+          <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-all border-l-4 border-l-orange-400">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-bold text-slate-600 uppercase tracking-wider">Last Activity</CardTitle>
+              <div className="p-2 bg-orange-50 rounded-full">
+                <Clock className="h-5 w-5 text-orange-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-black text-slate-900 mt-2">
+                {reports.length > 0
+                  ? new Date(reports[0].capturedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                  : '-'}
+              </div>
+              <p className="text-xs font-semibold text-slate-500 mt-1">
+                Latest submission date
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* QUICK ACTION FIX:
+            - Menggunakan 'lg:grid-cols-2' (Bagi 2 kolom rata)
+            - Ini membuat Quick Action melebar (50% layar) sehingga tingginya tidak memanjang ke bawah.
+            - Card History di sebelahnya juga mendapat 50% layar, seimbang.
+        */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* Quick Action - Create Report */}
+          <Card className="bg-white border-slate-200 shadow-lg h-fit">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
+              <CardTitle className="flex items-center gap-2 text-slate-900 text-xl">
+                <Camera className="h-6 w-6 text-cyan-600" />
+                Quick Action
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <p className="text-slate-600 font-medium mb-6 leading-relaxed">
+                Found an issue? Submit a new security report immediately with photo evidence and location tagging.
+              </p>
+              {/* Tombol Utama: Cyan Background + Black Text untuk kontras tinggi */}
+              <Button asChild className="w-full bg-[#00F7FF] text-slate-900 hover:bg-cyan-400 hover:shadow-cyan-200/50 hover:shadow-lg transition-all py-6 text-lg font-bold">
+                <Link href="/security/report">
+                  + Create New Report
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Recent Reports List */}
+          <Card className="bg-white border-slate-200 shadow-sm flex flex-col h-fit">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 flex flex-row items-center justify-between">
+              <CardTitle className="text-slate-900 text-xl flex items-center gap-2">
+                <FileText className="h-5 w-5 text-slate-500" />
+                Recent Patrol History
+              </CardTitle>
+              {reports.length > 3 && (
+                 <Link href="/security/reports" className="text-sm font-bold text-cyan-700 hover:text-cyan-500 hover:underline">
+                    View All
+                 </Link>
+              )}
+            </CardHeader>
+            <CardContent className="p-0">
+              {reports.length > 0 ? (
+                <div className="p-6">
+                  {/* Container List */}
+                  <div className="text-slate-900 font-medium">
+                    <RecentReportList reports={reports.slice(0, 3)} />
+                  </div>
+
+                  {reports.length > 3 && (
+                    <Button variant="outline" className="w-full mt-6 border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-cyan-700" asChild>
+                      <Link href="/security/reports">View Full History</Link>
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                   <div className="bg-slate-100 p-4 rounded-full mb-3">
+                      <FileText className="h-8 w-8 text-slate-400" />
+                   </div>
+                   <p className="text-slate-900 font-bold">No reports yet</p>
+                   <p className="text-slate-500 text-sm">Start your patrol to submit entries.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
