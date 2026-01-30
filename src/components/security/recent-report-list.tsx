@@ -31,11 +31,14 @@ export default function RecentReportList({ reports }: { reports: any[] }) {
           <div
             key={report.id}
             onClick={() => handleViewReport(report)}
-            className="border rounded-lg p-4 hover:bg-accent transition-colors cursor-pointer group"
+            className="border rounded-lg p-4 hover:border-cyan-400 transition-all duration-300 cursor-pointer group"
           >
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="font-semibold">Report #{report.id.substring(0, 8)}</h3>
+                {/* Menambahkan efek warna pada judul saat di-hover juga agar lebih interaktif (opsional) */}
+                <h3 className="font-semibold group-hover:text-cyan-400 transition-colors">
+                    Report #{report.id.substring(0, 8)}
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   {report.units?.name || 'Unknown Unit'}
                 </p>
