@@ -154,7 +154,7 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" class="text-slate-700 font-bold">Password</Label>
+                <Label htmlFor="password" className="text-slate-700 font-bold">Password</Label>
               </div>
               <div className="relative">
                 <Input
