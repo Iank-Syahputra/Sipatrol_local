@@ -308,7 +308,7 @@ export default function ManageUsersPage() {
                           <div className="p-1.5 bg-slate-100 rounded-full text-slate-500 border border-slate-200"><User size={16} /></div>
                           {user.full_name}
                       </td>
-                      <td className="px-6 py-4 text-slate-600 font-medium">@{user.username}</td>
+                      <td className="px-6 py-4 text-slate-600 font-medium">{user.username}</td>
                       <td className="px-6 py-4 text-slate-600">{user.phone_number || '-'}</td>
                       <td className="px-6 py-4 text-slate-600">
                           <span className="bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs font-medium">
