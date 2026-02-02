@@ -291,11 +291,16 @@ export default function CreateReportPage() {
                           {imagePreview && (
                             <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                           )}
-                          <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                            <Button onClick={clearPhoto} variant="secondary" className="font-bold shadow-xl border border-white/20 text-slate-900">
-                              <RotateCcw className="mr-2 h-4 w-4" /> Retake Photo
-                            </Button>
-                          </div>
+                         <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                          <Button 
+                            onClick={clearPhoto} 
+                            variant="secondary" 
+                            className="font-black shadow-2xl border-2 border-white bg-white text-slate-900 hover:bg-slate-100 transition-all active:scale-95"
+                          >
+                            <RotateCcw className="mr-2 h-4 w-4" /> 
+                            <span className="tracking-tight">RETAKE PHOTO</span>
+                          </Button>
+                        </div>
                           <div className="absolute bottom-3 right-3">
                              <Badge className="bg-emerald-500 hover:bg-emerald-600 border-0"><CheckCircle className="w-3 h-3 mr-1" /> Captured</Badge>
                           </div>
