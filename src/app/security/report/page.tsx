@@ -164,6 +164,7 @@ export default function CreateReportPage() {
 
   // --- SUBMIT LOGIC ---
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const submitReport = async () => {
     if (!session?.user) { alert('Authentication required.'); return; }
@@ -191,6 +192,7 @@ export default function CreateReportPage() {
       const response = await fetch('/api/reports', { method: 'POST', body: formData });
       if (!response.ok) throw new Error(await response.text());
 
+      setSuccessMessage('Report has been successfully submitted.');
       setShowSuccessPopup(true);
 
     } catch (error: any) {
@@ -208,9 +210,11 @@ export default function CreateReportPage() {
             locationId: locationRoom,
             capturedAt: new Date().toISOString()
           });
-          alert('Offline Mode: Report saved locally.');
-          router.push('/security');
-        } catch (e) { alert('Failed to save offline report.'); }
+          setSuccessMessage('Report has been saved locally and will sync when online.');
+          setShowSuccessPopup(true); // Show the same success popup as online mode
+        } catch (e) {
+          alert('Failed to save offline report.');
+        }
       } else {
         alert('Submission failed: ' + error.message);
       }
@@ -454,7 +458,7 @@ export default function CreateReportPage() {
               <CheckCircle className="w-12 h-12 text-emerald-600" />
             </div>
             <h2 className="text-3xl font-black text-slate-900 mb-2">SUCCESS!</h2>
-            <p className="text-slate-600 font-bold mb-8">Report has been successfully submitted.</p>
+            <p className="text-slate-600 font-bold mb-8">{successMessage}</p>
             <Button onClick={() => router.push('/security')} className="bg-slate-900 text-white font-bold py-4 px-6 rounded-xl w-full hover:bg-slate-800 shadow-lg border-b-4 border-black active:border-b-0 active:translate-y-1">
               RETURN TO DASHBOARD
             </Button>
