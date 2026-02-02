@@ -81,13 +81,13 @@ export function OnlineStatusIndicator() {
 
       {/* MODAL: DAFTAR LAPORAN PENDING */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md bg-zinc-950 border-zinc-800 text-white">
+        <DialogContent className="sm:max-w-md bg-white border-slate-200 text-slate-900">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-slate-900">
               <RefreshCw className="h-4 w-4 text-orange-500" />
               Antrean Laporan ({offlineReports.length})
             </DialogTitle>
-            <DialogDescription className="text-zinc-400">
+            <DialogDescription className="text-slate-600">
               Laporan ini tersimpan di perangkat Anda dan akan otomatis terkirim saat koneksi internet stabil kembali.
             </DialogDescription>
           </DialogHeader>
@@ -97,10 +97,10 @@ export function OnlineStatusIndicator() {
             {offlineReports.map((report: any, idx: number) => (
               <div
                 key={idx}
-                className="flex gap-3 p-3 rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 transition-colors"
+                className="flex gap-3 p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
               >
                 {/* Thumbnail Gambar */}
-                <div className="w-16 h-16 bg-black rounded-md overflow-hidden flex-shrink-0 border border-zinc-800 relative group">
+                <div className="w-16 h-16 bg-slate-200 rounded-md overflow-hidden flex-shrink-0 border border-slate-300 relative group">
                   {report.imageData ? (
                     <img
                       src={report.imageData}
@@ -108,7 +108,7 @@ export function OnlineStatusIndicator() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                    <div className="w-full h-full flex items-center justify-center text-slate-500">
                       <FileText className="h-6 w-6" />
                     </div>
                   )}
@@ -118,20 +118,20 @@ export function OnlineStatusIndicator() {
                 <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                   <div>
                     <div className="flex justify-between items-start mb-1">
-                      <span className="text-sm font-medium text-zinc-200 truncate">
+                      <span className="text-sm font-medium text-slate-800 truncate">
                         {report.categoryId || 'Tanpa Kategori'}
                       </span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-400">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600">
                         {new Date(report.capturedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <p className="text-xs text-zinc-500 line-clamp-1">
+                    <p className="text-xs text-slate-600 line-clamp-1">
                       {report.notes || 'Tidak ada catatan tambahan...'}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-1 text-[10px] text-zinc-400 mt-2">
-                    <MapPin className="h-3 w-3 text-zinc-500" />
+                  <div className="flex items-center gap-1 text-[10px] text-slate-500 mt-2">
+                    <MapPin className="h-3 w-3 text-slate-500" />
                     <span>Lat: {report.latitude?.toFixed(4)}, Long: {report.longitude?.toFixed(4)}</span>
                   </div>
                 </div>
@@ -139,12 +139,12 @@ export function OnlineStatusIndicator() {
             ))}
           </div>
 
-          <div className="flex justify-end pt-4 border-t border-zinc-900">
+          <div className="flex justify-end pt-4 border-t border-slate-200">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsOpen(false)}
-              className="border-zinc-700 hover:bg-zinc-800 text-zinc-300"
+              className="border-slate-300 hover:bg-slate-100 text-slate-700"
             >
               Tutup
             </Button>
