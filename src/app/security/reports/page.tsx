@@ -107,8 +107,8 @@ export default async function MyReportsPage(props: {
   return (
     <div className="container mx-auto py-6 max-w-3xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">My Reports</h1>
-        <p className="text-muted-foreground">Riwayat laporan keamanan yang Anda kirim</p>
+        <h1 className="text-2xl font-bold">Riwayat Laporan</h1>
+        <p className="text-muted-foreground">Daftar seluruh aktivitas pemantauan harian yang telah Anda selesaikan</p>
       </div>
 
       <Card className="bg-white border-slate-200 text-slate-900">

@@ -56,7 +56,7 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
             <div className="space-y-4">
               <h4 className="font-bold text-slate-800 flex items-center gap-2">
                 <Camera className="w-4 h-4 text-[#00F7FF]" />
-                Photo Evidence
+                Foto
               </h4>
               <div className="bg-slate-100 border border-slate-200 rounded-2xl w-full h-64 flex items-center justify-center overflow-hidden shadow-inner">
                 {report.image_path || report.imagePath || report.imageData || report.photo_url ? (
@@ -83,7 +83,7 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
             <div className="space-y-3">
               {/* Full Name */}
               <div className="bg-slate-50 border border-slate-100 hover:border-[#00F7FF]/30 rounded-xl p-3 transition-colors">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Full Name</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama Lengkap</p>
                 <p className="text-sm font-bold text-slate-800 mt-1">
                   {report.profiles?.full_name || report.profiles?.name || report.user?.fullName || report.user?.name || 'N/A'}
                 </p>
@@ -100,7 +100,7 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
               {/* Category */}
               {(report.report_categories?.name || report.category?.name) && (
                 <div className="bg-slate-50 border border-slate-100 hover:border-[#00F7FF]/30 rounded-xl p-3 transition-colors">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Category</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kategori</p>
                   <div className="mt-2">
                     <span
                       className={`inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${
@@ -122,7 +122,7 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
               {/* Specific Location */}
               {(report.unit_locations?.name || report.location?.name || report.locationNameCached) && (
                 <div className="bg-slate-50 border border-slate-100 hover:border-[#00F7FF]/30 rounded-xl p-3 transition-colors">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Specific Location</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lokasi Spesifik</p>
                   <p className="text-sm font-bold text-slate-800 mt-1">
                     {report.locationNameCached || report.unit_locations?.name || report.location?.name || 'N/A'}
                   </p>
@@ -135,7 +135,7 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
                 <div>
                   {latitude && longitude ? (
                     <>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Coordinates</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Koordinat</p>
                       <p className="text-sm font-bold text-slate-800 mt-0.5">
                         {latitude.toFixed(6)}, {longitude.toFixed(6)}
                       </p>
@@ -156,7 +156,7 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
 
               {/* Timestamp */}
               <div className="bg-slate-50 border border-slate-100 hover:border-[#00F7FF]/30 rounded-xl p-3 transition-colors">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Timestamp</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu</p>
                 <p className="text-sm font-bold text-slate-800 mt-1">
                   {report.captured_at || report.capturedAt ? formatDate(report.captured_at || report.capturedAt) : 'N/A'}
                 </p>
@@ -166,7 +166,7 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
 
           {/* Description Section */}
           <div className="mt-6">
-            <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">Description</h4>
+            <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">Deskripsi</h4>
             <div className="bg-slate-50 border border-slate-100 border-l-4 border-l-[#00F7FF] rounded-xl p-4 min-h-[100px] shadow-sm">
               <p className="text-slate-600 font-medium italic leading-relaxed">
                 "{report.notes || 'No description provided for this report.'}"
@@ -181,7 +181,7 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
             onClick={onClose}
             className="px-8 py-2 bg-[#00F7FF] hover:bg-cyan-400 text-slate-900 font-black rounded-xl shadow-lg shadow-cyan-200/50 transition-all active:scale-95"
           >
-            CLOSE
+            Tutup
           </button>
         </div>
       </div>

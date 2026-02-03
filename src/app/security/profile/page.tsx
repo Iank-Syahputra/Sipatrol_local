@@ -169,9 +169,9 @@ export default function SecurityProfilePage() {
       {/* Header Section */}
       <div className="bg-white border-l-4 border-l-[#00F7FF] border border-slate-200 p-6 rounded-2xl shadow-sm flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Profile Settings</h1>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Pengaturan Profil</h1>
           <p className="text-slate-500 font-medium text-sm mt-1">
-            Manage your account information and security settings
+            Kelola informasi data diri dan keamanan akun Anda
           </p>
         </div>
         <div className="bg-cyan-50 p-3 rounded-full hidden md:block">
@@ -189,26 +189,26 @@ export default function SecurityProfilePage() {
             <Card className="bg-white border border-slate-200 shadow-md hover:shadow-lg transition-shadow duration-300">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
                     <CardTitle className="flex items-center gap-2 text-slate-900 text-lg font-bold">
-                        <User className="w-5 h-5 text-cyan-600" /> Personal Information
+                        <User className="w-5 h-5 text-cyan-600" /> Informasi Personal 
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-5">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="space-y-1">
-                            <Label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Full Name</Label>
+                            <Label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Nama Lengkap</Label>
                             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-900">
                                 {fullName}
                             </div>
                         </div>
                         <div className="space-y-1">
-                            <Label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Username / ID</Label>
+                            <Label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Username</Label>
                             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg font-mono font-medium text-slate-900">
                                 {username}
                             </div>
                         </div>
                     </div>
                     <div className="space-y-1">
-                        <Label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Assigned Unit</Label>
+                        <Label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Unit Penugasan</Label>
                         <div className="p-3 bg-cyan-50 border border-cyan-100 text-cyan-800 rounded-lg font-bold flex items-center gap-2">
                             <ShieldCheck className="w-4 h-4" /> {unitName}
                         </div>
@@ -220,13 +220,13 @@ export default function SecurityProfilePage() {
             <Card className="bg-white border border-slate-200 shadow-md hover:shadow-lg transition-shadow duration-300">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
                     <CardTitle className="flex items-center gap-2 text-slate-900 text-lg font-bold">
-                        <Phone className="w-5 h-5 text-cyan-600" /> Contact
+                        <Phone className="w-5 h-5 text-cyan-600" /> Informasi Kontak
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
                     <form onSubmit={handlePhoneUpdate} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="phoneNumber" className="text-slate-700 font-bold">Phone Number / WhatsApp</Label>
+                            <Label htmlFor="phoneNumber" className="text-slate-700 font-bold">Nomor Telepon / WhatsApp</Label>
                             <Input
                                 id="phoneNumber"
                                 type="tel"
@@ -250,14 +250,13 @@ export default function SecurityProfilePage() {
                                     className="w-full bg-[#00F7FF] text-slate-900 hover:bg-cyan-400 font-bold shadow-md"
                                 >
                                     {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : <Save className="w-4 h-4 mr-2" />}
-                                    Save New Number
                                 </Button>
                             )}
                             
                             {showPhoneSuccess && (
                                 <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg flex items-center font-medium text-sm animate-in fade-in slide-in-from-top-2">
                                     <CheckCircle className="w-5 h-5 mr-2 text-emerald-600" />
-                                    Phone number successfully updated!
+                                    Nomor Telepon Berhasil Diperbaharui!
                                 </div>
                             )}
                         </div>
@@ -271,7 +270,7 @@ export default function SecurityProfilePage() {
             <Card className="bg-white border border-slate-200 shadow-md hover:shadow-lg transition-shadow duration-300 h-full">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
                     <CardTitle className="flex items-center gap-2 text-slate-900 text-lg font-bold">
-                        <Lock className="w-5 h-5 text-cyan-600" /> Account Security
+                        <Lock className="w-5 h-5 text-cyan-600" /> Buat Password Baru
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -279,7 +278,7 @@ export default function SecurityProfilePage() {
                         
                         {/* PASSWORD SAAT INI */}
                         <div className="space-y-2">
-                            <Label htmlFor="currentPassword" class="text-slate-700 font-bold">Current Password</Label>
+                            <Label htmlFor="currentPassword" class="text-slate-700 font-bold">Masukkan Password Sebelumnya</Label>
                             <div className="relative">
                                 <Input
                                     id="currentPassword"
@@ -303,7 +302,7 @@ export default function SecurityProfilePage() {
                         <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
                             {/* PASSWORD BARU */}
                             <div className="space-y-2">
-                                <Label htmlFor="newPassword" class="text-slate-700 font-bold">New Password</Label>
+                                <Label htmlFor="newPassword" class="text-slate-700 font-bold">Password Baru</Label>
                                 <div className="relative">
                                     <Input
                                         id="newPassword"
@@ -325,7 +324,7 @@ export default function SecurityProfilePage() {
 
                             {/* KONFIRMASI PASSWORD */}
                             <div className="space-y-2">
-                                <Label htmlFor="confirmPassword" class="text-slate-700 font-bold">Confirm New Password</Label>
+                                <Label htmlFor="confirmPassword" class="text-slate-700 font-bold">Konfirmasi Password Baru</Label>
                                 <div className="relative">
                                     <Input
                                         id="confirmPassword"
@@ -345,7 +344,7 @@ export default function SecurityProfilePage() {
                                 </div>
                             </div>
                             <p className="text-xs text-slate-500 leading-relaxed">
-                                Password must consist of at least 4 characters for your account security.
+                                Kata sandi harus terdiri dari minimal 4 karakter demi keamanan akun Anda.
                             </p>
                         </div>
 
@@ -360,14 +359,14 @@ export default function SecurityProfilePage() {
                                 }`}
                             >
                                 {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2"/> : <Lock className="w-4 h-4 mr-2" />}
-                                Change Password
+                                Simpan Password
                             </Button>
                         </div>
 
                         {showPasswordSuccess && (
                             <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg flex items-center font-medium text-sm animate-in fade-in slide-in-from-top-2">
                                 <CheckCircle className="w-5 h-5 mr-2 text-emerald-600" />
-                                Password successfully changed!
+                                Password Berhasil Diubah
                             </div>
                         )}
                     </form>

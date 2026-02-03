@@ -93,7 +93,7 @@ export default async function SecurityDashboardPage() {
                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Security Dashboard</h1>
             </div>
             <p className="text-slate-500 font-medium">
-              Welcome back, <span className="text-cyan-700 font-bold">{session.user.name}</span>. Ready for patrol?
+              Selamat Bertugas, <span className="text-cyan-700 font-bold">{session.user.name}</span>.
             </p>
           </div>
           <div className="bg-slate-100 p-2 rounded-lg border border-slate-200">
@@ -106,7 +106,7 @@ export default async function SecurityDashboardPage() {
           {/* Card 1: Unit Info */}
           <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-all border-l-4 border-l-cyan-400">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-bold text-slate-600 uppercase tracking-wider">Assigned Unit</CardTitle>
+              <CardTitle className="text-sm font-bold text-slate-600 uppercase tracking-wider">Unit Penugasan</CardTitle>
               <div className="p-2 bg-cyan-50 rounded-full">
                 <MapPin className="h-5 w-5 text-cyan-600" />
               </div>
@@ -124,21 +124,21 @@ export default async function SecurityDashboardPage() {
           {/* Card 2: Total Reports */}
           <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-all border-l-4 border-l-blue-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-bold text-slate-600 uppercase tracking-wider">Total Reports</CardTitle>
+              <CardTitle className="text-sm font-bold text-slate-600 uppercase tracking-wider">Total Log Laporan</CardTitle>
               <div className="p-2 bg-blue-50 rounded-full">
                 <FileText className="h-5 w-5 text-blue-600" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-black text-slate-900 mt-2">{totalReportsCount}</div>
-              <p className="text-xs font-semibold text-slate-500 mt-1">Submitted reports lifetime</p>
+              <p className="text-xs font-semibold text-slate-500 mt-1">Log Rutin Terkirim</p>
             </CardContent>
           </Card>
 
           {/* Card 3: Recent Activity */}
           <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-all border-l-4 border-l-orange-400">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-bold text-slate-600 uppercase tracking-wider">Last Activity</CardTitle>
+              <CardTitle className="text-sm font-bold text-slate-600 uppercase tracking-wider">Log Terakhir</CardTitle>
               <div className="p-2 bg-orange-50 rounded-full">
                 <Clock className="h-5 w-5 text-orange-600" />
               </div>
@@ -150,7 +150,7 @@ export default async function SecurityDashboardPage() {
                   : '-'}
               </div>
               <p className="text-xs font-semibold text-slate-500 mt-1">
-                Latest submission date
+                Tanggal Pengumpulan Terbaru
               </p>
             </CardContent>
           </Card>
@@ -168,17 +168,17 @@ export default async function SecurityDashboardPage() {
             <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
               <CardTitle className="flex items-center gap-2 text-slate-900 text-xl">
                 <Camera className="h-6 w-6 text-cyan-600" />
-                Quick Action
+                Log Patroli Harian
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <p className="text-slate-600 font-medium mb-6 leading-relaxed">
-                Found an issue? Submit a new security report immediately with photo evidence and location tagging.
+                Lakukan pemantauan area sesuai jadwal. Pastikan mendokumentasikan kondisi terkini untuk menjamin standar keamanan tetap terjaga.
               </p>
               {/* Tombol Utama: Cyan Background + Black Text untuk kontras tinggi */}
               <Button asChild className="w-full bg-[#00F7FF] text-slate-900 hover:bg-cyan-400 hover:shadow-cyan-200/50 hover:shadow-lg transition-all py-6 text-lg font-bold">
                 <Link href="/security/report">
-                  + Create New Report
+                  + Buat Laporan Baru 
                 </Link>
               </Button>
             </CardContent>
@@ -189,11 +189,11 @@ export default async function SecurityDashboardPage() {
             <CardHeader className="bg-slate-50 border-b border-slate-100 flex flex-row items-center justify-between">
               <CardTitle className="text-slate-900 text-xl flex items-center gap-2">
                 <FileText className="h-5 w-5 text-slate-500" />
-                Recent Patrol History
+                Riwayat Pemeriksaan Berkala
               </CardTitle>
               {reports.length > 3 && (
                  <Link href="/security/reports" className="text-sm font-bold text-cyan-700 hover:text-cyan-500 hover:underline">
-                    View All
+                    Selengkapnya
                  </Link>
               )}
             </CardHeader>
