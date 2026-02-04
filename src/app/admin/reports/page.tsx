@@ -2,21 +2,25 @@
 
 import { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
-import { 
-  Download, 
-  Printer, 
-  ChevronDown, 
-  Check, 
-  ImageIcon, 
-  Eye, 
-  Filter, 
-  Search, 
+import {
+  Download,
+  Printer,
+  ChevronDown,
+  Check,
+  ImageIcon,
+  Eye,
+  Filter,
+  Search,
   RotateCcw,
   Calendar,
   MoreHorizontal,
-  FileText
+  FileText,
+  Trash2,
+  Square,
+  CheckSquare
 } from "lucide-react";
 import ReportDetailsModal from '@/components/report-details-modal';
+import ConfirmationDialog from '@/components/confirmation-dialog';
 
 // Custom Multi-Select Component (Light Mode)
 const MultiSelectDropdown = ({ options, selected, onChange, placeholder }: any) => {
@@ -77,11 +81,11 @@ export default function ReportManagementPage() {
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
-  
+
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(true);
@@ -103,6 +107,12 @@ export default function ReportManagementPage() {
 
   const [filterTrigger, setFilterTrigger] = useState(0);
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+
+  // Selection state
+  const [selectedReports, setSelectedReports] = useState<string[]>([]);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+  const [deletingReportId, setDeletingReportId] = useState<string | null>(null);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   // Update refs when state changes
   useEffect(() => {
@@ -215,7 +225,7 @@ export default function ReportManagementPage() {
 
   const handleExport = () => {
     if (reports.length === 0) return alert("Tidak ada data laporan untuk diexport.");
-    
+
     const dataToExport = reports.map(report => ({
       "Tanggal": new Date(report.capturedAt).toLocaleDateString('id-ID'),
       "Waktu": new Date(report.capturedAt).toLocaleTimeString('id-ID'),
@@ -231,6 +241,99 @@ export default function ReportManagementPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Reports");
     XLSX.writeFile(workbook, `Reports_${new Date().toISOString().slice(0,10)}.xlsx`);
+  };
+
+  // Selection handlers
+  const toggleReportSelection = (reportId: string) => {
+    setSelectedReports(prev =>
+      prev.includes(reportId)
+        ? prev.filter(id => id !== reportId)
+        : [...prev, reportId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedReports.length === reports.length) {
+      setSelectedReports([]);
+    } else {
+      setSelectedReports(reports.map(report => report.id));
+    }
+  };
+
+  const handleDeleteSingleReport = (reportId: string) => {
+    setDeletingReportId(reportId);
+    setIsDeleteConfirmationOpen(true);
+  };
+
+  const handleDeleteMultipleReports = () => {
+    if (selectedReports.length > 0) {
+      setIsDeleteConfirmationOpen(true);
+    }
+  };
+
+  const handleDeleteAllReports = () => {
+    if (reports.length > 0) {
+      setSelectedReports(reports.map(report => report.id));
+      setIsDeleteConfirmationOpen(true);
+    }
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    if (!isSelectionMode) {
+      setSelectedReports([]); // Clear selections when entering selection mode
+    }
+  };
+
+  const exitSelectionMode = () => {
+    setIsSelectionMode(false);
+    setSelectedReports([]);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      if (deletingReportId) {
+        // Delete single report
+        const response = await fetch(`/api/admin/reports/${deletingReportId}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete report');
+        }
+
+        // Update local state to remove the deleted report
+        setReports(prev => prev.filter(report => report.id !== deletingReportId));
+        setFilteredReports(prev => prev.filter(report => report.id !== deletingReportId));
+        setTotalReports(prev => prev - 1);
+        setDeletingReportId(null);
+      } else if (selectedReports.length > 0) {
+        // Delete multiple reports
+        const response = await fetch('/api/admin/reports/bulk', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ reportIds: selectedReports }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete reports');
+        }
+
+        // Update local state to remove the deleted reports
+        setReports(prev => prev.filter(report => !selectedReports.includes(report.id)));
+        setFilteredReports(prev => prev.filter(report => !selectedReports.includes(report.id)));
+        setTotalReports(prev => prev - selectedReports.length);
+        setSelectedReports([]);
+      }
+
+      setIsDeleteConfirmationOpen(false);
+    } catch (error) {
+      console.error('Error deleting report(s):', error);
+      alert('Failed to delete report(s)');
+      setIsDeleteConfirmationOpen(false);
+    }
   };
 
   // --- RENDER HELPERS ---
@@ -287,13 +390,51 @@ export default function ReportManagementPage() {
               <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Report Management</h1>
               <p className="text-xs font-medium text-slate-500 hidden sm:block mt-1">Manage and analyze security reports</p>
             </div>
-            
+
             <div className="flex items-center gap-2 self-end sm:self-auto">
+              {isSelectionMode ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-slate-700">
+                    {selectedReports.length} selected
+                  </span>
+                  <button
+                    onClick={handleDeleteMultipleReports}
+                    className="flex items-center gap-1 px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors shadow-sm"
+                    disabled={selectedReports.length === 0}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Delete</span>
+                  </button>
+                  <button
+                    onClick={exitSelectionMode}
+                    className="flex items-center gap-1 px-3 py-2 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors shadow-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={toggleSelectionMode}
+                  className="flex items-center gap-1 px-3 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-bold hover:bg-amber-100 transition-colors shadow-sm"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Select</span>
+                </button>
+              )}
               <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-emerald-100 transition-colors shadow-sm">
                 <Download className="h-4 w-4" />
                 <span className="hidden sm:inline">Export to Excel</span>
                 <span className="sm:hidden">Export</span>
               </button>
+              {!isSelectionMode && (
+                <button
+                  onClick={handleDeleteAllReports}
+                  className="flex items-center gap-1 px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors shadow-sm"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Delete All</span>
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -389,6 +530,18 @@ export default function ReportManagementPage() {
               <table className="w-full text-left border-collapse">
                 <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-500 tracking-wider border-b border-slate-200">
                   <tr>
+                    {isSelectionMode && (
+                      <th className="px-6 py-4 w-12">
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={reports.length > 0 && selectedReports.length === reports.length}
+                            onChange={toggleSelectAll}
+                            className="h-4 w-4 text-amber-600 border-slate-300 rounded focus:ring-amber-500"
+                          />
+                        </div>
+                      </th>
+                    )}
                     <th className="px-6 py-4">Evidence</th>
                     <th className="px-6 py-4">Details</th>
                     <th className="px-6 py-4">Category</th>
@@ -400,6 +553,16 @@ export default function ReportManagementPage() {
                 <tbody className="divide-y divide-slate-100 text-sm">
                   {reports.map((report) => (
                     <tr key={report.id} className="hover:bg-amber-50/30 transition-colors group">
+                      {isSelectionMode && (
+                        <td className="px-6 py-4 w-12">
+                          <input
+                            type="checkbox"
+                            checked={selectedReports.includes(report.id)}
+                            onChange={() => toggleReportSelection(report.id)}
+                            className="h-4 w-4 text-amber-600 border-slate-300 rounded focus:ring-amber-500"
+                          />
+                        </td>
+                      )}
                       <td className="px-6 py-4 w-24">
                         <div className="h-14 w-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative shadow-sm">
                           {report.imagePath ? (
@@ -426,9 +589,17 @@ export default function ReportManagementPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button onClick={() => handleViewReport(report)} className="p-2 bg-white border border-slate-200 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50 rounded-lg text-slate-400 transition-all shadow-sm">
-                          <Eye size={18} />
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleDeleteSingleReport(report.id)}
+                            className="p-2 bg-white border border-red-200 hover:border-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg text-slate-400 transition-all shadow-sm"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                          <button onClick={() => handleViewReport(report)} className="p-2 bg-white border border-slate-200 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50 rounded-lg text-slate-400 transition-all shadow-sm">
+                            <Eye size={18} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -439,8 +610,20 @@ export default function ReportManagementPage() {
             {/* Mobile View (Cards) - Light Mode */}
             <div className="md:hidden divide-y divide-slate-100">
               {reports.map((report) => (
-                <div key={report.id} onClick={() => handleViewReport(report)} className="p-5 active:bg-slate-50 cursor-pointer">
+                <div key={report.id} className="p-5">
                   <div className="flex gap-4">
+                    {/* Checkbox - only show in selection mode */}
+                    {isSelectionMode && (
+                      <div className="flex items-start pt-1">
+                        <input
+                          type="checkbox"
+                          checked={selectedReports.includes(report.id)}
+                          onChange={() => toggleReportSelection(report.id)}
+                          className="h-4 w-4 text-amber-600 border-slate-300 rounded focus:ring-amber-500 mt-0.5"
+                        />
+                      </div>
+                    )}
+
                     {/* Image */}
                     <div className="h-20 w-20 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 shadow-sm">
                        {report.imagePath ? (
@@ -449,7 +632,7 @@ export default function ReportManagementPage() {
                         <div className="h-full w-full flex items-center justify-center text-slate-400"><ImageIcon size={24} /></div>
                       )}
                     </div>
-                    
+
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start mb-1">
@@ -458,16 +641,27 @@ export default function ReportManagementPage() {
                             {new Date(report.capturedAt).toLocaleDateString('en-GB')}
                         </span>
                       </div>
-                      
+
                       <div className="text-xs font-medium text-slate-500 mb-2 truncate flex items-center gap-1">
                           <span className="text-amber-700">{report.unit?.name}</span> • {report.location?.name}
                       </div>
-                      
+
                       <div className="flex items-center justify-between mt-2">
                         <CategoryBadge category={report.category} />
-                        <button className="text-xs text-amber-600 font-bold flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-md">
-                          Details <MoreHorizontal size={14} />
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleDeleteSingleReport(report.id)}
+                            className="text-xs text-red-600 font-bold flex items-center gap-1 bg-red-50 px-2 py-1 rounded-md"
+                          >
+                            <Trash2 size={12} /> Delete
+                          </button>
+                          <button
+                            onClick={() => handleViewReport(report)}
+                            className="text-xs text-amber-600 font-bold flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-md"
+                          >
+                            Details <MoreHorizontal size={12} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -518,6 +712,33 @@ export default function ReportManagementPage() {
           onClose={() => setIsModalOpen(false)}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={isDeleteConfirmationOpen}
+        onClose={() => {
+          setIsDeleteConfirmationOpen(false);
+          setDeletingReportId(null);
+        }}
+        onConfirm={confirmDelete}
+        title={
+          deletingReportId
+            ? "Delete Report?"
+            : selectedReports.length === reports.length
+              ? "Delete All Reports?"
+              : "Delete Selected Reports?"
+        }
+        message={
+          deletingReportId
+            ? "Are you sure you want to delete this report? This action cannot be undone."
+            : selectedReports.length === reports.length
+              ? `Are you sure you want to delete all ${selectedReports.length} report(s)? This action cannot be undone.`
+              : `Are you sure you want to delete ${selectedReports.length} report(s)? This action cannot be undone.`
+        }
+        confirmText="Yes, delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </>
   );
 }

@@ -72,3 +72,39 @@ export async function getUnitLocations(userId: string | undefined): Promise<Loca
     return [];
   }
 }
+
+export async function deleteReport(reportId: string): Promise<boolean> {
+  try {
+    await prisma.report.delete({
+      where: {
+        id: reportId,
+      },
+    });
+
+    // Revalidate the reports page to reflect the deletion
+    revalidatePath('/admin/reports');
+    return true;
+  } catch (error) {
+    console.error('Unexpected error in deleteReport:', error);
+    return false;
+  }
+}
+
+export async function deleteMultipleReports(reportIds: string[]): Promise<boolean> {
+  try {
+    await prisma.report.deleteMany({
+      where: {
+        id: {
+          in: reportIds,
+        },
+      },
+    });
+
+    // Revalidate the reports page to reflect the deletion
+    revalidatePath('/admin/reports');
+    return true;
+  } catch (error) {
+    console.error('Unexpected error in deleteMultipleReports:', error);
+    return false;
+  }
+}
