@@ -220,9 +220,9 @@ export default function ManageUsersPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-              <button onClick={handleExport} className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-sm">
+              <button onClick={handleExport} className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-emerald-100 transition-colors shadow-sm">
                 <Download className="h-4 w-4" />
-                <span className="hidden sm:inline">Ekspor Excel</span>
+                <span className="hidden sm:inline">Ekspor ke Excel</span>
                 <span className="sm:hidden">Ekspor</span>
               </button>
 

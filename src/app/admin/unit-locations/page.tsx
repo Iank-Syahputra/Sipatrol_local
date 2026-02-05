@@ -189,8 +189,10 @@ export default function ManageUnitLocationsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h1 className="text-xl font-bold text-slate-900">Kelola Lokasi Unit</h1>
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button onClick={handleExport} className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 rounded-lg text-sm font-semibold border border-slate-200 shadow-sm transition-colors text-slate-600">
-              <Download className="h-4 w-4" /> Ekspor
+            <button onClick={handleExport} className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-emerald-100 transition-colors shadow-sm">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Ekspor ke Excel</span>
+              <span className="sm:hidden">Ekspor</span>
             </button>
             <button
               onClick={() => { setShowAddForm(true); setShowEditForm(false); setFormData({ name: '', unitId: '' }); }}
