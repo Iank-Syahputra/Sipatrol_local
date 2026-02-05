@@ -172,7 +172,14 @@ export default function ManageUnitLocationsPage() {
     XLSX.writeFile(wb, `Lokasi_SiPatrol.xlsx`);
   };
 
-  if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-orange-500"></div></div>;
+  if (loading) return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-amber-500 border-r-transparent mb-4"></div>
+        <p className="font-medium text-slate-500">Loading locations...</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen">
