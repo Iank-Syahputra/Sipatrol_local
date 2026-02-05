@@ -296,7 +296,7 @@ export default function ManageUnitsPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => startEditUnit(unit)} className="p-2 bg-white border border-slate-200 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50 rounded-lg text-slate-400 transition-all shadow-sm" title="Edit">
+                        <button onClick={() => startEditUnit(unit)} className="p-2 bg-white border border-slate-200 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg text-slate-400 transition-all shadow-sm" title="Edit">
                           <Edit3 className="h-4 w-4" />
                         </button>
                         <button onClick={() => handleDeleteUnit(unit)} className="p-2 bg-white border border-slate-200 hover:border-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg text-slate-400 transition-all shadow-sm" title="Delete">
@@ -334,7 +334,7 @@ export default function ManageUnitsPage() {
                     {new Date(unit.created_at).toLocaleDateString('id-ID')}
                   </div>
                   <div className="flex gap-3">
-                    <button onClick={() => startEditUnit(unit)} className="text-xs font-bold text-amber-600 flex items-center gap-1 bg-amber-50 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition-colors">
+                    <button onClick={() => startEditUnit(unit)} className="text-xs font-bold text-blue-600 flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
                       <Edit3 size={14} /> Edit
                     </button>
                     <button onClick={() => handleDeleteUnit(unit)} className="text-xs font-bold text-red-600 flex items-center gap-1 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">

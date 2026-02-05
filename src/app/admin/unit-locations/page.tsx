@@ -323,7 +323,7 @@ export default function ManageUnitLocationsPage() {
                     <td className="px-6 py-4 text-slate-500 tabular-nums">{new Date(loc.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => startEdit(loc)} className="p-2 hover:bg-white hover:shadow-md border border-transparent hover:border-slate-100 rounded-lg text-slate-400 hover:text-orange-500 transition-all"><Edit3 size={16} /></button>
+                        <button onClick={() => startEdit(loc)} className="p-2 bg-white border border-slate-200 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg text-slate-400 transition-all shadow-sm"><Edit3 size={16} /></button>
                         <button onClick={() => handleDeleteLocation(loc.id)} className="p-2 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-lg text-slate-400 hover:text-red-600 transition-all"><Trash2 size={16} /></button>
                       </div>
                     </td>
