@@ -227,6 +227,61 @@ export default function ManageUnitLocationsPage() {
           </div>
         </div>
 
+        {/* ADD/EDIT FORM - Following the same pattern as units page */}
+        {(showAddForm || showEditForm) && (
+          <div className="bg-white border border-amber-200 rounded-xl p-5 mb-6 shadow-sm ring-1 ring-amber-100">
+            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2 text-base border-b border-slate-100 pb-3">
+              <div className="p-1.5 bg-amber-50 rounded-md text-amber-600">
+                 {showEditForm ? <Edit3 className="h-4 w-4"/> : <Plus className="h-4 w-4"/>}
+              </div>
+              {showEditForm ? 'Edit Detail Lokasi' : 'Tambah Lokasi Baru'}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Nama Lokasi</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg py-2.5 px-3 text-sm text-slate-900 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all"
+                  placeholder="Masukkan nama lokasi"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Unit</label>
+                <select
+                  value={formData.unitId}
+                  onChange={(e) => setFormData({...formData, unitId: e.target.value})}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg py-2.5 px-3 text-sm text-slate-900 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all"
+                >
+                  <option value="">Pilih Unit</option>
+                  {units.map(unit => (
+                    <option key={unit.id} value={unit.id}>{unit.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-5 pt-4 border-t border-slate-100">
+              <button
+                onClick={() => {
+                  setShowAddForm(false);
+                  setShowEditForm(false);
+                  setFormData({ name: '', unitId: '' });
+                }}
+                className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-lg text-sm transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => handleSaveLocation(showEditForm)}
+                className="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-sm transition-colors shadow-sm"
+              >
+                {showEditForm ? 'Perbarui Lokasi' : 'Simpan Lokasi'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* --- DATA LIST (Updated: Total Badge & Light Border) --- */}
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
           <div className="p-4 border-b border-slate-100 bg-white flex justify-between items-center">
