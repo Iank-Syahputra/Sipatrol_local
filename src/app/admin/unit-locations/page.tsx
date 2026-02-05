@@ -180,16 +180,16 @@ export default function ManageUnitLocationsPage() {
       {/* --- HEADER (Light Mode) --- */}
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur-md px-4 py-3 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h1 className="text-xl font-bold text-slate-900">Manage Unit Locations</h1>
+          <h1 className="text-xl font-bold text-slate-900">Kelola Lokasi Unit</h1>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button onClick={handleExport} className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 rounded-lg text-sm font-semibold border border-slate-200 shadow-sm transition-colors text-slate-600">
-              <Download className="h-4 w-4" /> Export
+              <Download className="h-4 w-4" /> Ekspor
             </button>
-            <button 
+            <button
               onClick={() => { setShowAddForm(true); setShowEditForm(false); setFormData({ name: '', unitId: '' }); }}
               className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-700 rounded-lg text-sm font-bold text-white transition-all shadow-md active:scale-95"
             >
-              <Plus className="h-4 w-4" /> Add Location
+              <Plus className="h-4 w-4" /> Tambah Lokasi
             </button>
           </div>
         </div>
@@ -201,11 +201,11 @@ export default function ManageUnitLocationsPage() {
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
             <div className="md:col-span-5">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Search Location</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Cari Lokasi</label>
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search by name..."
+                  placeholder="Cari berdasarkan nama..."
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-all"
                   value={searchTerm}
                   onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
@@ -215,13 +215,13 @@ export default function ManageUnitLocationsPage() {
             </div>
 
             <div className="md:col-span-5">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Filter Units</label>
-              <MultiSelectDropdown options={units} selected={selectedUnits} onChange={(val: any) => { setSelectedUnits(val); setCurrentPage(1); }} placeholder="All Units" />
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Filter Unit</label>
+              <MultiSelectDropdown options={units} selected={selectedUnits} onChange={(val: any) => { setSelectedUnits(val); setCurrentPage(1); }} placeholder="Semua Unit" />
             </div>
 
             <div className="md:col-span-2">
               <button onClick={handleResetFilters} className="w-full py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 font-bold rounded-lg text-sm transition-all shadow-sm">
-                Reset
+                Atur Ulang
               </button>
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function ManageUnitLocationsPage() {
         {/* --- DATA LIST (Updated: Total Badge & Light Border) --- */}
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
           <div className="p-4 border-b border-slate-100 bg-white flex justify-between items-center">
-            <h2 className="font-bold text-slate-800">Locations List</h2>
+            <h2 className="font-bold text-slate-800">Daftar Lokasi</h2>
             <span className="text-[10px] font-bold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md border border-slate-200 uppercase tracking-tighter">
               Total: {filteredLocations.length}
             </span>
@@ -240,10 +240,10 @@ export default function ManageUnitLocationsPage() {
             <table className="w-full text-left">
               <thead className="bg-slate-50/50 text-[10px] font-bold uppercase text-slate-400 border-b border-slate-100">
                 <tr>
-                  <th className="px-6 py-4">Location Name</th>
+                  <th className="px-6 py-4">Nama Lokasi</th>
                   <th className="px-6 py-4">Unit</th>
-                  <th className="px-6 py-4">Created At</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 py-4">Dibuat Pada</th>
+                  <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm text-slate-900">
@@ -287,7 +287,7 @@ export default function ManageUnitLocationsPage() {
             ))}
           </div>
 
-          {filteredLocations.length === 0 && <div className="p-16 text-center text-slate-400 font-medium">No locations found.</div>}
+          {filteredLocations.length === 0 && <div className="p-16 text-center text-slate-400 font-medium">Tidak ada lokasi ditemukan.</div>}
         </div>
       </div>
     </div>

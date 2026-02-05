@@ -215,20 +215,20 @@ export default function ManageUsersPage() {
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Manage Users</h1>
-              <p className="text-xs font-medium text-slate-500 hidden sm:block mt-1">Control user access and information</p>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Kelola Pengguna</h1>
+              <p className="text-xs font-medium text-slate-500 hidden sm:block mt-1">Kontrol akses dan informasi pengguna</p>
             </div>
-            
+
             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
               <button onClick={handleExport} className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-sm">
-                <Download className="h-4 w-4" /> 
-                <span className="hidden sm:inline">Export Excel</span>
-                <span className="sm:hidden">Export</span>
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Ekspor Excel</span>
+                <span className="sm:hidden">Ekspor</span>
               </button>
-              
+
               <Link href="/admin/users/create" className="flex-1 sm:flex-none">
                 <button className="w-full justify-center flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-md hover:shadow-lg">
-                  <UserPlus className="h-4 w-4" /> Add User
+                  <UserPlus className="h-4 w-4" /> Tambah Pengguna
                 </button>
               </Link>
             </div>
@@ -240,17 +240,17 @@ export default function ManageUsersPage() {
           {/* --- FILTERS --- */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-8 shadow-sm">
             <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <Filter className="h-4 w-4 text-amber-600" /> Filter Users
+                <Filter className="h-4 w-4 text-amber-600" /> Filter Pengguna
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-5 items-end">
-              
+
               {/* Search */}
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Search Name</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Cari Nama</label>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search by name or username..."
+                    placeholder="Cari berdasarkan nama atau username..."
                     className="w-full bg-white border border-slate-300 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -261,17 +261,17 @@ export default function ManageUsersPage() {
 
               {/* Unit Filter */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Filter Units</label>
-                <MultiSelectDropdown options={allUnits} selected={selectedUnits} onChange={setSelectedUnits} placeholder="Select Units" />
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Filter Unit</label>
+                <MultiSelectDropdown options={allUnits} selected={selectedUnits} onChange={setSelectedUnits} placeholder="Pilih Unit" />
               </div>
 
               {/* Action Buttons */}
               <div className="flex gap-3">
                 <button onClick={handleApplyFilters} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-bold transition-colors shadow-md">
-                  <Filter className="h-4 w-4" /> Apply
+                  <Filter className="h-4 w-4" /> Terapkan
                 </button>
                 <button onClick={handleResetFilters} className="px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-600 font-bold rounded-xl text-sm transition-colors">
-                  Reset
+                  Atur Ulang
                 </button>
               </div>
 
@@ -282,7 +282,7 @@ export default function ManageUsersPage() {
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
             <div className="p-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
               <h2 className="font-bold text-slate-900 text-lg flex items-center gap-2">
-                  <User className="h-5 w-5 text-amber-600" /> Users List
+                  <User className="h-5 w-5 text-amber-600" /> Daftar Pengguna
               </h2>
               <span className="text-xs font-bold px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-500 shadow-sm">Total: {totalCount}</span>
             </div>
@@ -292,13 +292,13 @@ export default function ManageUsersPage() {
               <table className="w-full text-left border-collapse">
                 <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-500 tracking-wider border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-4">Full Name</th>
+                    <th className="px-6 py-4">Nama Lengkap</th>
                     <th className="px-6 py-4">Username</th>
-                    <th className="px-6 py-4">Phone</th>
+                    <th className="px-6 py-4">Telepon</th>
                     <th className="px-6 py-4">Unit</th>
-                    <th className="px-6 py-4">Role</th>
-                    <th className="px-6 py-4">Created At</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
+                    <th className="px-6 py-4">Peran</th>
+                    <th className="px-6 py-4">Dibuat Pada</th>
+                    <th className="px-6 py-4 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm">
@@ -376,7 +376,7 @@ export default function ManageUsersPage() {
                       </div>
                     )}
                     <div className="flex items-center gap-2 text-xs text-slate-500 pt-1 border-t border-slate-200 mt-2">
-                        <Calendar size={12} /> Registered: {new Date(user.created_at).toLocaleDateString()}
+                        <Calendar size={12} /> Terdaftar: {new Date(user.created_at).toLocaleDateString()}
                     </div>
                   </div>
 
@@ -386,11 +386,11 @@ export default function ManageUsersPage() {
                         <Edit size={14} /> Edit
                       </button>
                     </Link>
-                    <button 
+                    <button
                       onClick={() => handleDeleteUser(user.id, user.full_name)}
                       className="flex-1 py-2 bg-white border border-slate-200 hover:bg-red-50 hover:border-red-200 rounded-lg text-xs font-bold text-red-600 flex items-center justify-center gap-2 transition-colors shadow-sm"
                     >
-                      <Trash2 size={14} /> Delete
+                      <Trash2 size={14} /> Hapus
                     </button>
                   </div>
                 </div>
@@ -402,24 +402,24 @@ export default function ManageUsersPage() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4 text-slate-400 border border-slate-200">
                   <User size={32} />
                 </div>
-                <h3 className="text-slate-900 font-bold text-lg mb-1">No users found</h3>
-                <p className="text-sm text-slate-500 font-medium">Try adjusting your filters or search terms.</p>
+                <h3 className="text-slate-900 font-bold text-lg mb-1">Tidak ada pengguna ditemukan</h3>
+                <p className="text-sm text-slate-500 font-medium">Coba sesuaikan filter atau pencarian Anda.</p>
               </div>
             )}
 
             {/* Pagination Footer */}
             {totalPages > 1 && (
               <div className="p-5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Page {currentPage} of {totalPages}</span>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Halaman {currentPage} dari {totalPages}</span>
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                     className="px-4 py-2 text-xs font-bold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-                  >Previous</button>
-                  <button 
+                  >Sebelumnya</button>
+                  <button
                     disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                     className="px-4 py-2 text-xs font-bold bg-amber-500 border border-amber-600 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
-                  >Next</button>
+                  >Berikutnya</button>
                 </div>
               </div>
             )}
@@ -436,20 +436,20 @@ export default function ManageUsersPage() {
                 <div className="p-3 bg-red-100 rounded-full text-red-600">
                     <AlertTriangle className="h-6 w-6" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">Confirm Delete</h3>
+                <h3 className="text-lg font-bold text-slate-900">Konfirmasi Hapus</h3>
             </div>
-            
+
             <p className="text-slate-600 mb-6 text-sm leading-relaxed font-medium">
-              Are you sure you want to delete user <span className="font-bold text-slate-900">"{confirmDelete.name}"</span>?
-              <br/><span className="text-red-600 text-xs mt-1 block">This action cannot be undone and will remove all associated data.</span>
+              Apakah Anda yakin ingin menghapus pengguna <span className="font-bold text-slate-900">"{confirmDelete.name}"</span>?
+              <br/><span className="text-red-600 text-xs mt-1 block">Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait.</span>
             </p>
-            
+
             <div className="flex gap-3 justify-end">
               <button onClick={cancelDelete} className="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm transition-colors border border-slate-300">
-                Cancel
+                Batal
               </button>
               <button onClick={confirmDeleteUser} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md hover:shadow-lg">
-                Delete User
+                Hapus Pengguna
               </button>
             </div>
           </div>

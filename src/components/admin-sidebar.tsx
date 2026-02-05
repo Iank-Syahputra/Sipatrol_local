@@ -21,11 +21,11 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
   const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
-    { href: '/admin/dashboard', label: 'Live Feed', icon: Activity },
-    { href: '/admin/reports', label: 'Report Management', icon: FileText },
-    { href: '/admin/units', label: 'Manage Units', icon: Building },
-    { href: '/admin/unit-locations', label: 'Manage Locations', icon: MapPin },
-    { href: '/admin/users', label: 'Manage Users', icon: User },
+    { href: '/admin/dashboard', label: 'Umpan Langsung', icon: Activity },
+    { href: '/admin/reports', label: 'Manajemen Laporan', icon: FileText },
+    { href: '/admin/units', label: 'Kelola Unit', icon: Building },
+    { href: '/admin/unit-locations', label: 'Kelola Lokasi', icon: MapPin },
+    { href: '/admin/users', label: 'Kelola Pengguna', icon: User },
   ];
 
   const handleSignOut = () => {
@@ -66,8 +66,8 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
               <LayoutDashboard className="h-6 w-6 text-white" />
             </div>
             <div>
-                <h1 className="text-lg font-extrabold text-slate-900 leading-tight">Command</h1>
-                <p className="text-xs font-bold text-amber-600 uppercase tracking-widest">Center</p>
+                <h1 className="text-lg font-extrabold text-slate-900 leading-tight">Pusat</h1>
+                <p className="text-xs font-bold text-amber-600 uppercase tracking-widest">Perintah</p>
             </div>
           </div>
         </div>
@@ -104,17 +104,17 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
               </div>
               <div className="flex flex-col">
                   <span className="text-sm font-bold text-slate-900">Administrator</span>
-                  <span className="text-[10px] text-slate-500">Super User</span>
+                  <span className="text-[10px] text-slate-500">Pengguna Super</span>
               </div>
             </div>
-            
+
             {/* Tombol Logout (Desktop & Mobile) */}
             <button
               onClick={handleSignOut}
               type="button"
               className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-200"
-              title="Sign Out"
-              aria-label="Sign Out"
+              title="Keluar"
+              aria-label="Keluar"
             >
               <LogOut className="h-5 w-5" />
             </button>
@@ -126,7 +126,7 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Header Mobile Placeholder */}
         <header className="md:hidden h-16 border-b border-slate-200 bg-white flex items-center justify-center sticky top-0 z-20">
-            <span className="font-bold text-slate-900">Admin Dashboard</span>
+            <span className="font-bold text-slate-900">Dasbor Admin</span>
         </header>
 
         <main className="flex-1 overflow-y-auto scroll-smooth bg-slate-50">

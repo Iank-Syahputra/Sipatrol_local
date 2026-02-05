@@ -99,7 +99,7 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-4">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-t-4 border-amber-500 border-r-transparent mb-4"></div>
-          <p className="text-sm sm:text-base font-medium text-slate-600">Initializing Operation Center...</p>
+          <p className="text-sm sm:text-base font-medium text-slate-600">Menginisialisasi Pusat Operasi...</p>
         </div>
       </div>
     );
@@ -112,13 +112,13 @@ export default function AdminDashboard() {
           <div className="bg-red-100 p-3 rounded-full w-fit mx-auto mb-4">
              <AlertTriangle className="h-8 w-8 text-red-600" />
           </div>
-          <h2 className="text-xl font-bold mb-2 text-slate-900">Connection Error</h2>
+          <h2 className="text-xl font-bold mb-2 text-slate-900">Kesalahan Koneksi</h2>
           <p className="text-slate-500 mb-6 text-sm">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="w-full sm:w-auto px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-colors shadow-md"
           >
-            Reconnect
+            Hubungkan Kembali
           </button>
         </div>
       </div>
@@ -129,7 +129,7 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-500 font-medium">No operational data available.</p>
+          <p className="text-slate-500 font-medium">Tidak ada data operasional tersedia.</p>
         </div>
       </div>
     );
@@ -137,9 +137,9 @@ export default function AdminDashboard() {
 
   // TECHNICAL COPYWRITING UPDATES
   const stats = [
-    { title: "Total Personnel", value: dashboardData?.totalUsers?.toString() || "0", icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-    { title: "Incoming Reports", value: dashboardData?.totalReports?.toString() || "0", icon: FileText, color: "text-amber-600", bg: "bg-amber-50" },
-    { title: "Operational Units", value: dashboardData?.totalUnits?.toString() || "0", icon: Building, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { title: "Jumlah Personel", value: dashboardData?.totalUsers?.toString() || "0", icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+    { title: "Laporan Masuk", value: dashboardData?.totalReports?.toString() || "0", icon: FileText, color: "text-amber-600", bg: "bg-amber-50" },
+    { title: "Unit Operasional", value: dashboardData?.totalUnits?.toString() || "0", icon: Building, color: "text-emerald-600", bg: "bg-emerald-50" },
   ];
 
   const globalChartData = [
@@ -165,11 +165,11 @@ export default function AdminDashboard() {
                  <div className="p-2 bg-amber-50 rounded-lg border border-amber-100">
                     <LayoutDashboard className="h-6 w-6 text-amber-600" />
                  </div>
-                 <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Operation Command Center</h1>
+                 <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Pusat Komando Operasi</h1>
               </div>
               {!userLoading && (
                 <p className="text-sm text-slate-500 font-medium ml-1">
-                  System Administrator: <span className="font-bold text-amber-700">{userProfile?.full_name || userProfile?.name || 'Admin'}</span>
+                  Administrator Sistem: <span className="font-bold text-amber-700">{userProfile?.full_name || userProfile?.name || 'Admin'}</span>
                 </p>
               )}
             </div>
@@ -180,7 +180,7 @@ export default function AdminDashboard() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                 </span>
-                <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">System Online</span>
+                <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Sistem Aktif</span>
               </div>
             </div>
           </div>
@@ -321,7 +321,7 @@ export default function AdminDashboard() {
                     <div className="bg-slate-50 p-4 rounded-full w-fit mx-auto mb-3">
                         <FileText className="h-8 w-8 text-slate-400" />
                     </div>
-                    <p className="text-slate-500 font-medium">No incoming reports available.</p>
+                    <p className="text-slate-500 font-medium">Tidak ada laporan masuk tersedia.</p>
                   </div>
                 )}
               </div>
@@ -333,12 +333,12 @@ export default function AdminDashboard() {
               <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
                   <Filter className="h-5 w-5 text-amber-600" />
-                  Data Filter Parameters
+                  Parameter Filter Data
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Start Date</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Tanggal Mulai</label>
                     <input
                       type="date"
                       value={dateRange.startDate}
@@ -348,7 +348,7 @@ export default function AdminDashboard() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">End Date</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Tanggal Akhir</label>
                     <input
                       type="date"
                       value={dateRange.endDate}
@@ -363,14 +363,14 @@ export default function AdminDashboard() {
                       className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition-colors shadow-md hover:shadow-lg"
                     >
                       <Search className="h-4 w-4" />
-                      Apply Filter
+                      Terapkan Filter
                     </button>
                     <button
                       onClick={handleResetFilters}
                       className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-600 font-bold rounded-xl text-sm transition-colors"
                     >
                       <RotateCcw className="h-4 w-4" />
-                      Reset
+                      Atur Ulang
                     </button>
                   </div>
                 </div>
@@ -380,7 +380,7 @@ export default function AdminDashboard() {
               <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
                   <CircleGauge className="h-5 w-5 text-amber-600" />
-                  HSE Compliance Overview
+                  Ikhtisar Kepatuhan HSE
                 </h3>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
@@ -401,14 +401,14 @@ export default function AdminDashboard() {
                             <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                           ))}
                         </Pie>
-                        <Tooltip 
-                          formatter={(value) => [value, 'Entries']} 
+                        <Tooltip
+                          formatter={(value) => [value, 'Entri']}
                           contentStyle={{ backgroundColor: '#fff', borderColor: '#e2e8f0', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', color: '#0f172a' }}
                           itemStyle={{ color: '#0f172a' }}
                         />
-                        <Legend 
-                            verticalAlign="bottom" 
-                            height={36} 
+                        <Legend
+                            verticalAlign="bottom"
+                            height={36}
                             iconType="circle"
                             formatter={(value) => <span className="text-slate-600 font-semibold ml-1">{value}</span>}
                         />
@@ -417,7 +417,7 @@ export default function AdminDashboard() {
                     {/* Center Text */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
                         <span className="text-3xl font-black text-slate-900">{dashboardData?.totalReports || 0}</span>
-                        <span className="text-xs font-bold text-slate-400 uppercase">Total Entries</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase">Total Entri</span>
                     </div>
                   </div>
 
@@ -491,7 +491,7 @@ export default function AdminDashboard() {
               <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
                   <Shield className="h-5 w-5 text-amber-600" />
-                  Unit Performance Distribution
+                  Distribusi Kinerja Unit
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -525,7 +525,7 @@ export default function AdminDashboard() {
                                   ))}
                                 </Pie>
                                 <Tooltip 
-                                  formatter={(value) => [value, 'Entries']}
+                                  formatter={(value) => [value, 'Entri']}
                                   contentStyle={{ backgroundColor: '#fff', borderColor: '#e2e8f0', borderRadius: '8px', fontSize: '12px', color: '#0f172a' }}
                                   itemStyle={{ color: '#0f172a' }}
                                 />
@@ -553,7 +553,7 @@ export default function AdminDashboard() {
                     })
                   ) : (
                     <div className="col-span-full text-center py-12 text-slate-500 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
-                      No unit analytics data available.
+                      Tidak ada data analitik unit tersedia.
                     </div>
                   )}
                 </div>

@@ -114,6 +114,14 @@ export default function ReportManagementPage() {
   const [deletingReportId, setDeletingReportId] = useState<string | null>(null);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
+  // Storage usage state
+  const [storageUsage, setStorageUsage] = useState<{
+    currentUsage: string;
+    maxUsage: string;
+    percentageUsed: number;
+    currentFilesCount: number;
+  } | null>(null);
+
   // Update refs when state changes
   useEffect(() => {
     searchTermRef.current = searchTerm;
@@ -387,83 +395,106 @@ export default function ReportManagementPage() {
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Report Management</h1>
-              <p className="text-xs font-medium text-slate-500 hidden sm:block mt-1">Manage and analyze security reports</p>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Manajemen Laporan</h1>
+              <p className="text-xs font-medium text-slate-500 hidden sm:block mt-1">Kelola dan analisis laporan keamanan</p>
             </div>
 
-            <div className="flex items-center gap-2 self-end sm:self-auto">
-              {isSelectionMode ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-slate-700">
-                    {selectedReports.length} selected
-                  </span>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 self-end sm:self-auto">
+              {/* Storage Usage Indicator */}
+              {storageUsage && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                  <div className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded border border-slate-200 shadow-sm">
+                    Penyimpanan: {storageUsage.currentUsage} / {storageUsage.maxUsage}
+                  </div>
+                  <div className="w-full sm:w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${
+                        storageUsage.percentageUsed > 90
+                          ? 'bg-red-500'
+                          : storageUsage.percentageUsed > 75
+                            ? 'bg-amber-500'
+                            : 'bg-green-500'
+                      }`}
+                      style={{ width: `${Math.min(storageUsage.percentageUsed, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                {isSelectionMode ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-700">
+                      {selectedReports.length} dipilih
+                    </span>
+                    <button
+                      onClick={handleDeleteMultipleReports}
+                      className="flex items-center gap-1 px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors shadow-sm"
+                      disabled={selectedReports.length === 0}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>Hapus</span>
+                    </button>
+                    <button
+                      onClick={exitSelectionMode}
+                      className="flex items-center gap-1 px-3 py-2 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors shadow-sm"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={handleDeleteMultipleReports}
-                    className="flex items-center gap-1 px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors shadow-sm"
-                    disabled={selectedReports.length === 0}
+                    onClick={toggleSelectionMode}
+                    className="flex items-center gap-1 px-3 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-bold hover:bg-amber-100 transition-colors shadow-sm"
                   >
                     <Trash2 className="h-4 w-4" />
-                    <span>Delete</span>
+                    <span>Pilih</span>
                   </button>
+                )}
+                <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-emerald-100 transition-colors shadow-sm">
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">Ekspor ke Excel</span>
+                  <span className="sm:hidden">Ekspor</span>
+                </button>
+                {!isSelectionMode && (
                   <button
-                    onClick={exitSelectionMode}
-                    className="flex items-center gap-1 px-3 py-2 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors shadow-sm"
+                    onClick={handleDeleteAllReports}
+                    className="flex items-center gap-1 px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors shadow-sm"
                   >
-                    Cancel
+                    <Trash2 className="h-4 w-4" />
+                    <span>Hapus Semua</span>
                   </button>
-                </div>
-              ) : (
-                <button
-                  onClick={toggleSelectionMode}
-                  className="flex items-center gap-1 px-3 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-bold hover:bg-amber-100 transition-colors shadow-sm"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span>Select</span>
-                </button>
-              )}
-              <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-emerald-100 transition-colors shadow-sm">
-                <Download className="h-4 w-4" />
-                <span className="hidden sm:inline">Export to Excel</span>
-                <span className="sm:hidden">Export</span>
-              </button>
-              {!isSelectionMode && (
-                <button
-                  onClick={handleDeleteAllReports}
-                  className="flex items-center gap-1 px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors shadow-sm"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span>Delete All</span>
-                </button>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </header>
 
         <div className="flex-1 p-6 overflow-y-auto">
           {/* Mobile Filter Toggle */}
-          <button 
+          <button
             onClick={() => setIsFilterExpanded(!isFilterExpanded)}
             className="w-full md:hidden flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-xl mb-4 text-sm font-bold text-slate-700 shadow-sm"
           >
-            <span className="flex items-center gap-2"><Filter className="h-4 w-4 text-amber-600" /> Filters</span>
+            <span className="flex items-center gap-2"><Filter className="h-4 w-4 text-amber-600" /> Filter</span>
             <ChevronDown className={`h-4 w-4 transition-transform ${isFilterExpanded ? 'rotate-180' : ''}`} />
           </button>
 
           {/* Filters Area - Light Mode */}
           <div className={`${isFilterExpanded ? 'block' : 'hidden'} md:block bg-white border border-slate-200 rounded-2xl p-6 mb-8 shadow-sm transition-all`}>
             <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <Filter className="h-4 w-4 text-amber-600" /> Filter Options
+                <Filter className="h-4 w-4 text-amber-600" /> Opsi Filter
             </h3>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-5">
               
               {/* Search */}
               <div className="col-span-1 sm:col-span-2 xl:col-span-2">
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Search</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Cari</label>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search officer, notes..."
+                    placeholder="Cari petugas, catatan..."
                     className="w-full bg-white border border-slate-300 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -474,19 +505,19 @@ export default function ReportManagementPage() {
 
               {/* Units */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Units</label>
-                <MultiSelectDropdown options={allUnits} selected={selectedUnits} onChange={setSelectedUnits} placeholder="All Units" />
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Unit</label>
+                <MultiSelectDropdown options={allUnits} selected={selectedUnits} onChange={setSelectedUnits} placeholder="Semua Unit" />
               </div>
 
               {/* Categories */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Categories</label>
-                <MultiSelectDropdown options={allCategories} selected={selectedCategories} onChange={setSelectedCategories} placeholder="All Categories" />
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Kategori</label>
+                <MultiSelectDropdown options={allCategories} selected={selectedCategories} onChange={setSelectedCategories} placeholder="Semua Kategori" />
               </div>
 
               {/* Date Range */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Start Date</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Tanggal Mulai</label>
                 <input
                   type="date"
                   className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -495,7 +526,7 @@ export default function ReportManagementPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">End Date</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Tanggal Akhir</label>
                 <input
                   type="date"
                   className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -507,10 +538,10 @@ export default function ReportManagementPage() {
               {/* Action Buttons */}
               <div className="col-span-1 sm:col-span-2 xl:col-span-6 flex flex-col sm:flex-row justify-end gap-3 mt-4 sm:mt-0 pt-4 border-t border-slate-100 xl:border-0 xl:pt-0">
                 <button onClick={handleResetFilters} className="px-6 py-2.5 text-sm font-bold text-slate-600 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 rounded-xl transition-colors flex items-center justify-center gap-2">
-                  <RotateCcw className="h-4 w-4" /> Reset
+                  <RotateCcw className="h-4 w-4" /> Atur Ulang
                 </button>
                 <button onClick={handleApplyFilters} className="px-8 py-2.5 text-sm font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2">
-                  <Filter className="h-4 w-4" /> Apply Filters
+                  <Filter className="h-4 w-4" /> Terapkan Filter
                 </button>
               </div>
             </div>
@@ -520,7 +551,7 @@ export default function ReportManagementPage() {
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
             <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <h2 className="font-bold text-slate-900 text-lg flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-amber-600" /> Reports List
+                  <FileText className="h-5 w-5 text-amber-600" /> Daftar Laporan
               </h2>
               <span className="text-xs font-bold px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-500 shadow-sm">Total: {totalReports}</span>
             </div>
@@ -542,12 +573,12 @@ export default function ReportManagementPage() {
                         </div>
                       </th>
                     )}
-                    <th className="px-6 py-4">Evidence</th>
-                    <th className="px-6 py-4">Details</th>
-                    <th className="px-6 py-4">Category</th>
-                    <th className="px-6 py-4">Location</th>
-                    <th className="px-6 py-4">Date/Time</th>
-                    <th className="px-6 py-4 text-right">Action</th>
+                    <th className="px-6 py-4">Bukti</th>
+                    <th className="px-6 py-4">Detail</th>
+                    <th className="px-6 py-4">Kategori</th>
+                    <th className="px-6 py-4">Lokasi</th>
+                    <th className="px-6 py-4">Tanggal/Waktu</th>
+                    <th className="px-6 py-4 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm">
@@ -653,13 +684,13 @@ export default function ReportManagementPage() {
                             onClick={() => handleDeleteSingleReport(report.id)}
                             className="text-xs text-red-600 font-bold flex items-center gap-1 bg-red-50 px-2 py-1 rounded-md"
                           >
-                            <Trash2 size={12} /> Delete
+                            <Trash2 size={12} /> Hapus
                           </button>
                           <button
                             onClick={() => handleViewReport(report)}
                             className="text-xs text-amber-600 font-bold flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-md"
                           >
-                            Details <MoreHorizontal size={12} />
+                            Detail <MoreHorizontal size={12} />
                           </button>
                         </div>
                       </div>
@@ -723,20 +754,20 @@ export default function ReportManagementPage() {
         onConfirm={confirmDelete}
         title={
           deletingReportId
-            ? "Delete Report?"
+            ? "Hapus Laporan?"
             : selectedReports.length === reports.length
-              ? "Delete All Reports?"
-              : "Delete Selected Reports?"
+              ? "Hapus Semua Laporan?"
+              : "Hapus Laporan Terpilih?"
         }
         message={
           deletingReportId
-            ? "Are you sure you want to delete this report? This action cannot be undone."
+            ? "Apakah Anda yakin ingin menghapus laporan ini? Tindakan ini tidak dapat dibatalkan. Foto terkait juga akan dihapus dari penyimpanan."
             : selectedReports.length === reports.length
-              ? `Are you sure you want to delete all ${selectedReports.length} report(s)? This action cannot be undone.`
-              : `Are you sure you want to delete ${selectedReports.length} report(s)? This action cannot be undone.`
+              ? `Apakah Anda yakin ingin menghapus semua ${selectedReports.length} laporan? Tindakan ini tidak dapat dibatalkan. Foto terkait juga akan dihapus dari penyimpanan.`
+              : `Apakah Anda yakin ingin menghapus ${selectedReports.length} laporan terpilih? Tindakan ini tidak dapat dibatalkan. Foto terkait juga akan dihapus dari penyimpanan.`
         }
-        confirmText="Yes, delete"
-        cancelText="Cancel"
+        confirmText="Ya, hapus"
+        cancelText="Batal"
         variant="danger"
       />
     </>

@@ -44,35 +44,35 @@ export default async function PatrolMapPage({
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Patrol Location Map</h1>
-        <p className="text-muted-foreground">Visualize security patrol locations</p>
+        <h1 className="text-2xl font-bold">Peta Lokasi Patroli</h1>
+        <p className="text-muted-foreground">Visualisasi lokasi patroli keamanan</p>
       </div>
 
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Filter Locations</CardTitle>
+          <CardTitle>Filter Lokasi</CardTitle>
         </CardHeader>
         <CardContent>
           <form method="GET" action="/admin/map">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="dateFrom">Date From</Label>
-                <Input 
-                  type="date" 
-                  id="dateFrom" 
-                  name="dateFrom" 
+                <Label htmlFor="dateFrom">Tanggal Mulai</Label>
+                <Input
+                  type="date"
+                  id="dateFrom"
+                  name="dateFrom"
                   defaultValue={dateFrom}
                   className="w-full"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dateTo">Date To</Label>
-                <Input 
-                  type="date" 
-                  id="dateTo" 
-                  name="dateTo" 
+                <Label htmlFor="dateTo">Tanggal Akhir</Label>
+                <Input
+                  type="date"
+                  id="dateTo"
+                  name="dateTo"
                   defaultValue={dateTo}
                   className="w-full"
                 />
@@ -82,7 +82,7 @@ export default async function PatrolMapPage({
             <div className="mt-4 flex justify-end">
               <Button type="submit">
                 <Search className="mr-2 h-4 w-4" />
-                Apply Filters
+                Terapkan Filter
               </Button>
             </div>
           </form>
@@ -94,9 +94,9 @@ export default async function PatrolMapPage({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
-            Patrol Locations
+            Lokasi Patroli
             <Badge variant="outline" className="ml-auto">
-              {locations.length} locations
+              {locations.length} lokasi
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -107,9 +107,9 @@ export default async function PatrolMapPage({
             <div className="h-full w-full flex items-center justify-center">
               <div className="text-center">
                 <MapPin className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 font-semibold">No locations to display</h3>
+                <h3 className="mt-4 font-semibold">Tidak ada lokasi untuk ditampilkan</h3>
                 <p className="text-muted-foreground mt-2">
-                  Submit security reports with location data to see them on the map.
+                  Kirim laporan keamanan dengan data lokasi untuk melihatnya di peta.
                 </p>
               </div>
             </div>
@@ -120,17 +120,17 @@ export default async function PatrolMapPage({
       {/* Legend */}
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Map Legend</CardTitle>
+          <CardTitle>Legenda Peta</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span>Security Reports</span>
+              <span>Laporan Keamanan</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span>Patrol Routes</span>
+              <span>Rute Patroli</span>
             </div>
           </div>
         </CardContent>

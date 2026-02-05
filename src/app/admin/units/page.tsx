@@ -187,20 +187,20 @@ export default function ManageUnitsPage() {
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Manage Units</h1>
-            <p className="text-xs font-medium text-slate-500 hidden sm:block mt-1">Configure organizational units and districts</p>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Kelola Unit</h1>
+            <p className="text-xs font-medium text-slate-500 hidden sm:block mt-1">Konfigurasi unit organisasi dan wilayah</p>
           </div>
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             <button onClick={handleExport} className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-sm">
               <Download className="h-4 w-4" />
-              <span>Export</span>
+              <span>Ekspor</span>
             </button>
-            <button 
+            <button
               onClick={() => { setShowAddForm(true); setShowEditForm(false); }}
               className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-md hover:shadow-lg"
             >
               <Plus className="h-4 w-4" />
-              <span>Add Unit</span>
+              <span>Tambah Unit</span>
             </button>
           </div>
         </div>
@@ -213,11 +213,11 @@ export default function ManageUnitsPage() {
           <div className="grid grid-cols-1 gap-4">
             {/* Search */}
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Search Units</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Cari Unit</label>
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search by name or district..."
+                  placeholder="Cari berdasarkan nama atau wilayah..."
                   className="w-full bg-white border border-slate-300 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all shadow-sm"
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
@@ -235,21 +235,21 @@ export default function ManageUnitsPage() {
               <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
                  {showEditForm ? <Edit3 className="h-5 w-5"/> : <Plus className="h-5 w-5"/>}
               </div>
-              {showEditForm ? 'Edit Unit Details' : 'Add New Unit'}
+              {showEditForm ? 'Edit Detail Unit' : 'Tambah Unit Baru'}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Unit Name</label>
-                <input id={showEditForm ? "edit-unit-name" : "unit-name"} type="text" className="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm text-slate-900 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all" placeholder="e.g. Unit Pembangkit" />
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Nama Unit</label>
+                <input id={showEditForm ? "edit-unit-name" : "unit-name"} type="text" className="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm text-slate-900 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all" placeholder="contoh: Unit Pembangkit" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">District</label>
-                <input id={showEditForm ? "edit-unit-district" : "unit-district"} type="text" className="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm text-slate-900 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all" placeholder="e.g. Kendari" value="PT PLN Nusantara Power UP Kendari"/>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Wilayah</label>
+                <input id={showEditForm ? "edit-unit-district" : "unit-district"} type="text" className="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm text-slate-900 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all" placeholder="contoh: Kendari" value="PT PLN Nusantara Power UP Kendari"/>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-100">
-              <button onClick={() => { setShowAddForm(false); setShowEditForm(false); }} className="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm transition-colors">Cancel</button>
-              <button onClick={showEditForm ? handleEditUnit : handleAddUnit} className="px-8 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg transition-all transform active:scale-95">Save Changes</button>
+              <button onClick={() => { setShowAddForm(false); setShowEditForm(false); }} className="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm transition-colors">Batal</button>
+              <button onClick={showEditForm ? handleEditUnit : handleAddUnit} className="px-8 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg transition-all transform active:scale-95">Simpan Perubahan</button>
             </div>
           </div>
         )}
@@ -258,7 +258,7 @@ export default function ManageUnitsPage() {
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
             <h2 className="font-bold text-slate-900 text-lg flex items-center gap-2">
-                <Building className="h-5 w-5 text-amber-600" /> Units List
+                <Building className="h-5 w-5 text-amber-600" /> Daftar Unit
             </h2>
             <span className="text-xs font-bold px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-500 shadow-sm">
               Total: {filteredUnits.length}
@@ -270,10 +270,10 @@ export default function ManageUnitsPage() {
             <table className="w-full text-left border-collapse">
               <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-500 tracking-wider border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-4">Unit Name</th>
-                  <th className="px-6 py-4">District</th>
-                  <th className="px-6 py-4">Created At</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 py-4">Nama Unit</th>
+                  <th className="px-6 py-4">Distrik</th>
+                  <th className="px-6 py-4">Dibuat Pada</th>
+                  <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
@@ -337,7 +337,7 @@ export default function ManageUnitsPage() {
                       <Edit3 size={14} /> Edit
                     </button>
                     <button onClick={() => handleDeleteUnit(unit)} className="text-xs font-bold text-red-600 flex items-center gap-1 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">
-                      <Trash2 size={14} /> Delete
+                      <Trash2 size={14} /> Hapus
                     </button>
                   </div>
                 </div>
@@ -351,8 +351,8 @@ export default function ManageUnitsPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4 text-slate-400 border border-slate-200">
                   <Search size={32} />
               </div>
-              <h3 className="text-slate-900 font-bold text-lg mb-1">No units found</h3>
-              <p className="text-sm text-slate-500 font-medium">Try adjusting your search terms.</p>
+              <h3 className="text-slate-900 font-bold text-lg mb-1">Tidak ada unit ditemukan</h3>
+              <p className="text-sm text-slate-500 font-medium">Coba sesuaikan pencarian Anda.</p>
             </div>
           )}
 
@@ -360,22 +360,22 @@ export default function ManageUnitsPage() {
           {totalPages > 1 && (
             <div className="p-5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-                Page {currentPage} of {totalPages}
+                Halaman {currentPage} dari {totalPages}
               </span>
               <div className="flex gap-2">
-                <button 
+                <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   className="px-4 py-2 text-xs font-bold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                 >
-                  Previous
+                  Sebelumnya
                 </button>
-                <button 
+                <button
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   className="px-4 py-2 text-xs font-bold bg-amber-500 border border-amber-600 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
                 >
-                  Next
+                  Berikutnya
                 </button>
               </div>
             </div>

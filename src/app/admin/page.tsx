@@ -20,53 +20,53 @@ export default async function AdminDashboardPage() {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Monitor security reports and manage units</p>
+        <h1 className="text-3xl font-bold">Dasbor Admin</h1>
+        <p className="text-muted-foreground">Monitor laporan keamanan dan kelola unit</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Units</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Unit</CardTitle>
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{units.length}</div>
-            <p className="text-xs text-muted-foreground">Active security units</p>
+            <p className="text-xs text-muted-foreground">Unit keamanan aktif</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Latest Reports</CardTitle>
+            <CardTitle className="text-sm font-medium">Laporan Terbaru</CardTitle>
             <Camera className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{latestReports.length}</div>
-            <p className="text-xs text-muted-foreground">Recent activity</p>
+            <p className="text-xs text-muted-foreground">Aktivitas terbaru</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Patrols</CardTitle>
+            <CardTitle className="text-sm font-medium">Patroli Aktif</CardTitle>
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{units.length}</div>
-            <p className="text-xs text-muted-foreground">Field operations</p>
+            <p className="text-xs text-muted-foreground">Operasi lapangan</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Officers</CardTitle>
+            <CardTitle className="text-sm font-medium">Petugas Keamanan</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">Registered personnel</p>
+            <p className="text-xs text-muted-foreground">Personel terdaftar</p>
           </CardContent>
         </Card>
       </div>
@@ -77,31 +77,31 @@ export default async function AdminDashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Live Feed - Latest Reports
+              Umpan Langsung - Laporan Terbaru
             </CardTitle>
           </CardHeader>
           <CardContent>
             {latestReports.length > 0 ? (
               <div className="space-y-4">
                 {latestReports.map((report) => (
-                  <div 
-                    key={report.id} 
+                  <div
+                    key={report.id}
                     className="border rounded-lg p-4 hover:bg-accent transition-colors"
                   >
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-semibold">
-                          {report.profiles?.full_name || 'Unknown User'}
+                          {report.profiles?.full_name || 'Pengguna Tidak Dikenal'}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          {report.units?.name || 'Unknown Unit'}
+                          {report.units?.name || 'Unit Tidak Dikenal'}
                         </p>
                       </div>
                       <Badge variant="secondary">
                         {new Date(report.captured_at).toLocaleString()}
                       </Badge>
                     </div>
-                    
+
                     <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                       {report.latitude && report.longitude && (
                         <>
@@ -110,16 +110,16 @@ export default async function AdminDashboardPage() {
                         </>
                       )}
                     </div>
-                    
+
                     {report.notes && (
                       <p className="mt-2 text-sm">{report.notes}</p>
                     )}
-                    
+
                     {report.image_path && (
                       <div className="mt-2">
-                        <img 
-                          src={report.image_path} 
-                          alt="Report evidence" 
+                        <img
+                          src={report.image_path}
+                          alt="Bukti laporan"
                           className="w-full max-h-40 object-cover rounded-md"
                         />
                       </div>
@@ -128,7 +128,7 @@ export default async function AdminDashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-4">No recent reports</p>
+              <p className="text-muted-foreground text-center py-4">Tidak ada laporan terbaru</p>
             )}
           </CardContent>
         </Card>
@@ -136,13 +136,13 @@ export default async function AdminDashboardPage() {
         {/* Units Management */}
         <Card>
           <CardHeader>
-            <CardTitle>Units Management</CardTitle>
+            <CardTitle>Manajemen Unit</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {units.map((unit) => (
-                <div 
-                  key={unit.id} 
+                <div
+                  key={unit.id}
                   className="flex justify-between items-center border-b pb-2 last:border-0 last:pb-0"
                 >
                   <div>
@@ -150,14 +150,14 @@ export default async function AdminDashboardPage() {
                     <p className="text-sm text-muted-foreground">{unit.district}</p>
                   </div>
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/admin/units/${unit.id}`}>Manage</Link>
+                    <Link href={`/admin/units/${unit.id}`}>Kelola</Link>
                   </Button>
                 </div>
               ))}
             </div>
-            
+
             <Button className="w-full mt-4" asChild>
-              <Link href="/admin/units/new">Add New Unit</Link>
+              <Link href="/admin/units/new">Tambah Unit Baru</Link>
             </Button>
           </CardContent>
         </Card>
