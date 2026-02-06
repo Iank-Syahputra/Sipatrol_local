@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Activity, MapPin, Users, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, RotateCcw, BarChart3, TrendingUp, AlertTriangle, LayoutDashboard } from "lucide-react";
+import { X, Download } from "lucide-react";
+import * as XLSX from 'xlsx';
+import { Activity, MapPin, Users, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, RotateCcw, BarChart3, TrendingUp, AlertTriangle, LayoutDashboard, Image, Trash2, Camera, ExternalLink } from "lucide-react";
 import ReportDetailsModal from '@/components/report-details-modal';
 import {
   PieChart,
@@ -32,6 +34,12 @@ export default function AdminDashboard() {
   });
   const [filterTrigger, setFilterTrigger] = useState(0);
 
+  // State untuk menampilkan laporan per unit
+  const [showUnitReports, setShowUnitReports] = useState(false);
+  const [selectedUnit, setSelectedUnit] = useState<any>(null);
+  const [unitReports, setUnitReports] = useState<any[]>([]);
+  const [loadingUnitReports, setLoadingUnitReports] = useState(false);
+
   // Fetch user profile
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -49,6 +57,73 @@ export default function AdminDashboard() {
     };
     fetchUserProfile();
   }, []);
+
+  // Fungsi untuk mengambil laporan berdasarkan unit
+  const fetchUnitReports = async (unitId: string) => {
+    try {
+      setLoadingUnitReports(true);
+      console.log('Fetching reports for unitId:', unitId, 'Type:', typeof unitId); // Debug log
+
+      // Pastikan unitId tidak kosong
+      if (!unitId) {
+        console.error('Unit ID is empty or undefined');
+        setUnitReports([]);
+        return;
+      }
+
+      const params = new URLSearchParams({
+        units: unitId,  // Gunakan 'units' sesuai dengan endpoint API
+        page: '1',
+        limit: '1000' // Ambil semua laporan untuk unit tertentu
+      });
+
+      console.log('Request URL:', `/api/admin/reports?${params.toString()}`); // Debug log
+
+      const response = await fetch(`/api/admin/reports?${params.toString()}`);
+      console.log('Response status:', response.status); // Debug log
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText); // Debug log
+        throw new Error(`Gagal mengambil laporan unit: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Received reports:', data.reports?.length || 0, data.reports); // Debug log
+      setUnitReports(data.reports || []);
+    } catch (error) {
+      console.error('Error fetching unit reports:', error);
+      setUnitReports([]);
+    } finally {
+      setLoadingUnitReports(false);
+    }
+  };
+
+  // Fungsi untuk menghapus laporan
+  const handleDeleteReport = async (reportId: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus laporan ini?')) return;
+
+    try {
+      const response = await fetch(`/api/admin/reports/${reportId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Gagal menghapus laporan');
+
+      // Update state lokal untuk menghapus laporan
+      setUnitReports(prev => prev.filter(report => report.id !== reportId));
+      // Juga update data dashboard jika diperlukan
+      if (dashboardData) {
+        setDashboardData({
+          ...dashboardData,
+          recentReports: dashboardData.recentReports?.filter((report: any) => report.id !== reportId)
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      alert('Gagal menghapus laporan');
+    }
+  };
 
   // Fetch dashboard data
   useEffect(() => {
@@ -504,7 +579,16 @@ export default function AdminDashboard() {
                       ].filter(item => item.value > 0);
 
                       return (
-                        <div key={index} className="bg-slate-50 rounded-xl border border-slate-200 p-5 flex flex-col hover:border-amber-200 transition-colors">
+                        <div
+                          key={index}
+                          className="bg-slate-50 rounded-xl border border-slate-200 p-5 flex flex-col hover:border-amber-200 transition-colors cursor-pointer hover:shadow-md"
+                          onClick={() => {
+                            console.log('Clicked unit:', unit); // Debug log
+                            setSelectedUnit(unit);
+                            fetchUnitReports(unit.id);
+                            setShowUnitReports(true);
+                          }}
+                        >
                           <h4 className="font-bold text-slate-900 mb-3 text-center text-base truncate" title={unit.name}>{unit.name}</h4>
                           
                           <div className="h-48 flex items-center justify-center relative">
@@ -564,11 +648,296 @@ export default function AdminDashboard() {
       </div>
 
       {isModalOpen && selectedReport && (
-        <ReportDetailsModal
-          report={selectedReport}
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-        />
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl scale-100 transform transition-all"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="text-xl font-black text-slate-900">Detail Laporan</h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-900 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="overflow-y-auto flex-1 p-6 bg-white">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left Column - Photo Evidence */}
+                <div className="space-y-4">
+                  <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                    <Camera className="w-4 h-4 text-amber-500" />
+                    Bukti Foto
+                  </h4>
+                  <div className="bg-slate-100 border border-slate-200 rounded-2xl w-full h-64 flex items-center justify-center overflow-hidden shadow-inner">
+                    {selectedReport.imagePath ? (
+                      <img
+                        src={selectedReport.imagePath}
+                        alt="Bukti laporan"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.parentElement?.querySelector('.fallback-content');
+                          if (fallback) fallback.setAttribute('style', 'display: flex');
+                        }}
+                      />
+                    ) : (
+                      <div className="fallback-content w-full h-full flex flex-col items-center justify-center text-slate-400">
+                        <Camera className="w-12 h-12 mb-2" />
+                        <p className="font-bold">Foto Tidak Tersedia</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Column - Report Info */}
+                <div className="space-y-4">
+                  {/* Officer */}
+                  <div className="bg-slate-50 border border-slate-100 hover:border-amber-300 rounded-xl p-3 transition-colors">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Petugas</p>
+                    <p className="text-sm font-bold text-slate-800 mt-1">{selectedReport.user?.fullName || 'N/A'}</p>
+                  </div>
+
+                  {/* Unit */}
+                  <div className="bg-slate-50 border border-slate-100 hover:border-amber-300 rounded-xl p-3 transition-colors">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Unit</p>
+                    <p className="text-sm font-bold text-slate-800 mt-1">{selectedReport.unit?.name || 'N/A'}</p>
+                  </div>
+
+                  {/* Category */}
+                  {selectedReport.category && (
+                    <div className="bg-slate-50 border border-slate-100 hover:border-amber-300 rounded-xl p-3 transition-colors">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kategori</p>
+                      <div className="mt-2">
+                        <span className={`inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${
+                          selectedReport.category.color === 'red' || selectedReport.category.name.toLowerCase().includes('action')
+                            ? 'bg-red-100 text-red-600 border border-red-200'
+                            : selectedReport.category.color === 'yellow' || selectedReport.category.name.toLowerCase().includes('condition')
+                              ? 'bg-amber-100 text-amber-700 border border-amber-200'
+                              : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                        }`}>
+                          {selectedReport.category.name}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Location */}
+                  <div className="bg-slate-50 border border-slate-100 hover:border-amber-300 rounded-xl p-3 transition-colors">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lokasi</p>
+                    <p className="text-sm font-bold text-slate-800 mt-1">{selectedReport.location?.name || 'N/A'}</p>
+                  </div>
+
+                  {/* Coordinates */}
+                  <div className="bg-slate-50 border border-slate-100 hover:border-amber-300 rounded-xl p-3 flex items-start gap-3 transition-colors">
+                    <div className="p-2 bg-amber-50 rounded-lg text-amber-600"><MapPin className="w-4 h-4" /></div>
+                    <div>
+                      {selectedReport.latitude && selectedReport.longitude ? (
+                        <>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Koordinat</p>
+                          <p className="text-sm font-bold text-slate-800 mt-1">
+                            {selectedReport.latitude.toFixed(6)}, {selectedReport.longitude.toFixed(6)}
+                          </p>
+                          <a
+                            href={`https://www.google.com/maps?q=${selectedReport.latitude},${selectedReport.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] font-black text-amber-600 hover:underline flex items-center gap-1 mt-1 uppercase"
+                          >
+                            Buka di Maps <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </>
+                      ) : (
+                        <p className="text-sm font-bold text-slate-400">Lokasi tidak tersedia</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Timestamp */}
+                  <div className="bg-slate-50 border border-slate-100 hover:border-amber-300 rounded-xl p-3 transition-colors">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu</p>
+                    <p className="text-sm font-bold text-slate-800 mt-1">
+                      {new Date(selectedReport.capturedAt).toLocaleString('id-ID')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description Section */}
+              <div className="mt-6">
+                <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">Deskripsi</h4>
+                <div className="bg-slate-50 border border-slate-100 border-l-4 border-l-amber-500 rounded-xl p-4 min-h-[100px] shadow-sm">
+                  <p className="text-slate-600 font-medium italic leading-relaxed">
+                    "{selectedReport.notes || 'Tidak ada deskripsi untuk laporan ini.'}"
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-slate-100 flex justify-end bg-slate-50/50">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-8 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal untuk menampilkan laporan per unit */}
+      {showUnitReports && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-6xl w-full shadow-2xl scale-100 transform transition-all max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <FileText className="h-6 w-6 text-amber-600" />
+                  Laporan untuk Unit: {selectedUnit?.name}
+                </h3>
+                <p className="text-sm text-slate-500 mt-1">Daftar laporan keamanan untuk unit {selectedUnit?.name}</p>
+              </div>
+              <button
+                onClick={() => setShowUnitReports(false)}
+                className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {loadingUnitReports ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-amber-500 border-r-transparent"></div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-slate-50 text-[10px] font-bold uppercase text-slate-500 tracking-wider border-b border-slate-200">
+                    <tr>
+                      <th className="px-6 py-4">Bukti</th>
+                      <th className="px-6 py-4">Petugas</th>
+                      <th className="px-6 py-4">Unit</th>
+                      <th className="px-6 py-4">Kategori</th>
+                      <th className="px-6 py-4">Lokasi</th>
+                      <th className="px-6 py-4">Tanggal/Waktu</th>
+                      <th className="px-6 py-4 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-sm">
+                    {unitReports.map((report: any) => (
+                      <tr key={report.id} className="hover:bg-amber-50/30 transition-colors group">
+                        <td className="px-6 py-4 w-24">
+                          <div className="h-14 w-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative shadow-sm">
+                            {report.imagePath ? (
+                              <img src={report.imagePath} alt="Evd" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center text-slate-400"><Image size={20} /></div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-bold text-slate-900">{report.user?.fullName || 'Unknown'}</div>
+                          <div className="text-xs font-medium text-slate-500 mt-0.5">{report.unit?.name || 'Unknown Unit'}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="font-medium text-slate-700 bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs">
+                            {report.unit?.name || 'N/A'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {report.category ? (
+                            <span className={`px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase tracking-wider border ${
+                              report.category.color === 'red' || report.category.name.toLowerCase().includes('action')
+                                ? 'bg-red-50 text-red-600 border-red-200'
+                                : report.category.color === 'yellow' || report.category.name.toLowerCase().includes('condition')
+                                  ? 'bg-amber-50 text-amber-600 border-amber-200'
+                                  : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                            }`}>
+                              {report.category.name}
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase tracking-wider border bg-slate-100 text-slate-500 border-slate-200">
+                              N/A
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="font-medium text-slate-700 bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs">
+                            {report.location?.name || '-'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-slate-600 whitespace-nowrap">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-slate-800">{new Date(report.capturedAt).toLocaleDateString('en-GB')}</span>
+                            <span className="text-xs text-slate-500 mt-0.5">{new Date(report.capturedAt).toLocaleTimeString('en-GB')}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent triggering parent row click
+                                setSelectedReport(report);
+                                setIsModalOpen(true);
+                              }}
+                              className="p-2 bg-white border border-slate-200 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50 rounded-lg text-slate-400 transition-all shadow-sm"
+                            >
+                              <Eye size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-200">
+              <span className="text-sm font-bold text-slate-700 uppercase tracking-wide">
+                Total: {unitReports.length} laporan
+              </span>
+              <button
+                onClick={() => {
+                  // Fungsi export ke Excel
+                  console.log('Export button clicked. Unit reports count:', unitReports.length); // Debug log
+                  if (unitReports.length === 0) {
+                    alert("Tidak ada data laporan untuk diekspor.");
+                    return;
+                  }
+
+                  const exportData = unitReports.map(report => ({
+                    "Tanggal": new Date(report.capturedAt).toLocaleDateString('id-ID'),
+                    "Waktu": new Date(report.capturedAt).toLocaleTimeString('id-ID'),
+                    "Nama Petugas": report.user?.fullName || 'N/A',
+                    "Unit": report.unit?.name || 'N/A',
+                    "Kategori": report.category?.name || 'N/A',
+                    "Lokasi": report.location?.name || '-',
+                    "Catatan": report.notes || '-',
+                    "Link Foto": report.imagePath || '-'
+                  }));
+
+                  console.log('Export data prepared:', exportData); // Debug log
+
+                  const ws = XLSX.utils.json_to_sheet(exportData);
+                  const wb = XLSX.utils.book_new();
+                  XLSX.utils.book_append_sheet(wb, ws, "Laporan Unit");
+                  XLSX.writeFile(wb, `Laporan_Unit_${selectedUnit?.name}_${new Date().toISOString().slice(0,10)}.xlsx`);
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-sm transition-colors shadow-md"
+              >
+                <Download className="h-4 w-4" />
+                <span>Ekspor ke Excel</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

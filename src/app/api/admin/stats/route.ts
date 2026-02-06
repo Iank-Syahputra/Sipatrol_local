@@ -160,6 +160,7 @@ export async function GET(request: Request) {
       });
 
       return {
+        id: unit.id,  // Include unit ID
         name: unit.name,
         safe,
         unsafeAction,
