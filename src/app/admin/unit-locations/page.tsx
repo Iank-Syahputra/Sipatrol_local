@@ -10,7 +10,6 @@ import {
   Trash2,
   MapPin,
   ChevronDown,
-  RotateCcw,
   Check,
   Calendar,
   Building,
@@ -421,9 +420,9 @@ export default function ManageUnitLocationsPage() {
             </div>
 
             <div className="md:col-span-2">
-                <button onClick={handleResetFilters} className="px-6 py-2.5 text-sm font-bold text-slate-600 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 rounded-xl transition-colors flex items-center justify-center gap-2">
-                  <RotateCcw className="h-4 w-4" /> Atur Ulang
-                </button>
+              <button onClick={handleResetFilters} className="w-full py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 font-bold rounded-lg text-sm transition-all shadow-sm">
+                Atur Ulang
+              </button>
             </div>
           </div>
         </div>

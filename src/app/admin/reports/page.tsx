@@ -574,7 +574,8 @@ export default function ReportManagementPage() {
                       </th>
                     )}
                     <th className="px-6 py-4">Bukti</th>
-                    <th className="px-6 py-4">Detail</th>
+                    <th className="px-6 py-4">Petugas</th>
+                    <th className="px-6 py-4">Unit</th>
                     <th className="px-6 py-4">Kategori</th>
                     <th className="px-6 py-4">Lokasi</th>
                     <th className="px-6 py-4">Tanggal/Waktu</th>
@@ -605,7 +606,11 @@ export default function ReportManagementPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="font-bold text-slate-900">{report.user?.fullName || 'Unknown'}</div>
-                        <div className="text-xs font-medium text-slate-500 mt-0.5">{report.unit?.name || 'Unknown Unit'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="font-medium text-slate-700 bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs">
+                          {report.unit?.name || 'N/A'}
+                        </span>
                       </td>
                       <td className="px-6 py-4"><CategoryBadge category={report.category} /></td>
                       <td className="px-6 py-4">
