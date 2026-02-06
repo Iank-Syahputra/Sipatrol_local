@@ -39,7 +39,7 @@ export default function LoginPage() {
     gradient: isOfficer ? "from-cyan-600 to-blue-600" : "from-amber-600 to-orange-700",
     overlay: isOfficer ? "bg-cyan-900/20" : "bg-amber-900/20", // Tint warna di background
     icon: isOfficer ? Shield : Zap, // Icon dinamis
-    label: isOfficer ? "Patrol Officer" : "Administrator" // ENGLISH COPY
+    label: isOfficer ? "Petugas Patroli" : "Administrator" // INDONESIAN COPY
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,7 +55,7 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError('Invalid Username or Password.'); // ENGLISH COPY
+        setError('Nama pengguna atau kata sandi salah.'); // INDONESIAN COPY
         setLoading(false);
       } else if (result?.ok) {
         console.log('Login successful, redirecting...');
@@ -71,7 +71,7 @@ export default function LoginPage() {
         router.refresh();
       }
     } catch (err) {
-      setError('System error occurred.'); // ENGLISH COPY
+      setError('Terjadi kesalahan sistem.'); // INDONESIAN COPY
       setLoading(false);
     }
   };
@@ -97,11 +97,11 @@ export default function LoginPage() {
 
       {/* 2. Tombol Kembali (User Control) */}
       <div className="absolute top-6 left-6 z-20">
-        <Link 
-            href="/" 
+        <Link
+            href="/"
             className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 hover:bg-white text-slate-700 text-sm font-bold shadow-sm backdrop-blur-md transition-all border border-slate-200"
         >
-            <ArrowLeft className="h-4 w-4" /> Back
+            <ArrowLeft className="h-4 w-4" /> Kembali
         </Link>
       </div>
 
@@ -116,13 +116,13 @@ export default function LoginPage() {
 
           <CardTitle className="text-2xl font-extrabold tracking-tight text-slate-900">
             {/* Typography diperbaiki */}
-            <span className="block text-sm font-medium text-slate-500 uppercase tracking-widest mb-1">Access Portal</span>
+            <span className="block text-sm font-medium text-slate-500 uppercase tracking-widest mb-1">Portal Akses</span>
             <span className={`text-3xl text-transparent bg-clip-text bg-gradient-to-r ${theme.gradient}`}>
               {theme.label}
             </span>
           </CardTitle>
           <CardDescription className="text-slate-500 font-medium">
-            Enter your credentials to access the system.
+            Masukkan kredensial Anda untuk mengakses sistem.
           </CardDescription>
         </CardHeader>
 
@@ -136,11 +136,11 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-slate-700 font-bold">Username</Label>
+              <Label htmlFor="username" className="text-slate-700 font-bold">Nama Pengguna</Label>
               <div className="relative">
                 <Input
                   id="username"
-                  placeholder={isOfficer ? "Example: SEC-001" : "Example: ADM-HQ"}
+                  placeholder={isOfficer ? "Contoh: PET-001 " : "Contoh: ADM-KNT"}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -154,7 +154,7 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-slate-700 font-bold">Password</Label>
+                <Label htmlFor="password" className="text-slate-700 font-bold">Kata Sandi</Label>
               </div>
               <div className="relative">
                 <Input
@@ -197,10 +197,10 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Processing...
+                  Memproses...
                 </>
               ) : (
-                'Sign In Now'
+                'Masuk Sekarang'
               )}
             </Button>
           </CardFooter>
@@ -208,7 +208,7 @@ export default function LoginPage() {
         
         {/* Footer Brand Kecil */}
         <div className="absolute bottom-4 w-full text-center">
-            <p className="text-[10px] text-slate-400 font-semibold tracking-widest uppercase opacity-60">SiPatrol Secure System</p>
+            <p className="text-[10px] text-slate-400 font-semibold tracking-widest uppercase opacity-60">Sistem Keamanan SiPatrol</p>
         </div>
       </Card>
     </div>

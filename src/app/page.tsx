@@ -81,9 +81,9 @@ export default function HomeMobileLightBg() {
               Management System
             </span>
           </h1>
-          
+
           <p className="text-slate-500 text-xs md:text-base font-medium mt-2 max-w-md mx-auto leading-relaxed">
-            Platform for Critical Asset Protection, workforce supervision & real-time HSE compliance reporting.
+            Platform untuk Perlindungan Aset Kritis, supervisi tenaga kerja & pelaporan kepatuhan HSE secara real-time.
           </p>
         </div>
 
@@ -95,9 +95,9 @@ export default function HomeMobileLightBg() {
             <button
               onClick={() => setActiveTab("officer")}
               className={`relative flex items-center justify-center gap-2 py-3.5 rounded-[1.2rem] text-xs md:text-sm font-bold transition-all duration-300
-                ${activeTab === "officer" 
-                  ? "bg-white text-cyan-700 shadow-sm ring-1 ring-cyan-200" 
-                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"}`} 
+                ${activeTab === "officer"
+                  ? "bg-white text-cyan-700 shadow-sm ring-1 ring-cyan-200"
+                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"}`}
             >
               <Shield className="h-4 w-4" />
               Security
@@ -105,7 +105,7 @@ export default function HomeMobileLightBg() {
             <button
               onClick={() => setActiveTab("admin")}
               className={`relative flex items-center justify-center gap-2 py-3.5 rounded-[1.2rem] text-xs md:text-sm font-bold transition-all duration-300
-                ${activeTab === "admin" 
+                ${activeTab === "admin"
                   ? "bg-white text-amber-600 shadow-sm ring-1 ring-amber-200"
                   : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"}`}
             >
@@ -126,12 +126,12 @@ export default function HomeMobileLightBg() {
                 {/* Judul Card */}
                 {activeTab === "officer" ? "Security Personnel Access" : "Administrator Console"}
               </h2>
-              
+
               <p className="text-xs md:text-base text-slate-500 leading-relaxed max-w-[320px] mx-auto font-medium">
                 {/* Deskripsi Card - Technical Copywriting */}
-                {activeTab === "officer" 
-                  ? "Authenticate to execute patrol beats, report Unsafe Action/Condition (UA/UC), and ensure area sterility."
-                  : "Centralized dashboard for situational awareness, personnel management, and operational analytics."}
+                {activeTab === "officer"
+                  ? "Otentikasi untuk melaksanakan ronde patroli, melaporkan Tindakan/Kondisi Tidak Aman (TT/KTA), dan memastikan sterilisasi area."
+                  : "Dasbor terpusat untuk kesadaran situasional, manajemen personil, dan analitik operasional."}
               </p>
             </div>
 
