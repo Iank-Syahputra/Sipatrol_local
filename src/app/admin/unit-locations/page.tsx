@@ -2,17 +2,18 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { 
-  Search, 
-  Download, 
-  Plus, 
-  Edit3, 
-  Trash2, 
-  MapPin, 
-  ChevronDown, 
+import {
+  Search,
+  Download,
+  Plus,
+  Edit3,
+  Trash2,
+  MapPin,
+  ChevronDown,
   Check,
   Calendar,
-  Building
+  Building,
+  AlertTriangle
 } from "lucide-react";
 
 // --- REUSABLE MULTI-SELECT COMPONENT (Updated: Light Border & Amber Check) ---
@@ -64,12 +65,13 @@ const MultiSelectDropdown = ({ options, selected, onChange, placeholder }: any) 
 };
 
 export default function ManageUnitLocationsPage() {
-  const [allLocations, setAllLocations] = useState<any[]>([]); 
+  const [allLocations, setAllLocations] = useState<any[]>([]);
   const [units, setUnits] = useState<any[]>([]);
+  const [filteredLocations, setFilteredLocations] = useState<any[]>([]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -77,6 +79,12 @@ export default function ManageUnitLocationsPage() {
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingLocation, setEditingLocation] = useState<any>(null);
   const [formData, setFormData] = useState({ name: '', unitId: '' });
+
+  // Selection states
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+  const [deletingLocationId, setDeletingLocationId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +95,7 @@ export default function ManageUnitLocationsPage() {
       const response = await fetch(`/api/admin/unit-locations`);
       if (!response.ok) throw new Error('Failed to fetch data');
       const data = await response.json();
-      setAllLocations(data || []); 
+      setAllLocations(data || []);
 
       const unitsResponse = await fetch('/api/admin/units');
       if (unitsResponse.ok) {
@@ -102,18 +110,19 @@ export default function ManageUnitLocationsPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const filteredLocations = useMemo(() => {
-    return allLocations.filter(loc => {
+  useEffect(() => {
+    const filtered = allLocations.filter(loc => {
       const matchesSearch = loc.name.toLowerCase().includes(searchTerm.toLowerCase());
       const locUnitId = loc.unitId || loc.unit?.id;
       const matchesUnit = selectedUnits.length === 0 || selectedUnits.includes(locUnitId);
       return matchesSearch && matchesUnit;
     });
+    setFilteredLocations(filtered);
   }, [allLocations, searchTerm, selectedUnits]);
 
   const totalPages = Math.ceil(filteredLocations.length / itemsPerPage);
   const currentData = filteredLocations.slice(
-    (currentPage - 1) * itemsPerPage, 
+    (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
@@ -141,16 +150,15 @@ export default function ManageUnitLocationsPage() {
     } catch (err: any) { alert(err.message); }
   };
 
-  const handleDeleteLocation = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this location?')) return;
-    try {
-      const response = await fetch('/api/admin/unit-locations', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      });
-      if (response.ok) await fetchData();
-    } catch (err: any) { alert(err.message); }
+  const handleDeleteLocation = async (id: string, name: string) => {
+    if (!isSelectionMode) {
+      // If not in selection mode, delete single item
+      setDeletingLocationId(id);
+      setIsDeleteConfirmationOpen(true);
+    } else {
+      // If in selection mode, add to selection
+      toggleLocationSelection(id);
+    }
   };
 
   const startEdit = (loc: any) => {
@@ -158,6 +166,127 @@ export default function ManageUnitLocationsPage() {
     setFormData({ name: loc.name, unitId: loc.unitId || loc.unit?.id || "" });
     setShowEditForm(true);
     setShowAddForm(false);
+  };
+
+  // Selection handlers
+  const toggleLocationSelection = (locationId: string) => {
+    setSelectedLocations(prev =>
+      prev.includes(locationId)
+        ? prev.filter(id => id !== locationId)
+        : [...prev, locationId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedLocations.length === currentData.length) {
+      setSelectedLocations([]);
+    } else {
+      setSelectedLocations(currentData.map(loc => loc.id));
+    }
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    if (!isSelectionMode) {
+      setSelectedLocations([]); // Clear selections when entering selection mode
+    }
+  };
+
+  const exitSelectionMode = () => {
+    setIsSelectionMode(false);
+    setSelectedLocations([]);
+  };
+
+  const handleDeleteSingleLocation = (locationId: string, locationName: string) => {
+    setDeletingLocationId(locationId);
+    setIsDeleteConfirmationOpen(true);
+  };
+
+  const handleDeleteMultipleLocations = () => {
+    if (selectedLocations.length > 0) {
+      setIsDeleteConfirmationOpen(true);
+    }
+  };
+
+  const handleDeleteAllLocations = () => {
+    if (allLocations.length > 0) {
+      setSelectedLocations(allLocations.map(loc => loc.id));
+      setIsDeleteConfirmationOpen(true);
+    }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      if (deletingLocationId) {
+        // Delete single location
+        const response = await fetch(`/api/admin/unit-locations`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: deletingLocationId }),
+        });
+
+        if (!response.ok) {
+          let errorMessage = '';
+
+          // Check if the response is JSON or plain text
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+          } else {
+            // If not JSON, try to read as text
+            const errorText = await response.text();
+            errorMessage = errorText || `HTTP ${response.status}: ${response.statusText}`;
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        // Update local state to remove the deleted location
+        setAllLocations(prev => prev.filter(loc => loc.id !== deletingLocationId));
+        setFilteredLocations(prev => prev.filter(loc => loc.id !== deletingLocationId));
+
+        setDeletingLocationId(null);
+      } else if (selectedLocations.length > 0) {
+        // Delete multiple locations
+        const response = await fetch('/api/admin/unit-locations', {  // Updated to use same endpoint
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ locationIds: selectedLocations }),
+        });
+
+        if (!response.ok) {
+          let errorMessage = '';
+
+          // Check if the response is JSON or plain text
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+          } else {
+            // If not JSON, try to read as text
+            const errorText = await response.text();
+            errorMessage = errorText || `HTTP ${response.status}: ${response.statusText}`;
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        // Update local state to remove the deleted locations
+        setAllLocations(prev => prev.filter(loc => !selectedLocations.includes(loc.id)));
+        setFilteredLocations(prev => prev.filter(loc => !selectedLocations.includes(loc.id)));
+        setSelectedLocations([]);
+      }
+
+      setIsDeleteConfirmationOpen(false);
+      await fetchData(); // Refresh data after deletion
+    } catch (error: any) {
+      console.error('Error deleting location(s):', error);
+      alert(`Failed to delete location(s): ${error.message}`);
+      setIsDeleteConfirmationOpen(false);
+    }
   };
 
   const handleExport = () => {
@@ -188,18 +317,60 @@ export default function ManageUnitLocationsPage() {
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur-md px-4 py-3 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h1 className="text-xl font-bold text-slate-900">Kelola Lokasi Unit</h1>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button onClick={handleExport} className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-emerald-100 transition-colors shadow-sm">
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Ekspor ke Excel</span>
-              <span className="sm:hidden">Ekspor</span>
-            </button>
-            <button
-              onClick={() => { setShowAddForm(true); setShowEditForm(false); setFormData({ name: '', unitId: '' }); }}
-              className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-700 rounded-lg text-sm font-bold text-white transition-all shadow-md active:scale-95"
-            >
-              <Plus className="h-4 w-4" /> Tambah Lokasi
-            </button>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 self-end sm:self-auto">
+            <div className="flex items-center gap-2">
+              {isSelectionMode ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-slate-700">
+                    {selectedLocations.length} dipilih
+                  </span>
+                  <button
+                    onClick={handleDeleteMultipleLocations}
+                    className="flex items-center gap-1 px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors shadow-sm"
+                    disabled={selectedLocations.length === 0}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Hapus</span>
+                  </button>
+                  <button
+                    onClick={exitSelectionMode}
+                    className="flex items-center gap-1 px-3 py-2 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors shadow-sm"
+                  >
+                    Batal
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={toggleSelectionMode}
+                  className="flex items-center gap-1 px-3 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-bold hover:bg-amber-100 transition-colors shadow-sm"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Pilih</span>
+                </button>
+              )}
+              <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-emerald-100 transition-colors shadow-sm">
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Ekspor ke Excel</span>
+                <span className="sm:hidden">Ekspor</span>
+              </button>
+              {!isSelectionMode && (
+                <button
+                  onClick={handleDeleteAllLocations}
+                  className="flex items-center gap-1 px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors shadow-sm"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Hapus Semua</span>
+                </button>
+              )}
+              <button
+                onClick={() => { setShowAddForm(true); setShowEditForm(false); setFormData({ name: '', unitId: '' }); }}
+                className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white border border-amber-600 rounded-xl text-xs sm:text-sm font-bold hover:bg-amber-600 transition-colors shadow-sm"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Tambah Lokasi</span>
+                <span className="sm:hidden">Tambah</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -238,10 +409,10 @@ export default function ManageUnitLocationsPage() {
 
         {/* ADD/EDIT FORM - Following the same pattern as units page */}
         {(showAddForm || showEditForm) && (
-          <div className="bg-white border border-amber-200 rounded-xl p-5 mb-6 shadow-sm ring-1 ring-amber-100">
+          <div className="bg-white border border-amber-200 rounded-xl p-5 mb-6 shadow-md ring-1 ring-amber-100 relative">
             <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2 text-base border-b border-slate-100 pb-3">
               <div className="p-1.5 bg-amber-50 rounded-md text-amber-600">
-                 {showEditForm ? <Edit3 className="h-4 w-4"/> : <Plus className="h-4 w-4"/>}
+                {showEditForm ? <Edit3 className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
               </div>
               {showEditForm ? 'Edit Detail Lokasi' : 'Tambah Lokasi Baru'}
             </h3>
@@ -251,7 +422,7 @@ export default function ManageUnitLocationsPage() {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg py-2.5 px-3 text-sm text-slate-900 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all"
                   placeholder="Masukkan nama lokasi"
                 />
@@ -260,12 +431,14 @@ export default function ManageUnitLocationsPage() {
                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Unit</label>
                 <select
                   value={formData.unitId}
-                  onChange={(e) => setFormData({...formData, unitId: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, unitId: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg py-2.5 px-3 text-sm text-slate-900 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all"
                 >
                   <option value="">Pilih Unit</option>
                   {units.map(unit => (
-                    <option key={unit.id} value={unit.id}>{unit.name}</option>
+                    <option key={unit.id} value={unit.id}>
+                      {unit.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -304,6 +477,18 @@ export default function ManageUnitLocationsPage() {
             <table className="w-full text-left">
               <thead className="bg-slate-50/50 text-[10px] font-bold uppercase text-slate-400 border-b border-slate-100">
                 <tr>
+                  {isSelectionMode && (
+                    <th className="px-6 py-4 w-12">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={currentData.length > 0 && selectedLocations.length === currentData.length}
+                          onChange={toggleSelectAll}
+                          className="h-4 w-4 text-amber-600 border-slate-300 rounded focus:ring-amber-500"
+                        />
+                      </div>
+                    </th>
+                  )}
                   <th className="px-6 py-4">Nama Lokasi</th>
                   <th className="px-6 py-4">Unit</th>
                   <th className="px-6 py-4">Dibuat Pada</th>
@@ -313,6 +498,16 @@ export default function ManageUnitLocationsPage() {
               <tbody className="divide-y divide-slate-100 text-sm text-slate-900">
                 {currentData.map((loc: any) => (
                   <tr key={loc.id} className="hover:bg-slate-50 transition-colors group">
+                    {isSelectionMode && (
+                      <td className="px-6 py-4 w-12">
+                        <input
+                          type="checkbox"
+                          checked={selectedLocations.includes(loc.id)}
+                          onChange={() => toggleLocationSelection(loc.id)}
+                          className="h-4 w-4 text-amber-600 border-slate-300 rounded focus:ring-amber-500"
+                        />
+                      </td>
+                    )}
                     <td className="px-6 py-4 font-bold flex items-center gap-3 text-slate-900">
                         <div className="p-2 bg-orange-50 rounded-lg text-orange-500"><MapPin size={16} /></div>
                         {loc.name}
@@ -324,7 +519,7 @@ export default function ManageUnitLocationsPage() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => startEdit(loc)} className="p-2 bg-white border border-slate-200 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg text-slate-400 transition-all shadow-sm"><Edit3 size={16} /></button>
-                        <button onClick={() => handleDeleteLocation(loc.id)} className="p-2 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-lg text-slate-400 hover:text-red-600 transition-all"><Trash2 size={16} /></button>
+                        <button onClick={() => handleDeleteLocation(loc.id, loc.name)} className="p-2 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-lg text-slate-400 hover:text-red-600 transition-all"><Trash2 size={16} /></button>
                       </div>
                     </td>
                   </tr>
@@ -338,6 +533,18 @@ export default function ManageUnitLocationsPage() {
             {currentData.map((loc: any) => (
               <div key={loc.id} className="p-4 hover:bg-slate-50 transition-colors">
                 <div className="flex items-start gap-4">
+                  {/* Checkbox - only show in selection mode */}
+                  {isSelectionMode && (
+                    <div className="flex items-start pt-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedLocations.includes(loc.id)}
+                        onChange={() => toggleLocationSelection(loc.id)}
+                        className="h-4 w-4 text-amber-600 border-slate-300 rounded focus:ring-amber-500 mt-0.5"
+                      />
+                    </div>
+                  )}
+
                   <div className="p-2.5 bg-orange-50 rounded-xl text-orange-500"><MapPin size={20} /></div>
                   <div className="flex-1">
                     <h3 className="font-bold text-slate-900">{loc.name}</h3>
@@ -354,6 +561,42 @@ export default function ManageUnitLocationsPage() {
           {filteredLocations.length === 0 && <div className="p-16 text-center text-slate-400 font-medium">Tidak ada lokasi ditemukan.</div>}
         </div>
       </div>
+
+      {/* Confirmation Dialog (Modal) */}
+      {isDeleteConfirmationOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl scale-100 transform transition-all">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-100 rounded-full text-red-600">
+                    <AlertTriangle className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Konfirmasi Hapus</h3>
+            </div>
+
+            <p className="text-slate-600 mb-6 text-sm leading-relaxed font-medium">
+              {deletingLocationId
+                ? `Apakah Anda yakin ingin menghapus lokasi ini?`
+                : `Apakah Anda yakin ingin menghapus ${selectedLocations.length} lokasi yang dipilih?`}
+              <br/><span className="text-red-600 text-xs mt-1 block">Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait.</span>
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setIsDeleteConfirmationOpen(false)}
+                className="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm transition-colors border border-slate-300"
+              >
+                Batal
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md hover:shadow-lg"
+              >
+                Hapus Lokasi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

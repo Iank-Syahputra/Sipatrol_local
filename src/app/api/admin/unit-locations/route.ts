@@ -119,30 +119,93 @@ export async function DELETE(request: Request) {
 
   try {
     const body = await request.json();
-    const { id } = body;
 
-    if (!id) {
-      return NextResponse.json({ error: "Location ID is required" }, { status: 400 });
-    }
+    // Check if it's a bulk delete request
+    if (body.locationIds && Array.isArray(body.locationIds)) {
+      // Bulk delete
+      const { locationIds } = body;
 
-    // Check if there are any reports associated with this location
-    const reportCount = await prisma.report.count({
-      where: {
-        locationId: id
+      if (!locationIds || locationIds.length === 0) {
+        return NextResponse.json({ error: "Location IDs are required for bulk delete" }, { status: 400 });
       }
-    });
 
-    if (reportCount > 0) {
+      // Check if any of the locations have associated reports
+      let reportCount = 0;
+      try {
+        reportCount = await prisma.report.count({
+          where: {
+            locationId: {
+              in: locationIds
+            }
+          }
+        });
+      } catch (error) {
+        console.error("Error counting reports for bulk delete:", error);
+        // Return error response if count operation fails
+        return NextResponse.json({
+          error: "Error checking associated reports. Please ensure all locations are valid."
+        }, { status: 500 });
+      }
+
+      if (reportCount > 0) {
+        return NextResponse.json({
+          error: "Cannot delete locations: some locations have reports associated with them."
+        }, { status: 400 });
+      }
+
+      const deletedCount = await prisma.unitLocation.deleteMany({
+        where: {
+          id: {
+            in: locationIds
+          }
+        }
+      });
+
       return NextResponse.json({
-        error: "Cannot delete location: there are reports associated with this location."
-      }, { status: 400 });
-    }
+        success: true,
+        message: `${deletedCount.count} locations deleted successfully`,
+        count: deletedCount.count
+      });
+    } else {
+      // Single delete
+      const { id } = body;
 
-    await prisma.unitLocation.delete({
-      where: { id }
-    });
-    return NextResponse.json({ success: true, message: "Location deleted successfully" });
-  } catch (error) {
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+      if (!id) {
+        return NextResponse.json({ error: "Location ID is required" }, { status: 400 });
+      }
+
+      // Check if there are any reports associated with this location
+      let reportCount = 0;
+      try {
+        reportCount = await prisma.report.count({
+          where: {
+            locationId: id
+          }
+        });
+      } catch (error) {
+        console.error("Error counting reports for single delete:", error);
+        // Return error response if count operation fails
+        return NextResponse.json({
+          error: "Error checking associated reports. Please ensure the location is valid."
+        }, { status: 500 });
+      }
+
+      if (reportCount > 0) {
+        return NextResponse.json({
+          error: "Cannot delete location: there are reports associated with this location."
+        }, { status: 400 });
+      }
+
+      await prisma.unitLocation.delete({
+        where: { id }
+      });
+      return NextResponse.json({ success: true, message: "Location deleted successfully" });
+    }
+  } catch (error: any) {
+    console.error("Error in DELETE /api/admin/unit-locations:", error);
+    return NextResponse.json({
+      error: "Internal Server Error",
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 500 });
   }
 }

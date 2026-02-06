@@ -2,17 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { 
-  Download, 
-  Printer, 
-  Edit3, 
-  Trash2, 
-  Search, 
-  Plus, 
-  MapPin, 
+import {
+  Download,
+  Printer,
+  Edit3,
+  Trash2,
+  Search,
+  Plus,
+  MapPin,
   Calendar,
   Building,
-  ArrowRight
+  ArrowRight,
+  AlertTriangle
 } from "lucide-react";
 
 export default function ManageUnitsPage() {
@@ -24,6 +25,12 @@ export default function ManageUnitsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingUnit, setEditingUnit] = useState<any>(null);
+
+  // Selection states
+  const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+  const [deletingUnitId, setDeletingUnitId] = useState<string | null>(null);
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,16 +108,14 @@ export default function ManageUnitsPage() {
   };
 
   const handleDeleteUnit = async (unit: any) => {
-    if (!window.confirm(`Delete unit "${unit.name}"?`)) return;
-    try {
-      const response = await fetch('/api/admin/units', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: unit.id }),
-      });
-      if (!response.ok) throw new Error(`HTTP error!`);
-      fetchUnits();
-    } catch (err) { alert('Failed to delete unit'); }
+    if (!isSelectionMode) {
+      // If not in selection mode, delete single item
+      setDeletingUnitId(unit.id);
+      setIsDeleteConfirmationOpen(true);
+    } else {
+      // If in selection mode, add to selection
+      toggleUnitSelection(unit.id);
+    }
   };
 
   const startEditUnit = (unit: any) => {
@@ -123,6 +128,127 @@ export default function ManageUnitsPage() {
       if (nameInput) nameInput.value = unit.name;
       if (districtInput) districtInput.value = unit.district;
     }, 50);
+  };
+
+  // Selection handlers
+  const toggleUnitSelection = (unitId: string) => {
+    setSelectedUnits(prev =>
+      prev.includes(unitId)
+        ? prev.filter(id => id !== unitId)
+        : [...prev, unitId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedUnits.length === currentData.length) {
+      setSelectedUnits([]);
+    } else {
+      setSelectedUnits(currentData.map(unit => unit.id));
+    }
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    if (!isSelectionMode) {
+      setSelectedUnits([]); // Clear selections when entering selection mode
+    }
+  };
+
+  const exitSelectionMode = () => {
+    setIsSelectionMode(false);
+    setSelectedUnits([]);
+  };
+
+  const handleDeleteSingleUnit = (unitId: string, unitName: string) => {
+    setDeletingUnitId(unitId);
+    setIsDeleteConfirmationOpen(true);
+  };
+
+  const handleDeleteMultipleUnits = () => {
+    if (selectedUnits.length > 0) {
+      setIsDeleteConfirmationOpen(true);
+    }
+  };
+
+  const handleDeleteAllUnits = () => {
+    if (allUnits.length > 0) {
+      setSelectedUnits(allUnits.map(unit => unit.id));
+      setIsDeleteConfirmationOpen(true);
+    }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      if (deletingUnitId) {
+        // Delete single unit
+        const response = await fetch(`/api/admin/units`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: deletingUnitId }),
+        });
+
+        if (!response.ok) {
+          let errorMessage = '';
+
+          // Check if the response is JSON or plain text
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+          } else {
+            // If not JSON, try to read as text
+            const errorText = await response.text();
+            errorMessage = errorText || `HTTP ${response.status}: ${response.statusText}`;
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        // Update local state to remove the deleted unit
+        setAllUnits(prev => prev.filter(unit => unit.id !== deletingUnitId));
+        setFilteredUnits(prev => prev.filter(unit => unit.id !== deletingUnitId));
+
+        setDeletingUnitId(null);
+      } else if (selectedUnits.length > 0) {
+        // Delete multiple units
+        const response = await fetch('/api/admin/units', {  // Updated to use same endpoint
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ unitIds: selectedUnits }),
+        });
+
+        if (!response.ok) {
+          let errorMessage = '';
+
+          // Check if the response is JSON or plain text
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+          } else {
+            // If not JSON, try to read as text
+            const errorText = await response.text();
+            errorMessage = errorText || `HTTP ${response.status}: ${response.statusText}`;
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        // Update local state to remove the deleted units
+        setAllUnits(prev => prev.filter(unit => !selectedUnits.includes(unit.id)));
+        setFilteredUnits(prev => prev.filter(unit => !selectedUnits.includes(unit.id)));
+        setSelectedUnits([]);
+      }
+
+      setIsDeleteConfirmationOpen(false);
+      await fetchUnits(); // Refresh data after deletion
+    } catch (error: any) {
+      console.error('Error deleting unit(s):', error);
+      alert(`Failed to delete unit(s): ${error.message}`);
+      setIsDeleteConfirmationOpen(false);
+    }
   };
 
   const handleExport = async () => {
@@ -190,19 +316,59 @@ export default function ManageUnitsPage() {
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Kelola Unit</h1>
             <p className="text-xs font-medium text-slate-500 hidden sm:block mt-1">Konfigurasi unit organisasi dan wilayah</p>
           </div>
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            <button onClick={handleExport} className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-emerald-100 transition-colors shadow-sm">
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Ekspor ke Excel</span>
-              <span className="sm:hidden">Ekspor</span>
-            </button>
-            <button
-              onClick={() => { setShowAddForm(true); setShowEditForm(false); }}
-              className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-md hover:shadow-lg"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Tambah Unit</span>
-            </button>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 self-end sm:self-auto">
+            <div className="flex items-center gap-2">
+              {isSelectionMode ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-slate-700">
+                    {selectedUnits.length} dipilih
+                  </span>
+                  <button
+                    onClick={handleDeleteMultipleUnits}
+                    className="flex items-center gap-1 px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors shadow-sm"
+                    disabled={selectedUnits.length === 0}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Hapus</span>
+                  </button>
+                  <button
+                    onClick={exitSelectionMode}
+                    className="flex items-center gap-1 px-3 py-2 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors shadow-sm"
+                  >
+                    Batal
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={toggleSelectionMode}
+                  className="flex items-center gap-1 px-3 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-bold hover:bg-amber-100 transition-colors shadow-sm"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Pilih</span>
+                </button>
+              )}
+              <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-emerald-100 transition-colors shadow-sm">
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Ekspor ke Excel</span>
+                <span className="sm:hidden">Ekspor</span>
+              </button>
+              {!isSelectionMode && (
+                <button
+                  onClick={handleDeleteAllUnits}
+                  className="flex items-center gap-1 px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors shadow-sm"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Hapus Semua</span>
+                </button>
+              )}
+              <button
+                onClick={() => { setShowAddForm(true); setShowEditForm(false); }}
+                className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-md hover:shadow-lg"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Tambah Unit</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -271,6 +437,18 @@ export default function ManageUnitsPage() {
             <table className="w-full text-left border-collapse">
               <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-500 tracking-wider border-b border-slate-200">
                 <tr>
+                  {isSelectionMode && (
+                    <th className="px-6 py-4 w-12">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={currentData.length > 0 && selectedUnits.length === currentData.length}
+                          onChange={toggleSelectAll}
+                          className="h-4 w-4 text-amber-600 border-slate-300 rounded focus:ring-amber-500"
+                        />
+                      </div>
+                    </th>
+                  )}
                   <th className="px-6 py-4">Nama Unit</th>
                   <th className="px-6 py-4">Distrik</th>
                   <th className="px-6 py-4">Dibuat Pada</th>
@@ -280,6 +458,16 @@ export default function ManageUnitsPage() {
               <tbody className="divide-y divide-slate-100 text-sm">
                 {currentData.map((unit: any) => (
                   <tr key={unit.id} className="hover:bg-amber-50/30 transition-colors group">
+                    {isSelectionMode && (
+                      <td className="px-6 py-4 w-12">
+                        <input
+                          type="checkbox"
+                          checked={selectedUnits.includes(unit.id)}
+                          onChange={() => toggleUnitSelection(unit.id)}
+                          className="h-4 w-4 text-amber-600 border-slate-300 rounded focus:ring-amber-500"
+                        />
+                      </td>
+                    )}
                     <td className="px-6 py-4 font-bold text-slate-900 flex items-center gap-3">
                        <div className="p-2 bg-slate-100 rounded-lg text-slate-500 border border-slate-200 group-hover:border-amber-200 group-hover:bg-white group-hover:text-amber-600 transition-colors">
                           <Building size={18} />
@@ -316,6 +504,18 @@ export default function ManageUnitsPage() {
               <div key={unit.id} className="p-5 bg-white hover:bg-slate-50 transition-colors">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-start gap-4">
+                    {/* Checkbox - only show in selection mode */}
+                    {isSelectionMode && (
+                      <div className="flex items-start pt-1">
+                        <input
+                          type="checkbox"
+                          checked={selectedUnits.includes(unit.id)}
+                          onChange={() => toggleUnitSelection(unit.id)}
+                          className="h-4 w-4 text-amber-600 border-slate-300 rounded focus:ring-amber-500 mt-0.5"
+                        />
+                      </div>
+                    )}
+
                     <div className="p-3 bg-amber-50 rounded-xl text-amber-600 border border-amber-100 mt-0.5 shadow-sm">
                       <Building size={20} />
                     </div>
@@ -378,6 +578,42 @@ export default function ManageUnitsPage() {
                 >
                   Berikutnya
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Confirmation Dialog (Modal) */}
+          {isDeleteConfirmationOpen && (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl scale-100 transform transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="p-3 bg-red-100 rounded-full text-red-600">
+                        <AlertTriangle className="h-6 w-6" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900">Konfirmasi Hapus</h3>
+                </div>
+
+                <p className="text-slate-600 mb-6 text-sm leading-relaxed font-medium">
+                  {deletingUnitId
+                    ? `Apakah Anda yakin ingin menghapus unit ini?`
+                    : `Apakah Anda yakin ingin menghapus ${selectedUnits.length} unit yang dipilih?`}
+                  <br/><span className="text-red-600 text-xs mt-1 block">Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait.</span>
+                </p>
+
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setIsDeleteConfirmationOpen(false)}
+                    className="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm transition-colors border border-slate-300"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md hover:shadow-lg"
+                  >
+                    Hapus Unit
+                  </button>
+                </div>
               </div>
             </div>
           )}
