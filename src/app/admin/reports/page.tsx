@@ -714,20 +714,105 @@ export default function ReportManagementPage() {
             {totalPages > 1 && (
               <div className="p-5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Page {currentPage} of {totalPages}</span>
-                <div className="flex gap-2">
-                  <button 
+                <div className="flex flex-wrap justify-center gap-1">
+                  {/* Previous button */}
+                  <button
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    className="px-4 py-2 text-xs font-bold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                    className="px-3 py-2 text-xs font-bold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                   >
-                    Previous
+                    &lt;
                   </button>
-                  <button 
+
+                  {/* Page numbers */}
+                  {(() => {
+                    const pages = [];
+                    const maxVisiblePages = 5; // Maximum number of page buttons to show
+
+                    // Calculate the range of pages to show
+                    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+                    // Adjust startPage if we're near the end
+                    if (endPage - startPage + 1 < maxVisiblePages) {
+                      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                    }
+
+                    // Add first page and ellipsis if needed
+                    if (startPage > 1) {
+                      pages.push(
+                        <button
+                          key={1}
+                          onClick={() => setCurrentPage(1)}
+                          className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm ${
+                            currentPage === 1
+                              ? 'bg-amber-500 border border-amber-600 text-white'
+                              : 'bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-600'
+                          }`}
+                        >
+                          1
+                        </button>
+                      );
+                      if (startPage > 2) {
+                        pages.push(
+                          <span key="ellipsis-start" className="px-3 py-2 text-xs font-bold text-slate-400">
+                            ...
+                          </span>
+                        );
+                      }
+                    }
+
+                    // Add visible pages
+                    for (let i = startPage; i <= endPage; i++) {
+                      pages.push(
+                        <button
+                          key={i}
+                          onClick={() => setCurrentPage(i)}
+                          className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm ${
+                            currentPage === i
+                              ? 'bg-amber-500 border border-amber-600 text-white'
+                              : 'bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-600'
+                          }`}
+                        >
+                          {i}
+                        </button>
+                      );
+                    }
+
+                    // Add last page and ellipsis if needed
+                    if (endPage < totalPages) {
+                      if (endPage < totalPages - 1) {
+                        pages.push(
+                          <span key="ellipsis-end" className="px-3 py-2 text-xs font-bold text-slate-400">
+                            ...
+                          </span>
+                        );
+                      }
+                      pages.push(
+                        <button
+                          key={totalPages}
+                          onClick={() => setCurrentPage(totalPages)}
+                          className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm ${
+                            currentPage === totalPages
+                              ? 'bg-amber-500 border border-amber-600 text-white'
+                              : 'bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-600'
+                          }`}
+                        >
+                          {totalPages}
+                        </button>
+                      );
+                    }
+
+                    return pages;
+                  })()}
+
+                  {/* Next button */}
+                  <button
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    className="px-4 py-2 text-xs font-bold bg-amber-500 border border-amber-600 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+                    className="px-3 py-2 text-xs font-bold bg-amber-500 border border-amber-600 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
                   >
-                    Next
+                    &gt;
                   </button>
                 </div>
               </div>

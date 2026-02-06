@@ -10,6 +10,7 @@ import {
   Trash2,
   MapPin,
   ChevronDown,
+  RotateCcw,
   Check,
   Calendar,
   Building,
@@ -86,6 +87,12 @@ export default function ManageUnitLocationsPage() {
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [deletingLocationId, setDeletingLocationId] = useState<string | null>(null);
 
+  // Error state for deletion
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Validation error state
+  const [validationError, setValidationError] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -133,7 +140,17 @@ export default function ManageUnitLocationsPage() {
   };
 
   const handleSaveLocation = async (isEdit: boolean) => {
-    if (!formData.name || !formData.unitId) return alert('Please fill in all fields');
+    // Validasi bahwa formData tidak kosong dan tidak hanya berisi spasi kosong
+    if (!formData.name?.trim()) {
+      setValidationError('Nama lokasi harus diisi!');
+      return;
+    }
+
+    if (!formData.unitId?.trim()) {
+      setValidationError('Anda harus memilih unit terlebih dahulu!');
+      return;
+    }
+
     try {
       const method = isEdit ? 'PUT' : 'POST';
       const body = isEdit ? { ...formData, id: editingLocation.id } : formData;
@@ -143,11 +160,15 @@ export default function ManageUnitLocationsPage() {
         body: JSON.stringify(body),
       });
       if (!response.ok) throw new Error('Failed to save');
-      await fetchData(); 
+      await fetchData();
       setShowAddForm(false);
       setShowEditForm(false);
       setFormData({ name: '', unitId: '' });
-    } catch (err: any) { alert(err.message); }
+      setValidationError(null); // Clear any validation errors
+    } catch (err: any) {
+      console.error('Error saving location:', err);
+      setValidationError(err.message);
+    }
   };
 
   const handleDeleteLocation = async (id: string, name: string) => {
@@ -284,7 +305,7 @@ export default function ManageUnitLocationsPage() {
       await fetchData(); // Refresh data after deletion
     } catch (error: any) {
       console.error('Error deleting location(s):', error);
-      alert(`Failed to delete location(s): ${error.message}`);
+      setDeleteError(error.message);
       setIsDeleteConfirmationOpen(false);
     }
   };
@@ -400,9 +421,9 @@ export default function ManageUnitLocationsPage() {
             </div>
 
             <div className="md:col-span-2">
-              <button onClick={handleResetFilters} className="w-full py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 font-bold rounded-lg text-sm transition-all shadow-sm">
-                Atur Ulang
-              </button>
+                <button onClick={handleResetFilters} className="px-6 py-2.5 text-sm font-bold text-slate-600 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 rounded-xl transition-colors flex items-center justify-center gap-2">
+                  <RotateCcw className="h-4 w-4" /> Atur Ulang
+                </button>
             </div>
           </div>
         </div>
@@ -559,6 +580,116 @@ export default function ManageUnitLocationsPage() {
           </div>
 
           {filteredLocations.length === 0 && <div className="p-16 text-center text-slate-400 font-medium">Tidak ada lokasi ditemukan.</div>}
+
+          {/* Pagination Footer */}
+          {totalPages > 1 && (
+            <div className="p-5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                Halaman {currentPage} dari {totalPages}
+              </span>
+              <div className="flex flex-wrap justify-center gap-1">
+                {/* Previous button */}
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className="px-3 py-2 text-xs font-bold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                >
+                  &lt;
+                </button>
+
+                {/* Page numbers */}
+                {(() => {
+                  const pages = [];
+                  const maxVisiblePages = 5; // Maximum number of page buttons to show
+
+                  // Calculate the range of pages to show
+                  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+                  // Adjust startPage if we're near the end
+                  if (endPage - startPage + 1 < maxVisiblePages) {
+                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                  }
+
+                  // Add first page and ellipsis if needed
+                  if (startPage > 1) {
+                    pages.push(
+                      <button
+                        key={1}
+                        onClick={() => setCurrentPage(1)}
+                        className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm ${
+                          currentPage === 1
+                            ? 'bg-amber-500 border border-amber-600 text-white'
+                            : 'bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-600'
+                        }`}
+                      >
+                        1
+                      </button>
+                    );
+                    if (startPage > 2) {
+                      pages.push(
+                        <span key="ellipsis-start" className="px-3 py-2 text-xs font-bold text-slate-400">
+                          ...
+                        </span>
+                      );
+                    }
+                  }
+
+                  // Add visible pages
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i)}
+                        className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm ${
+                          currentPage === i
+                            ? 'bg-amber-500 border border-amber-600 text-white'
+                            : 'bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-600'
+                        }`}
+                      >
+                        {i}
+                      </button>
+                    );
+                  }
+
+                  // Add last page and ellipsis if needed
+                  if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                      pages.push(
+                        <span key="ellipsis-end" className="px-3 py-2 text-xs font-bold text-slate-400">
+                          ...
+                        </span>
+                      );
+                    }
+                    pages.push(
+                      <button
+                        key={totalPages}
+                        onClick={() => setCurrentPage(totalPages)}
+                        className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm ${
+                          currentPage === totalPages
+                            ? 'bg-amber-500 border border-amber-600 text-white'
+                            : 'bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-600'
+                        }`}
+                      >
+                        {totalPages}
+                      </button>
+                    );
+                  }
+
+                  return pages;
+                })()}
+
+                {/* Next button */}
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className="px-3 py-2 text-xs font-bold bg-amber-500 border border-amber-600 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+                >
+                  &gt;
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -592,6 +723,63 @@ export default function ManageUnitLocationsPage() {
                 className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md hover:shadow-lg"
               >
                 Hapus Lokasi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Validation Error Dialog (Modal) */}
+      {validationError && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl scale-100 transform transition-all">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-amber-100 rounded-full text-amber-600">
+                    <AlertTriangle className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Validasi Gagal</h3>
+            </div>
+
+            <p className="text-slate-600 mb-6 text-sm leading-relaxed font-medium">
+              {validationError}
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setValidationError(null)}
+                className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition-colors shadow-md hover:shadow-lg"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Dialog (Modal) */}
+      {deleteError && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl scale-100 transform transition-all">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-100 rounded-full text-red-600">
+                    <AlertTriangle className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Gagal Menghapus Lokasi</h3>
+            </div>
+
+            <p className="text-slate-600 mb-6 text-sm leading-relaxed font-medium">
+              {deleteError.includes('reports associated')
+                ? 'Tidak dapat menghapus lokasi karena terdapat laporan yang terkait dengan lokasi ini.'
+                : deleteError}
+              <br/><span className="text-red-600 text-xs mt-1 block">Harap hapus laporan terkait terlebih dahulu sebelum menghapus lokasi ini.</span>
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteError(null)}
+                className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition-colors shadow-md hover:shadow-lg"
+              >
+                Tutup
               </button>
             </div>
           </div>

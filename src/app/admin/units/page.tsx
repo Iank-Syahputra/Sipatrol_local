@@ -25,6 +25,7 @@ export default function ManageUnitsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingUnit, setEditingUnit] = useState<any>(null);
+  const [formData, setFormData] = useState({ name: '', district: '' });
 
   // Selection states
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
@@ -70,39 +71,37 @@ export default function ManageUnitsPage() {
 
   // --- HANDLERS ---
   const handleAddUnit = async () => {
-    const name = (document.getElementById('unit-name') as HTMLInputElement)?.value;
-    const district = (document.getElementById('unit-district') as HTMLInputElement)?.value;
-    if (!name || !district) return alert('Please fill in all fields');
+    if (!formData.name) return alert('Please fill in all fields');
 
     try {
       const response = await fetch('/api/admin/units', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, district }),
+        body: JSON.stringify({ name: formData.name, district: "PT PLN Nusantara Power UP Kendari" }),
       });
       if (!response.ok) throw new Error(`HTTP error!`);
-      
+
       setShowAddForm(false);
+      setFormData({ name: '', district: '' });
       setCurrentPage(1);
       fetchUnits();
     } catch (err) { alert('Failed to add unit'); }
   };
 
   const handleEditUnit = async () => {
-    const name = (document.getElementById('edit-unit-name') as HTMLInputElement)?.value;
-    const district = (document.getElementById('edit-unit-district') as HTMLInputElement)?.value;
-    if (!name || !district || !editingUnit) return alert('Please fill in all fields');
+    if (!formData.name || !editingUnit) return alert('Please fill in all fields');
 
     try {
       const response = await fetch('/api/admin/units', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editingUnit.id, name, district }),
+        body: JSON.stringify({ id: editingUnit.id, name: formData.name, district: "PT PLN Nusantara Power UP Kendari" }),
       });
       if (!response.ok) throw new Error(`HTTP error!`);
 
       setShowEditForm(false);
       setEditingUnit(null);
+      setFormData({ name: '', district: '' });
       fetchUnits();
     } catch (err) { alert('Failed to update unit'); }
   };
@@ -120,14 +119,9 @@ export default function ManageUnitsPage() {
 
   const startEditUnit = (unit: any) => {
     setEditingUnit(unit);
+    setFormData({ name: unit.name, district: "PT PLN Nusantara Power UP Kendari" });
     setShowEditForm(true);
     setShowAddForm(false);
-    setTimeout(() => {
-      const nameInput = document.getElementById('edit-unit-name') as HTMLInputElement;
-      const districtInput = document.getElementById('edit-unit-district') as HTMLInputElement;
-      if (nameInput) nameInput.value = unit.name;
-      if (districtInput) districtInput.value = unit.district;
-    }, 50);
   };
 
   // Selection handlers
@@ -176,6 +170,8 @@ export default function ManageUnitsPage() {
       setIsDeleteConfirmationOpen(true);
     }
   };
+
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const confirmDelete = async () => {
     try {
@@ -246,7 +242,7 @@ export default function ManageUnitsPage() {
       await fetchUnits(); // Refresh data after deletion
     } catch (error: any) {
       console.error('Error deleting unit(s):', error);
-      alert(`Failed to delete unit(s): ${error.message}`);
+      setDeleteError(error.message);
       setIsDeleteConfirmationOpen(false);
     }
   };
@@ -362,7 +358,11 @@ export default function ManageUnitsPage() {
                 </button>
               )}
               <button
-                onClick={() => { setShowAddForm(true); setShowEditForm(false); }}
+                onClick={() => {
+                  setShowAddForm(true);
+                  setShowEditForm(false);
+                  setFormData({ name: '', district: 'PT PLN Nusantara Power UP Kendari' });
+                }}
                 className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-md hover:shadow-lg"
               >
                 <Plus className="h-4 w-4" />
@@ -407,15 +407,33 @@ export default function ManageUnitsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Nama Unit</label>
-                <input id={showEditForm ? "edit-unit-name" : "unit-name"} type="text" className="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm text-slate-900 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all" placeholder="contoh: Unit Pembangkit" />
+                <input
+                  id={showEditForm ? "edit-unit-name" : "unit-name"}
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value, district: "PT PLN Nusantara Power UP Kendari"})}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm text-slate-900 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all"
+                  placeholder="contoh: Unit Pembangkit"
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Wilayah</label>
-                <input id={showEditForm ? "edit-unit-district" : "unit-district"} type="text" className="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm text-slate-900 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all" placeholder="contoh: Kendari" value="PT PLN Nusantara Power UP Kendari"/>
+                <input
+                  id={showEditForm ? "edit-unit-district" : "unit-district"}
+                  type="text"
+                  value="PT PLN Nusantara Power UP Kendari"
+                  readOnly
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm text-slate-900 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all"
+                  placeholder="contoh: Kendari"
+                />
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-100">
-              <button onClick={() => { setShowAddForm(false); setShowEditForm(false); }} className="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm transition-colors">Batal</button>
+              <button onClick={() => {
+                setShowAddForm(false);
+                setShowEditForm(false);
+                setFormData({ name: '', district: 'PT PLN Nusantara Power UP Kendari' });
+              }} className="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm transition-colors">Batal</button>
               <button onClick={showEditForm ? handleEditUnit : handleAddUnit} className="px-8 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg transition-all transform active:scale-95">Simpan Perubahan</button>
             </div>
           </div>
@@ -563,20 +581,105 @@ export default function ManageUnitsPage() {
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                 Halaman {currentPage} dari {totalPages}
               </span>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap justify-center gap-1">
+                {/* Previous button */}
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  className="px-4 py-2 text-xs font-bold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  className="px-3 py-2 text-xs font-bold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                 >
-                  Sebelumnya
+                  &lt;
                 </button>
+
+                {/* Page numbers */}
+                {(() => {
+                  const pages = [];
+                  const maxVisiblePages = 5; // Maximum number of page buttons to show
+
+                  // Calculate the range of pages to show
+                  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+                  // Adjust startPage if we're near the end
+                  if (endPage - startPage + 1 < maxVisiblePages) {
+                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                  }
+
+                  // Add first page and ellipsis if needed
+                  if (startPage > 1) {
+                    pages.push(
+                      <button
+                        key={1}
+                        onClick={() => setCurrentPage(1)}
+                        className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm ${
+                          currentPage === 1
+                            ? 'bg-amber-500 border border-amber-600 text-white'
+                            : 'bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-600'
+                        }`}
+                      >
+                        1
+                      </button>
+                    );
+                    if (startPage > 2) {
+                      pages.push(
+                        <span key="ellipsis-start" className="px-3 py-2 text-xs font-bold text-slate-400">
+                          ...
+                        </span>
+                      );
+                    }
+                  }
+
+                  // Add visible pages
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i)}
+                        className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm ${
+                          currentPage === i
+                            ? 'bg-amber-500 border border-amber-600 text-white'
+                            : 'bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-600'
+                        }`}
+                      >
+                        {i}
+                      </button>
+                    );
+                  }
+
+                  // Add last page and ellipsis if needed
+                  if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                      pages.push(
+                        <span key="ellipsis-end" className="px-3 py-2 text-xs font-bold text-slate-400">
+                          ...
+                        </span>
+                      );
+                    }
+                    pages.push(
+                      <button
+                        key={totalPages}
+                        onClick={() => setCurrentPage(totalPages)}
+                        className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm ${
+                          currentPage === totalPages
+                            ? 'bg-amber-500 border border-amber-600 text-white'
+                            : 'bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-600'
+                        }`}
+                      >
+                        {totalPages}
+                      </button>
+                    );
+                  }
+
+                  return pages;
+                })()}
+
+                {/* Next button */}
                 <button
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  className="px-4 py-2 text-xs font-bold bg-amber-500 border border-amber-600 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+                  className="px-3 py-2 text-xs font-bold bg-amber-500 border border-amber-600 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
                 >
-                  Berikutnya
+                  &gt;
                 </button>
               </div>
             </div>
@@ -619,6 +722,36 @@ export default function ManageUnitsPage() {
           )}
         </div>
       </div>
+
+      {/* Error Dialog (Modal) */}
+      {deleteError && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl scale-100 transform transition-all">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-100 rounded-full text-red-600">
+                    <AlertTriangle className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Gagal Menghapus Unit</h3>
+            </div>
+
+            <p className="text-slate-600 mb-6 text-sm leading-relaxed font-medium">
+              {deleteError.includes('locations associated')
+                ? 'Tidak dapat menghapus unit karena terdapat lokasi yang terkait dengan unit ini.'
+                : deleteError}
+              <br/><span className="text-red-600 text-xs mt-1 block">Harap hapus lokasi terkait terlebih dahulu sebelum menghapus unit ini.</span>
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteError(null)}
+                className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition-colors shadow-md hover:shadow-lg"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
