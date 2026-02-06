@@ -380,7 +380,7 @@ export default function AdminDashboard() {
               <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
                   <CircleGauge className="h-5 w-5 text-amber-600" />
-                  Ikhtisar Kepatuhan HSE
+                  Akumulasi Kepatuhan HSE 
                 </h3>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
