@@ -35,8 +35,8 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-slate-50 text-slate-900">
-
+    <div className="flex h-screen w-full bg-slate-50 text-slate-900 overflow-hidden">
+      
       {/* --- MOBILE TOGGLE BUTTON --- */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -48,7 +48,7 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
 
       {/* --- MOBILE OVERLAY BACKDROP --- */}
       {isOpen && (
-        <div
+        <div 
           className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm md:hidden"
           onClick={() => setIsOpen(false)}
         />
@@ -56,11 +56,11 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
 
       {/* --- SIDEBAR --- */}
       <aside className={`
-        sticky top-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col h-screen transition-transform duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         md:translate-x-0 md:relative md:inset-auto
       `}>
-
+        
         {/* Header Sidebar */}
         <div className="p-6 border-b border-slate-200">
           <div className="flex items-center gap-3">
@@ -73,7 +73,7 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
             </div>
           </div>
         </div>
-
+        
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {menuItems.map((item) => {
@@ -83,7 +83,7 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setIsOpen(false)}
+                onClick={() => setIsOpen(false)} 
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium ${
                   isActive
                     ? 'bg-amber-50 text-amber-700 shadow-sm border border-amber-100'
@@ -96,7 +96,7 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
             );
           })}
         </nav>
-
+        
         {/* Footer User Profile & Logout */}
         <div className="p-4 border-t border-slate-200 bg-slate-50/50">
           <div className="flex items-center justify-between">
@@ -125,14 +125,16 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
       </aside>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <div className="flex-1 flex flex-col min-w-0 relative">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Header Mobile Placeholder */}
         <header className="md:hidden h-16 border-b border-slate-200 bg-white flex items-center justify-center sticky top-0 z-20">
             <span className="font-bold text-slate-900">Dasbor Admin</span>
         </header>
 
-        <main className="flex-1 p-6 bg-slate-50">
-          {children}
+        <main className="flex-1 overflow-y-auto scroll-smooth bg-slate-50">
+          <div className="w-full h-full">
+             {children}
+          </div>
         </main>
       </div>
 
