@@ -5,7 +5,6 @@ import { X, Download } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { Activity, MapPin, Users, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, RotateCcw, BarChart3, TrendingUp, AlertTriangle, LayoutDashboard, Image, Trash2, Camera, ExternalLink } from "lucide-react";
 import ReportDetailsModal from '@/components/report-details-modal';
-import DashboardAssistant from '@/components/dashboard-assistant';
 import {
   PieChart,
   Pie,
@@ -941,8 +940,6 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Dashboard Assistant */}
-      <DashboardAssistant />
     </>
   );
 }

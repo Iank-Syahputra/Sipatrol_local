@@ -93,10 +93,10 @@ export default function AdminChatbotPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center">
+        <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center">
           <Link href="/admin/dashboard" className="mr-6 text-gray-600 hover:text-gray-900">
             <ArrowLeft className="h-6 w-6" />
           </Link>
@@ -107,10 +107,10 @@ export default function AdminChatbotPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 h-[calc(100vh-200px)] flex flex-col overflow-hidden">
+      <main className="flex-1 p-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 h-full flex flex-col overflow-hidden">
           {/* Quick Questions */}
-          <div className="p-6 border-b border-gray-200 bg-gray-50">
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
             <h2 className="text-sm font-semibold text-gray-700 mb-3">Pertanyaan Cepat:</h2>
             <div className="flex flex-wrap gap-2">
               {[
@@ -129,9 +129,9 @@ export default function AdminChatbotPage() {
               ))}
             </div>
           </div>
-          
+
           {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50">
+          <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-gray-50">
             {messages.map((message) => (
               <div
                 key={message.id}
