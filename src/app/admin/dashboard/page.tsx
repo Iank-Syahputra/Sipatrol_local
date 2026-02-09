@@ -39,6 +39,10 @@ export default function AdminDashboard() {
   const [selectedUnit, setSelectedUnit] = useState<any>(null);
   const [unitReports, setUnitReports] = useState<any[]>([]);
   const [loadingUnitReports, setLoadingUnitReports] = useState(false);
+  
+  // Pagination state for unit reports
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10; // Standard pagination like other pages
 
   // Fetch user profile
   useEffect(() => {
@@ -68,6 +72,7 @@ export default function AdminDashboard() {
       if (!unitId) {
         console.error('Unit ID is empty or undefined');
         setUnitReports([]);
+        setCurrentPage(1); // Reset page when no unit
         return;
       }
 
@@ -91,9 +96,11 @@ export default function AdminDashboard() {
       const data = await response.json();
       console.log('Received reports:', data.reports?.length || 0, data.reports); // Debug log
       setUnitReports(data.reports || []);
+      setCurrentPage(1); // Reset to first page when loading new unit reports
     } catch (error) {
       console.error('Error fetching unit reports:', error);
       setUnitReports([]);
+      setCurrentPage(1); // Reset page on error
     } finally {
       setLoadingUnitReports(false);
     }
@@ -816,92 +823,206 @@ export default function AdminDashboard() {
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-amber-500 border-r-transparent"></div>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead className="bg-slate-50 text-[10px] font-bold uppercase text-slate-500 tracking-wider border-b border-slate-200">
-                    <tr>
-                      <th className="px-6 py-4">Bukti</th>
-                      <th className="px-6 py-4">Petugas</th>
-                      <th className="px-6 py-4">Unit</th>
-                      <th className="px-6 py-4">Kategori</th>
-                      <th className="px-6 py-4">Lokasi</th>
-                      <th className="px-6 py-4">Tanggal/Waktu</th>
-                      <th className="px-6 py-4 text-right">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-sm">
-                    {unitReports.map((report: any) => (
-                      <tr key={report.id} className="hover:bg-amber-50/30 transition-colors group">
-                        <td className="px-6 py-4 w-24">
-                          <div className="h-14 w-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative shadow-sm">
-                            {report.imagePath ? (
-                              <img src={report.imagePath} alt="Evd" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center text-slate-400"><Image size={20} /></div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-slate-900">{report.user?.fullName || 'Unknown'}</div>
-                          <div className="text-xs font-medium text-slate-500 mt-0.5">{report.unit?.name || 'Unknown Unit'}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="font-medium text-slate-700 bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs">
-                            {report.unit?.name || 'N/A'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          {report.category ? (
-                            <span className={`px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase tracking-wider border ${
-                              report.category.color === 'red' || report.category.name.toLowerCase().includes('action')
-                                ? 'bg-red-50 text-red-600 border-red-200'
-                                : report.category.color === 'yellow' || report.category.name.toLowerCase().includes('condition')
-                                  ? 'bg-amber-50 text-amber-600 border-amber-200'
-                                  : 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                            }`}>
-                              {report.category.name}
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase tracking-wider border bg-slate-100 text-slate-500 border-slate-200">
-                              N/A
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="font-medium text-slate-700 bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs">
-                            {report.location?.name || '-'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-slate-600 whitespace-nowrap">
-                          <div className="flex flex-col">
-                            <span className="font-bold text-slate-800">{new Date(report.capturedAt).toLocaleDateString('en-GB')}</span>
-                            <span className="text-xs text-slate-500 mt-0.5">{new Date(report.capturedAt).toLocaleTimeString('en-GB')}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation(); // Prevent triggering parent row click
-                                setSelectedReport(report);
-                                setIsModalOpen(true);
-                              }}
-                              className="p-2 bg-white border border-slate-200 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50 rounded-lg text-slate-400 transition-all shadow-sm"
-                            >
-                              <Eye size={18} />
-                            </button>
-                          </div>
-                        </td>
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-slate-50 text-[10px] font-bold uppercase text-slate-500 tracking-wider border-b border-slate-200">
+                      <tr>
+                        <th className="px-6 py-4">Bukti</th>
+                        <th className="px-6 py-4">Petugas</th>
+                        <th className="px-6 py-4">Unit</th>
+                        <th className="px-6 py-4">Kategori</th>
+                        <th className="px-6 py-4">Lokasi</th>
+                        <th className="px-6 py-4">Tanggal/Waktu</th>
+                        <th className="px-6 py-4 text-right">Aksi</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-sm">
+                      {unitReports
+                        .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                        .map((report: any) => (
+                          <tr key={report.id} className="hover:bg-amber-50/30 transition-colors group">
+                            <td className="px-6 py-4 w-24">
+                              <div className="h-14 w-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative shadow-sm">
+                                {report.imagePath ? (
+                                  <img src={report.imagePath} alt="Evd" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                                ) : (
+                                  <div className="h-full w-full flex items-center justify-center text-slate-400"><Image size={20} /></div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="font-bold text-slate-900">{report.user?.fullName || 'Unknown'}</div>
+                              <div className="text-xs font-medium text-slate-500 mt-0.5">{report.unit?.name || 'Unknown Unit'}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="font-medium text-slate-700 bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs">
+                                {report.unit?.name || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              {report.category ? (
+                                <span className={`px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase tracking-wider border ${
+                                  report.category.color === 'red' || report.category.name.toLowerCase().includes('action')
+                                    ? 'bg-red-50 text-red-600 border-red-200'
+                                    : report.category.color === 'yellow' || report.category.name.toLowerCase().includes('condition')
+                                      ? 'bg-amber-50 text-amber-600 border-amber-200'
+                                      : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                                }`}>
+                                  {report.category.name}
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase tracking-wider border bg-slate-100 text-slate-500 border-slate-200">
+                                  N/A
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="font-medium text-slate-700 bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs">
+                                {report.location?.name || '-'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-slate-600 whitespace-nowrap">
+                              <div className="flex flex-col">
+                                <span className="font-bold text-slate-800">{new Date(report.capturedAt).toLocaleDateString('en-GB')}</span>
+                                <span className="text-xs text-slate-500 mt-0.5">{new Date(report.capturedAt).toLocaleTimeString('en-GB')}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent triggering parent row click
+                                    setSelectedReport(report);
+                                    setIsModalOpen(true);
+                                  }}
+                                  className="p-2 bg-white border border-slate-200 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50 rounded-lg text-slate-400 transition-all shadow-sm"
+                                >
+                                  <Eye size={18} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Pagination Controls */}
+                {unitReports.length > itemsPerPage && (
+                  <div className="p-5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                      Halaman {currentPage} dari {Math.ceil(unitReports.length / itemsPerPage)}
+                    </span>
+                    <div className="flex flex-wrap justify-center gap-1">
+                      {/* Previous button */}
+                      <button
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        className="px-3 py-2 text-xs font-bold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                      >
+                        &lt;
+                      </button>
+
+                      {/* Page numbers */}
+                      {(() => {
+                        const pages = [];
+                        const maxVisiblePages = 5; // Maximum number of page buttons to show
+
+                        // Calculate the range of pages to show
+                        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                        let endPage = Math.min(Math.ceil(unitReports.length / itemsPerPage), startPage + maxVisiblePages - 1);
+
+                        // Adjust startPage if we're near the end
+                        if (endPage - startPage + 1 < maxVisiblePages) {
+                          startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                        }
+
+                        // Add first page and ellipsis if needed
+                        if (startPage > 1) {
+                          pages.push(
+                            <button
+                              key={1}
+                              onClick={() => setCurrentPage(1)}
+                              className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm ${
+                                currentPage === 1
+                                  ? 'bg-amber-500 border border-amber-600 text-white'
+                                  : 'bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-600'
+                              }`}
+                            >
+                              1
+                            </button>
+                          );
+                          if (startPage > 2) {
+                            pages.push(
+                              <span key="ellipsis-start" className="px-3 py-2 text-xs font-bold text-slate-400">
+                                ...
+                              </span>
+                            );
+                          }
+                        }
+
+                        // Add visible pages
+                        for (let i = startPage; i <= endPage; i++) {
+                          pages.push(
+                            <button
+                              key={i}
+                              onClick={() => setCurrentPage(i)}
+                              className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm ${
+                                currentPage === i
+                                  ? 'bg-amber-500 border border-amber-600 text-white'
+                                  : 'bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-600'
+                              }`}
+                            >
+                              {i}
+                            </button>
+                          );
+                        }
+
+                        // Add last page and ellipsis if needed
+                        if (endPage < Math.ceil(unitReports.length / itemsPerPage)) {
+                          if (endPage < Math.ceil(unitReports.length / itemsPerPage) - 1) {
+                            pages.push(
+                              <span key="ellipsis-end" className="px-3 py-2 text-xs font-bold text-slate-400">
+                                ...
+                              </span>
+                            );
+                          }
+                          pages.push(
+                            <button
+                              key={Math.ceil(unitReports.length / itemsPerPage)}
+                              onClick={() => setCurrentPage(Math.ceil(unitReports.length / itemsPerPage))}
+                              className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm ${
+                                currentPage === Math.ceil(unitReports.length / itemsPerPage)
+                                  ? 'bg-amber-500 border border-amber-600 text-white'
+                                  : 'bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-600'
+                              }`}
+                            >
+                              {Math.ceil(unitReports.length / itemsPerPage)}
+                            </button>
+                          );
+                        }
+
+                        return pages;
+                      })()}
+
+                      {/* Next button */}
+                      <button
+                        disabled={currentPage === Math.ceil(unitReports.length / itemsPerPage)}
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(unitReports.length / itemsPerPage)))}
+                        className="px-3 py-2 text-xs font-bold bg-amber-500 border border-amber-600 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+                      >
+                        &gt;
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-200">
               <span className="text-sm font-bold text-slate-700 uppercase tracking-wide">
-                Total: {unitReports.length} laporan
+                Total: {unitReports.length} laporan {unitReports.length > itemsPerPage && `(Menampilkan ${Math.min(itemsPerPage, unitReports.length - (currentPage - 1) * itemsPerPage)} dari ${unitReports.length} laporan pada halaman ${currentPage})`}
               </span>
               <button
                 onClick={() => {
