@@ -186,6 +186,16 @@ export default function ManageUnitLocationsPage() {
     setFormData({ name: loc.name, unitId: loc.unitId || loc.unit?.id || "" });
     setShowEditForm(true);
     setShowAddForm(false);
+    
+    // Scroll to the top where the edit form is located
+    setTimeout(() => {
+      const formElement = document.querySelector('.bg-white.border.border-amber-200');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   // Selection handlers
@@ -383,7 +393,21 @@ export default function ManageUnitLocationsPage() {
                 </button>
               )}
               <button
-                onClick={() => { setShowAddForm(true); setShowEditForm(false); setFormData({ name: '', unitId: '' }); }}
+                onClick={() => { 
+                  setShowAddForm(true); 
+                  setShowEditForm(false); 
+                  setFormData({ name: '', unitId: '' }); 
+                  
+                  // Scroll to the top where the add form is located
+                  setTimeout(() => {
+                    const formElement = document.querySelector('.bg-white.border.border-amber-200');
+                    if (formElement) {
+                      formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }, 100);
+                }}
                 className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white border border-amber-600 rounded-xl text-xs sm:text-sm font-bold hover:bg-amber-600 transition-colors shadow-sm"
               >
                 <Plus className="h-4 w-4" />
@@ -469,6 +493,11 @@ export default function ManageUnitLocationsPage() {
                   setShowAddForm(false);
                   setShowEditForm(false);
                   setFormData({ name: '', unitId: '' });
+                  
+                  // Scroll to the top when closing the form
+                  setTimeout(() => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }, 100);
                 }}
                 className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-lg text-sm transition-colors"
               >

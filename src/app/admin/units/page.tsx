@@ -122,6 +122,16 @@ export default function ManageUnitsPage() {
     setFormData({ name: unit.name, district: "PT PLN Nusantara Power UP Kendari" });
     setShowEditForm(true);
     setShowAddForm(false);
+    
+    // Scroll to the top where the edit form is located
+    setTimeout(() => {
+      const formElement = document.querySelector('.bg-white.border.border-amber-200');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   // Selection handlers
@@ -362,6 +372,16 @@ export default function ManageUnitsPage() {
                   setShowAddForm(true);
                   setShowEditForm(false);
                   setFormData({ name: '', district: 'PT PLN Nusantara Power UP Kendari' });
+                  
+                  // Scroll to the top where the add form is located
+                  setTimeout(() => {
+                    const formElement = document.querySelector('.bg-white.border.border-amber-200');
+                    if (formElement) {
+                      formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }, 100);
                 }}
                 className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-md hover:shadow-lg"
               >
@@ -433,6 +453,11 @@ export default function ManageUnitsPage() {
                 setShowAddForm(false);
                 setShowEditForm(false);
                 setFormData({ name: '', district: 'PT PLN Nusantara Power UP Kendari' });
+                
+                // Scroll to the top when closing the form
+                setTimeout(() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 100);
               }} className="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm transition-colors">Batal</button>
               <button onClick={showEditForm ? handleEditUnit : handleAddUnit} className="px-8 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg transition-all transform active:scale-95">Simpan Perubahan</button>
             </div>
