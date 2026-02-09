@@ -537,9 +537,13 @@ export default function ManageUnitLocationsPage() {
                     </td>
                     <td className="px-6 py-4 text-slate-500 tabular-nums">{new Date(loc.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => startEdit(loc)} className="p-2 bg-white border border-slate-200 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg text-slate-400 transition-all shadow-sm"><Edit3 size={16} /></button>
-                        <button onClick={() => handleDeleteLocation(loc.id, loc.name)} className="p-2 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-lg text-slate-400 hover:text-red-600 transition-all"><Trash2 size={16} /></button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => startEdit(loc)} className="p-2 bg-white border border-slate-200 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg text-slate-400 transition-all shadow-sm" title="Edit">
+                          <Edit3 className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => handleDeleteLocation(loc.id, loc.name)} className="p-2 bg-white border border-slate-200 hover:border-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg text-slate-400 transition-all shadow-sm" title="Delete">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -573,6 +577,22 @@ export default function ManageUnitLocationsPage() {
                        <span className="text-xs font-bold text-slate-600">{loc.unit?.name || '-'}</span>
                     </div>
                   </div>
+                </div>
+                
+                {/* Action Buttons for Mobile - Consistent with Unit Management */}
+                <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
+                  <button 
+                    onClick={() => startEdit(loc)} 
+                    className="text-xs font-bold text-blue-600 flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
+                  >
+                    <Edit3 size={14} /> Edit
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteLocation(loc.id, loc.name)} 
+                    className="text-xs font-bold text-red-600 flex items-center gap-1 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors"
+                  >
+                    <Trash2 size={14} /> Hapus
+                  </button>
                 </div>
               </div>
             ))}
