@@ -2,16 +2,17 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { 
-  Activity, 
-  FileText, 
-  Building, 
-  User, 
-  LogOut, 
-  MapPin, 
-  Menu, 
+import {
+  Activity,
+  FileText,
+  Building,
+  User,
+  LogOut,
+  MapPin,
+  Menu,
   X,
-  LayoutDashboard
+  LayoutDashboard,
+  MessageSquare
 } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
@@ -22,6 +23,7 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
 
   const menuItems = [
     { href: '/admin/dashboard', label: 'Umpan Langsung', icon: Activity },
+    { href: '/admin/chatbot', label: 'Asisten AI', icon: MessageSquare },
     { href: '/admin/reports', label: 'Manajemen Laporan', icon: FileText },
     { href: '/admin/units', label: 'Kelola Unit', icon: Building },
     { href: '/admin/unit-locations', label: 'Kelola Lokasi', icon: MapPin },
