@@ -29,8 +29,8 @@ export default function SecuritySidebar({
   ];
 
   return (
-    <div className="flex h-screen w-full bg-slate-50 text-slate-900 overflow-hidden">
-      
+    <div className="flex min-h-screen w-full bg-slate-50 text-slate-900">
+
       {/* --- MOBILE TOGGLE BUTTON --- */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -42,7 +42,7 @@ export default function SecuritySidebar({
 
       {/* --- MOBILE OVERLAY BACKDROP --- */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm md:hidden"
           onClick={() => setIsOpen(false)}
         />
@@ -50,7 +50,7 @@ export default function SecuritySidebar({
 
       {/* --- SIDEBAR UTAMA --- */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 ease-in-out
+        sticky top-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col h-screen transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         md:translate-x-0 md:relative md:inset-auto
       `}>
@@ -116,19 +116,13 @@ export default function SecuritySidebar({
       </aside>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+      <div className="flex-1 flex flex-col min-w-0 relative">
         <header className="md:hidden h-14 border-b border-slate-200 bg-white flex items-center justify-center sticky top-0 z-20">
             <span className="font-semibold text-slate-900">Security Dashboard</span>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-0 md:p-0 scroll-smooth bg-slate-50">
-          {/* PERBAIKAN UTAMA ADA DI SINI:
-            - Dihapus: mx-auto max-w-5xl (Ini yang bikin sempit)
-            - Diganti: w-full h-full (Agar konten dari page.tsx bisa melebar bebas)
-          */}
-          <div className="w-full h-full">
-             {children}
-          </div>
+        <main className="flex-1 p-6 bg-slate-50">
+          {children}
         </main>
       </div>
     </div>
