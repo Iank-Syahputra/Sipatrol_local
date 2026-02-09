@@ -125,7 +125,7 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
       </aside>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+      <div className={`flex-1 flex flex-col min-w-0 overflow-hidden relative transition-all duration-300 ease-in-out ${isOpen ? 'backdrop-blur-sm' : ''}`}>
         {/* Header Mobile Placeholder */}
         <header className="md:hidden h-16 border-b border-slate-200 bg-white flex items-center justify-center sticky top-0 z-20">
             <span className="font-bold text-slate-900">Dasbor Admin</span>
