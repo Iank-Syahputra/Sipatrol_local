@@ -30,8 +30,12 @@ export default async function AdminLayout({
   // Perbaikan: AdminSidebar sekarang membungkus children
   // agar layout full-width berfungsi dengan benar
   return (
-    <AdminSidebar>
-      {children}
-    </AdminSidebar>
+    <div className="animate-in fade-in duration-500">
+      <AdminSidebar>
+        <div className="animate-in slide-in-from-bottom-4 duration-700">
+          {children}
+        </div>
+      </AdminSidebar>
+    </div>
   );
 }

@@ -235,13 +235,13 @@ export default function AdminDashboard() {
   return (
     <>
       {/* Main Content - Light Mode Background & Full Width */}
-      <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen">
+      <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen animate-in fade-in duration-500">
         
         {/* Scrollable Content Container */}
-        <div className="w-full px-6 py-8 space-y-8">
+        <div className="w-full px-6 py-8 space-y-8 animate-in slide-in-from-bottom-4 duration-700">
           
           {/* Header Section */}
-          <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-in slide-in-from-top-4 duration-700">
             <div>
               <div className="flex items-center gap-2 mb-1">
                  <div className="p-2 bg-amber-50 rounded-lg border border-amber-100">
@@ -268,9 +268,9 @@ export default function AdminDashboard() {
           </div>
 
           {/* Stats Grid - Responsive */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 animate-in slide-in-from-bottom-4 duration-700">
             {stats.map((stat, index) => (
-              <div key={index} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div key={index} className={`bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow animate-in slide-in-from-bottom-${index * 2 + 4} duration-500`}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">{stat.title}</p>
@@ -285,7 +285,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="grid grid-cols-2 gap-2 sm:gap-0 sm:flex sm:border-b sm:border-slate-200 bg-slate-100/50 p-1 sm:p-0 rounded-xl sm:rounded-none">
+          <div className="grid grid-cols-2 gap-2 sm:gap-0 sm:flex sm:border-b sm:border-slate-200 bg-slate-100/50 p-1 sm:p-0 rounded-xl sm:rounded-none animate-in slide-in-from-bottom-4 duration-700">
             <button
               className={`px-6 py-3 text-center text-sm font-bold rounded-lg sm:rounded-none sm:rounded-t-lg transition-all ${
                 activeTab === 'live'
@@ -315,7 +315,7 @@ export default function AdminDashboard() {
           {/* Tab Content */}
           {activeTab === 'live' ? (
             /* Live Feed Section */
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden animate-in slide-in-from-bottom-8 duration-700">
               <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                   <Activity className="h-5 w-5 text-amber-600" />
@@ -329,10 +329,10 @@ export default function AdminDashboard() {
 
               {/* Reports List */}
               <div className="p-6 space-y-4">
-                {(dashboardData?.recentReports || []).map((report: any) => (
+                {(dashboardData?.recentReports || []).map((report: any, index: number) => (
                   <div
                     key={report?.id}
-                    className="p-4 bg-white rounded-xl border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all cursor-pointer group"
+                    className={`p-4 bg-white rounded-xl border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all cursor-pointer group animate-in slide-in-from-bottom-${index * 2 + 4} duration-500`}
                     onClick={() => handleViewReport(report)}
                   >
                     <div className="flex flex-col sm:flex-row items-start gap-4">
@@ -410,9 +410,9 @@ export default function AdminDashboard() {
             </div>
           ) : (
             /* Statistics & Analysis Tab */
-            <div className="space-y-8">
+            <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-700">
               {/* Filters */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm animate-in slide-in-from-bottom-4 duration-700">
                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
                   <Filter className="h-5 w-5 text-amber-600" />
                   Parameter Filter Data
@@ -459,7 +459,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Global Overview */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm animate-in slide-in-from-bottom-8 duration-700">
                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
                   <CircleGauge className="h-5 w-5 text-amber-600" />
                   Akumulasi Kepatuhan HSE 
@@ -532,7 +532,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Unit Ranking */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm animate-in slide-in-from-bottom-8 duration-700">
                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
                   <TrendingUp className="h-5 w-5 text-amber-600" />
                   Top Performing Units (HSE Compliance)
@@ -570,7 +570,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Unit Breakdown */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm animate-in slide-in-from-bottom-8 duration-700">
                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
                   <Shield className="h-5 w-5 text-amber-600" />
                   Distribusi Kinerja Unit

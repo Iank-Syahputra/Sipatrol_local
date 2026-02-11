@@ -313,16 +313,16 @@ export default function ManageUnitsPage() {
   }
   
   return (
-    <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen">
-      
+    <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen animate-in fade-in duration-500">
+
       {/* --- HEADER --- */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm">
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm animate-in slide-in-from-top-4 duration-700">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Kelola Unit</h1>
             <p className="text-xs font-medium text-slate-500 hidden sm:block mt-1">Konfigurasi unit organisasi dan wilayah</p>
           </div>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 self-end sm:self-auto">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 self-end sm:self-auto animate-in slide-in-from-right-4 duration-500">
             <div className="flex items-center gap-2">
               {isSelectionMode ? (
                 <div className="flex items-center gap-2">
@@ -372,7 +372,7 @@ export default function ManageUnitsPage() {
                   setShowAddForm(true);
                   setShowEditForm(false);
                   setFormData({ name: '', district: 'PT PLN Nusantara Power UP Kendari' });
-                  
+
                   // Scroll to the top where the add form is located
                   setTimeout(() => {
                     const formElement = document.querySelector('.bg-white.border.border-amber-200');
@@ -393,13 +393,13 @@ export default function ManageUnitsPage() {
         </div>
       </header>
 
-      <div className="flex-1 p-6 overflow-y-auto">
-        
+      <div className="flex-1 p-6 overflow-y-auto animate-in slide-in-from-bottom-4 duration-700">
+
         {/* --- CONTROLS SECTION --- */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-8 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-8 shadow-sm animate-in slide-in-from-bottom-4 duration-700">
           <div className="grid grid-cols-1 gap-4">
             {/* Search */}
-            <div>
+            <div className="animate-in slide-in-from-left-4 duration-500">
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Cari Unit</label>
               <div className="relative">
                 <input
@@ -418,13 +418,13 @@ export default function ManageUnitsPage() {
         {/* --- ADD/EDIT FORM --- */}
         {(showAddForm || showEditForm) && (
           <div className="bg-white border border-amber-200 rounded-2xl p-6 mb-8 shadow-lg ring-1 ring-amber-100 animate-in fade-in slide-in-from-top-4">
-            <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2 text-lg border-b border-slate-100 pb-4">
+            <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2 text-lg border-b border-slate-100 pb-4 animate-in slide-in-from-top-4 duration-500">
               <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
                  {showEditForm ? <Edit3 className="h-5 w-5"/> : <Plus className="h-5 w-5"/>}
               </div>
               {showEditForm ? 'Edit Detail Unit' : 'Tambah Unit Baru'}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-bottom-4 duration-500">
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Nama Unit</label>
                 <input
@@ -448,12 +448,12 @@ export default function ManageUnitsPage() {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-100">
+            <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-100 animate-in slide-in-from-bottom-4 duration-500">
               <button onClick={() => {
                 setShowAddForm(false);
                 setShowEditForm(false);
                 setFormData({ name: '', district: 'PT PLN Nusantara Power UP Kendari' });
-                
+
                 // Scroll to the top when closing the form
                 setTimeout(() => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -465,7 +465,7 @@ export default function ManageUnitsPage() {
         )}
 
         {/* --- DATA LIST --- */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden animate-in slide-in-from-bottom-8 duration-700">
           <div className="p-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
             <h2 className="font-bold text-slate-900 text-lg flex items-center gap-2">
                 <Building className="h-5 w-5 text-amber-600" /> Daftar Unit

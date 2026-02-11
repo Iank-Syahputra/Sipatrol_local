@@ -93,9 +93,9 @@ export default function AdminChatbotPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-50 animate-in fade-in duration-500">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm animate-in slide-in-from-top-4 duration-700">
         <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center">
           <Link href="/admin/dashboard" className="mr-6 text-gray-600 hover:text-gray-900">
             <ArrowLeft className="h-6 w-6" />
@@ -107,10 +107,10 @@ export default function AdminChatbotPage() {
         </div>
       </header>
 
-      <main className="flex-1 p-4">
+      <main className="flex-1 p-4 animate-in slide-in-from-bottom-4 duration-700">
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200 h-full flex flex-col overflow-hidden">
           {/* Quick Questions */}
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
+          <div className="p-4 border-b border-gray-200 bg-gray-50 animate-in slide-in-from-top-4 duration-500">
             <h2 className="text-sm font-semibold text-gray-700 mb-3">Pertanyaan Cepat:</h2>
             <div className="flex flex-wrap gap-2">
               {[
@@ -122,7 +122,7 @@ export default function AdminChatbotPage() {
                 <button
                   key={index}
                   onClick={() => setInputValue(question)}
-                  className="px-3 py-2 text-sm bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 transition-colors border border-amber-200"
+                  className={`px-3 py-2 text-sm bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 transition-colors border border-amber-200 animate-in slide-in-from-top-${index * 2 + 4} duration-500`}
                 >
                   {question}
                 </button>
@@ -132,10 +132,10 @@ export default function AdminChatbotPage() {
 
           {/* Messages Container */}
           <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-gray-50">
-            {messages.map((message) => (
+            {messages.map((message, index) => (
               <div
                 key={message.id}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-4 duration-500`}
               >
                 <div
                   className={`max-w-[85%] rounded-2xl px-5 py-3 ${
@@ -159,7 +159,7 @@ export default function AdminChatbotPage() {
               </div>
             ))}
             {isLoading && (
-              <div className="flex justify-start">
+              <div className="flex justify-start animate-in fade-in duration-500">
                 <div className="bg-slate-200 text-slate-800 rounded-2xl rounded-bl-none px-5 py-3">
                   <div className="flex items-center gap-3">
                     <Bot className="h-5 w-5 mt-0.5" />
@@ -176,7 +176,7 @@ export default function AdminChatbotPage() {
           </div>
 
           {/* Input Area */}
-          <div className="border-t border-gray-200 p-4 bg-white">
+          <div className="border-t border-gray-200 p-4 bg-white animate-in slide-in-from-bottom-4 duration-700">
             <form onSubmit={handleSubmit} className="flex gap-3">
               <input
                 type="text"
@@ -200,7 +200,7 @@ export default function AdminChatbotPage() {
                 <Send className="h-5 w-5" />
               </button>
             </form>
-            <p className="text-xs text-gray-500 mt-2 text-center">
+            <p className="text-xs text-gray-500 mt-2 text-center animate-in slide-in-from-bottom-4 duration-700">
               Asisten Analis Data SiPatrol - Silahkan tanyakan tentang laporan keamanan
             </p>
           </div>

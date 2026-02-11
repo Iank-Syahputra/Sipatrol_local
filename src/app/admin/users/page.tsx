@@ -209,17 +209,17 @@ export default function ManageUsersPage() {
 
   return (
     <>
-      <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen">
-        
+      <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen animate-in fade-in duration-500">
+
         {/* --- HEADER --- */}
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm">
+        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm animate-in slide-in-from-top-4 duration-700">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Kelola Pengguna</h1>
               <p className="text-xs font-medium text-slate-500 hidden sm:block mt-1">Kontrol akses dan informasi pengguna</p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto animate-in slide-in-from-right-4 duration-500">
               <button onClick={handleExport} className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-emerald-100 transition-colors shadow-sm">
                 <Download className="h-4 w-4" />
                 <span className="hidden sm:inline">Ekspor ke Excel</span>
@@ -235,17 +235,17 @@ export default function ManageUsersPage() {
           </div>
         </header>
 
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 p-6 overflow-y-auto animate-in slide-in-from-bottom-4 duration-700">
 
           {/* --- FILTERS --- */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-8 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-8 shadow-sm animate-in slide-in-from-bottom-4 duration-700">
             <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                 <Filter className="h-4 w-4 text-amber-600" /> Filter Pengguna
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-5 items-end">
 
               {/* Search */}
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 animate-in slide-in-from-left-4 duration-500">
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Cari Nama</label>
                 <div className="relative">
                   <input
@@ -260,13 +260,13 @@ export default function ManageUsersPage() {
               </div>
 
               {/* Unit Filter */}
-              <div>
+              <div className="animate-in slide-in-from-left-8 duration-500">
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Filter Unit</label>
                 <MultiSelectDropdown options={allUnits} selected={selectedUnits} onChange={setSelectedUnits} placeholder="Pilih Unit" />
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3">
+              <div className="flex gap-3 animate-in slide-in-from-right-4 duration-500">
                 <button onClick={handleApplyFilters} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-bold transition-colors shadow-md">
                   <Filter className="h-4 w-4" /> Terapkan
                 </button>
@@ -279,7 +279,7 @@ export default function ManageUsersPage() {
           </div>
 
           {/* --- DATA DISPLAY --- */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden animate-in slide-in-from-bottom-8 duration-700">
             <div className="p-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
               <h2 className="font-bold text-slate-900 text-lg flex items-center gap-2">
                   <User className="h-5 w-5 text-amber-600" /> Daftar Pengguna
