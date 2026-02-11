@@ -13,9 +13,20 @@ import { useSession } from 'next-auth/react';
 import { Combobox } from '@/components/ui/combobox';
 import { getReportCategories, getUnitLocations } from '@/actions/report-actions';
 
+// Loading Component
+const LoadingScreen = () => (
+  <div className="min-h-screen bg-slate-50 w-full text-slate-900 flex items-center justify-center">
+    <div className="text-center">
+      <div className="inline-block animate-spin rounded-full h-10 w-10 border-t-4 border-[#00F7FF] border-r-transparent mb-4"></div>
+      <p className="font-medium text-slate-600">Memuat Form Laporan...</p>
+      <p className="text-sm text-slate-500 mt-1">Mempersiapkan formulir pelaporan keamanan</p>
+    </div>
+  </div>
+);
+
 export default function CreateReportPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { addOfflineReport } = useOfflineReports();
   const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -33,6 +44,7 @@ export default function CreateReportPage() {
   const [locationRoom, setLocationRoom] = useState<string>('');
   const [categories, setCategories] = useState<{ value: string; label: string }[]>([]);
   const [locations, setLocations] = useState<{ value: string; label: string }[]>([]);
+  const [loading, setLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -84,6 +96,21 @@ export default function CreateReportPage() {
     };
     fetchAssignedUnit();
   }, [session]);
+
+  // Handle loading state
+  useEffect(() => {
+    if (status === 'loading') {
+      setLoading(true);
+    } else if (status === 'authenticated') {
+      // Wait for data to load before showing the form
+      if (assignedUnit !== undefined && categories.length >= 0 && locations.length >= 0) {
+        setLoading(false);
+      }
+    } else if (status === 'unauthenticated') {
+      router.push('/login');
+      setLoading(false);
+    }
+  }, [status, assignedUnit, categories, locations]);
 
   // --- CAMERA LOGIC ---
   const startCamera = async () => {
@@ -228,6 +255,11 @@ export default function CreateReportPage() {
   }, [imagePreview]);
 
   const isSubmitEnabled = isImageCaptured && location && assignedUnit && category && locationRoom && !isSubmitting;
+
+  // Show loading screen while initializing
+  if (loading || status === 'loading') {
+    return <LoadingScreen />;
+  }
 
   return (
     <div className="w-full px-6 py-8 space-y-6 animate-in fade-in duration-500">

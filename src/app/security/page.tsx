@@ -36,7 +36,7 @@ export default async function SecurityDashboardPage() {
       orderBy: {
         capturedAt: 'desc',
       },
-      take: 10, 
+      take: 10,
     }),
     prisma.report.count({
       where: {
@@ -74,6 +74,9 @@ export default async function SecurityDashboardPage() {
       id: session.user.unitId as string | undefined,
     }
   });
+
+  // Simulate loading for better UX
+  await new Promise(resolve => setTimeout(resolve, 500));
 
   return (
     // Layout Fix: Full width background, light mode forced

@@ -105,6 +105,9 @@ export default async function MyReportsPage(props: {
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
+  // Simulate loading for better UX
+  await new Promise(resolve => setTimeout(resolve, 500));
+
   return (
     <div className="w-full px-6 py-8 space-y-8 bg-slate-50 min-h-screen animate-in fade-in duration-500">
       <div className="bg-white border-l-4 border-l-[#00F7FF] border border-slate-200 p-6 rounded-2xl shadow-sm flex items-center justify-between animate-in slide-in-from-top-4 duration-700">

@@ -11,6 +11,17 @@ import { useSession } from 'next-auth/react';
 // Tambahkan Eye & EyeOff
 import { User, Phone, Lock, ShieldCheck, Save, Loader2, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
+// Loading Component
+const LoadingScreen = () => (
+  <div className="min-h-screen bg-slate-50 w-full text-slate-900 flex items-center justify-center">
+    <div className="text-center">
+      <div className="inline-block animate-spin rounded-full h-10 w-10 border-t-4 border-[#00F7FF] border-r-transparent mb-4"></div>
+      <p className="font-medium text-slate-600">Memuat Pengaturan Profil...</p>
+      <p className="text-sm text-slate-500 mt-1">Mempersiapkan pengaturan akun keamanan Anda</p>
+    </div>
+  </div>
+);
+
 export default function SecurityProfilePage() {
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
@@ -152,11 +163,7 @@ export default function SecurityProfilePage() {
   };
 
   if (loading || status === 'loading') {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-slate-50">
-        <Loader2 className="h-10 w-10 animate-spin text-cyan-600" />
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (status === 'unauthenticated') {
@@ -327,7 +334,7 @@ export default function SecurityProfilePage() {
                                 <Label htmlFor="confirmPassword" className="text-slate-700 font-bold">Konfirmasi Password Baru</Label>
                                 <div className="relative">
                                     <Input
-                                        id="confirmPassword"
+                                        id="confirmPassword" 
                                         type={showConfirmPassword ? "text" : "password"}
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
