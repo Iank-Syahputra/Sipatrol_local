@@ -439,7 +439,7 @@ export default function CreateReportPage() {
                               : 'bg-[#00F7FF] text-slate-900 hover:bg-cyan-400 hover:shadow-cyan-200/50 border-b-4 border-cyan-600 active:border-b-0 active:translate-y-1' 
                       }`}
                     >
-                      {isSubmitting ? <><Loader2 className="mr-2 h-6 w-6 animate-spin" /> SENDING DATA...</> : isOnline ? 'Kirim Laporsn' : 'SAVE OFFLINE'}
+                      {isSubmitting ? <><Loader2 className="mr-2 h-6 w-6 animate-spin" /> SENDING DATA...</> : isOnline ? 'Kirim Laporan' : 'SAVE OFFLINE'}
                     </Button>
                   </div>
 
