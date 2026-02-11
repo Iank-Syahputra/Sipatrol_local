@@ -164,10 +164,10 @@ export default function SecurityProfilePage() {
   }
 
   return (
-    <div className="w-full px-6 py-8 space-y-8 bg-slate-50 min-h-screen">
-      
+    <div className="w-full px-6 py-8 space-y-8 bg-slate-50 min-h-screen animate-in fade-in duration-500">
+
       {/* Header Section */}
-      <div className="bg-white border-l-4 border-l-[#00F7FF] border border-slate-200 p-6 rounded-2xl shadow-sm flex items-center justify-between">
+      <div className="bg-white border-l-4 border-l-[#00F7FF] border border-slate-200 p-6 rounded-2xl shadow-sm flex items-center justify-between animate-in slide-in-from-top-4 duration-700">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Pengaturan Profil</h1>
           <p className="text-slate-500 font-medium text-sm mt-1">
@@ -180,16 +180,16 @@ export default function SecurityProfilePage() {
       </div>
 
       {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start animate-in slide-in-from-bottom-4 duration-700">
+
         {/* Left Column: Personal Info */}
         <div className="space-y-8">
-            
+
             {/* Personal Information Card */}
-            <Card className="bg-white border border-slate-200 shadow-md hover:shadow-lg transition-shadow duration-300">
+            <Card className="bg-white border border-slate-200 shadow-md hover:shadow-lg transition-shadow duration-300 animate-in slide-in-from-left-4 duration-500">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
                     <CardTitle className="flex items-center gap-2 text-slate-900 text-lg font-bold">
-                        <User className="w-5 h-5 text-cyan-600" /> Informasi Personal 
+                        <User className="w-5 h-5 text-cyan-600" /> Informasi Personal
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-5">
@@ -217,7 +217,7 @@ export default function SecurityProfilePage() {
             </Card>
 
             {/* Phone Number Card */}
-            <Card className="bg-white border border-slate-200 shadow-md hover:shadow-lg transition-shadow duration-300">
+            <Card className="bg-white border border-slate-200 shadow-md hover:shadow-lg transition-shadow duration-300 animate-in slide-in-from-left-8 duration-500">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
                     <CardTitle className="flex items-center gap-2 text-slate-900 text-lg font-bold">
                         <Phone className="w-5 h-5 text-cyan-600" /> Informasi Kontak
@@ -241,18 +241,18 @@ export default function SecurityProfilePage() {
                             />
                             {phoneError && <p className="text-red-600 text-xs font-bold mt-1">{phoneError}</p>}
                         </div>
-                        
+
                         <div className="flex flex-col gap-3">
                             {phoneNumber !== originalPhone && (
-                                <Button 
-                                    type="submit" 
-                                    disabled={saving} 
+                                <Button
+                                    type="submit"
+                                    disabled={saving}
                                     className="w-full bg-[#00F7FF] text-slate-900 hover:bg-cyan-400 font-bold shadow-md"
                                 >
                                     {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : <Save className="w-4 h-4 mr-2" />}
                                 </Button>
                             )}
-                            
+
                             {showPhoneSuccess && (
                                 <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg flex items-center font-medium text-sm animate-in fade-in slide-in-from-top-2">
                                     <CheckCircle className="w-5 h-5 mr-2 text-emerald-600" />
@@ -267,7 +267,7 @@ export default function SecurityProfilePage() {
 
         {/* Right Column: Password Change */}
         <div className="space-y-8">
-            <Card className="bg-white border border-slate-200 shadow-md hover:shadow-lg transition-shadow duration-300 h-full">
+            <Card className="bg-white border border-slate-200 shadow-md hover:shadow-lg transition-shadow duration-300 h-full animate-in slide-in-from-right-4 duration-500">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
                     <CardTitle className="flex items-center gap-2 text-slate-900 text-lg font-bold">
                         <Lock className="w-5 h-5 text-cyan-600" /> Buat Password Baru
@@ -275,10 +275,10 @@ export default function SecurityProfilePage() {
                 </CardHeader>
                 <CardContent className="pt-6">
                     <form onSubmit={handlePasswordChange} className="space-y-5">
-                        
+
                         {/* PASSWORD SAAT INI */}
                         <div className="space-y-2">
-                            <Label htmlFor="currentPassword" class="text-slate-700 font-bold">Masukkan Password Sebelumnya</Label>
+                            <Label htmlFor="currentPassword" className="text-slate-700 font-bold">Masukkan Password Sebelumnya</Label>
                             <div className="relative">
                                 <Input
                                     id="currentPassword"
@@ -302,7 +302,7 @@ export default function SecurityProfilePage() {
                         <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
                             {/* PASSWORD BARU */}
                             <div className="space-y-2">
-                                <Label htmlFor="newPassword" class="text-slate-700 font-bold">Password Baru</Label>
+                                <Label htmlFor="newPassword" className="text-slate-700 font-bold">Password Baru</Label>
                                 <div className="relative">
                                     <Input
                                         id="newPassword"
@@ -324,7 +324,7 @@ export default function SecurityProfilePage() {
 
                             {/* KONFIRMASI PASSWORD */}
                             <div className="space-y-2">
-                                <Label htmlFor="confirmPassword" class="text-slate-700 font-bold">Konfirmasi Password Baru</Label>
+                                <Label htmlFor="confirmPassword" className="text-slate-700 font-bold">Konfirmasi Password Baru</Label>
                                 <div className="relative">
                                     <Input
                                         id="confirmPassword"
@@ -349,12 +349,12 @@ export default function SecurityProfilePage() {
                         </div>
 
                         <div className="pt-2">
-                            <Button 
-                                type="submit" 
-                                disabled={saving || !currentPassword || !newPassword || !confirmPassword} 
+                            <Button
+                                type="submit"
+                                disabled={saving || !currentPassword || !newPassword || !confirmPassword}
                                 className={`w-full font-bold shadow-md transition-all py-6 rounded-xl ${
-                                    !currentPassword || !newPassword || !confirmPassword 
-                                    ? 'bg-slate-200 text-slate-400' 
+                                    !currentPassword || !newPassword || !confirmPassword
+                                    ? 'bg-slate-200 text-slate-400'
                                     : 'bg-slate-900 text-white hover:bg-slate-800 border-b-4 border-slate-950 active:border-b-0 active:translate-y-1'
                                 }`}
                             >

@@ -264,14 +264,15 @@ async function generateNaturalLanguageResponse(
     5. **PENJELASAN SEBAB-AKIBAT**: Jika ada kolom 'notes', jelaskan itu sebagai penyebab atau kondisi yang terjadi. Gunakan kata penghubung seperti "dikarenakan", "dengan temuan", atau "catatan lapangan menyebutkan".
 
     --- FORMATTING ---
-    - Gunakan **Bold** hanya untuk: **Nama Pelapor**, **Nama Unit**, **Lokasi**, **Kategori Laporan**, dan **Waktu/Tanggal**.
+    - Gunakan **Bold** hanya untuk: **Nama Pelapor atau petugas**, **Nama Unit**, **Lokasi**, **Kategori Laporan**, dan **Waktu/Tanggal**.
     - Gunakan Emoji K3 yang relevan (seperti ⚠️, 🛡️, 📝, ✅) di awal paragraf untuk visualisasi cepat, tapi jangan berlebihan.
 
     --- SKENARIO JAWABAN ---
     
     [SKENARIO 1: DATA DITEMUKAN]
     Contoh gaya bicara: 
-    "⚠️ Terdapat laporan terbaru kategori **Unsafe Condition** dari unit **UP KENDARI**. Laporan ini dibuat pada **5 Februari 2026** di lokasi **Area Turbin**. Petugas mencatat adanya tumpahan oli yang berpotensi bahaya slip..."
+    paparkan dengan paragraf terstruktur 
+    "⚠️ Terdapat laporan terbaru kategori **Unsafe Condition** dari unit **UP KENDARI** yang dilaporkan oleh **Nama_Petugas**. Laporan ini dibuat pada **5 Februari 2026** di lokasi **Area Turbin**. Petugas mencatat adanya tumpahan oli yang berpotensi bahaya slip..."
 
     [SKENARIO 2: DATA KOSONG]
     Contoh gaya bicara:

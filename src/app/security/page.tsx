@@ -77,34 +77,34 @@ export default async function SecurityDashboardPage() {
 
   return (
     // Layout Fix: Full width background, light mode forced
-    <div className="min-h-screen bg-slate-50 w-full text-slate-900">
-      
+    <div className="min-h-screen bg-slate-50 w-full text-slate-900 animate-in fade-in duration-500">
+
       {/* PERBAIKAN LEBAR & PADDING:
          - px-4: Padding kiri-kanan dikecilkan agar content lebih 'menabrak' ke sisi sidebar.
          - w-full: Memastikan div mengambil 100% width parent.
       */}
-      <div className="w-full px-3 py-2 space-y-6">
-        
+      <div className="w-full px-3 py-2 space-y-6 animate-in slide-in-from-bottom-4 duration-700">
+
         {/* Header Section */}
-        <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-in slide-in-from-top-4 duration-700">
           <div>
             <div className="flex items-center gap-2 mb-1">
                <Shield className="h-6 w-6 text-cyan-600" />
                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Security Dashboard</h1>
             </div>
-            <p className="text-slate-500 font-medium">
+            <p className="text-slate-500 font-medium animate-in slide-in-from-top-2 duration-500">
               Selamat Bertugas, <span className="text-cyan-700 font-bold">{session.user.name}</span>.
             </p>
           </div>
-          <div className="bg-slate-100 p-2 rounded-lg border border-slate-200">
+          <div className="bg-slate-100 p-2 rounded-lg border border-slate-200 animate-in slide-in-from-top-2 duration-500">
             <OnlineStatusIndicator />
           </div>
         </div>
 
         {/* Stats Cards Grid - Full Width Responsive */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-bottom-4 duration-700">
           {/* Card 1: Unit Info */}
-          <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-all border-l-4 border-l-cyan-400">
+          <Card className={`bg-white border-slate-200 shadow-sm hover:shadow-md transition-all border-l-4 border-l-cyan-400 animate-in slide-in-from-bottom-4 duration-500`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-bold text-slate-600 uppercase tracking-wider">Unit Penugasan</CardTitle>
               <div className="p-2 bg-cyan-50 rounded-full">
@@ -122,7 +122,7 @@ export default async function SecurityDashboardPage() {
           </Card>
 
           {/* Card 2: Total Reports */}
-          <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-all border-l-4 border-l-blue-500">
+          <Card className={`bg-white border-slate-200 shadow-sm hover:shadow-md transition-all border-l-4 border-l-blue-500 animate-in slide-in-from-bottom-6 duration-500`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-bold text-slate-600 uppercase tracking-wider">Total Log Laporan</CardTitle>
               <div className="p-2 bg-blue-50 rounded-full">
@@ -136,7 +136,7 @@ export default async function SecurityDashboardPage() {
           </Card>
 
           {/* Card 3: Recent Activity */}
-          <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-all border-l-4 border-l-orange-400">
+          <Card className={`bg-white border-slate-200 shadow-sm hover:shadow-md transition-all border-l-4 border-l-orange-400 animate-in slide-in-from-bottom-8 duration-500`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-bold text-slate-600 uppercase tracking-wider">Log Terakhir</CardTitle>
               <div className="p-2 bg-orange-50 rounded-full">
@@ -161,10 +161,10 @@ export default async function SecurityDashboardPage() {
             - Ini membuat Quick Action melebar (50% layar) sehingga tingginya tidak memanjang ke bawah.
             - Card History di sebelahnya juga mendapat 50% layar, seimbang.
         */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in slide-in-from-bottom-8 duration-700">
+
           {/* Quick Action - Create Report */}
-          <Card className="bg-white border-slate-200 shadow-lg h-fit">
+          <Card className={`bg-white border-slate-200 shadow-lg h-fit animate-in slide-in-from-left-4 duration-500`}>
             <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
               <CardTitle className="flex items-center gap-2 text-slate-900 text-xl">
                 <Camera className="h-6 w-6 text-cyan-600" />
@@ -178,14 +178,14 @@ export default async function SecurityDashboardPage() {
               {/* Tombol Utama: Cyan Background + Black Text untuk kontras tinggi */}
               <Button asChild className="w-full bg-[#00F7FF] text-slate-900 hover:bg-cyan-400 hover:shadow-cyan-200/50 hover:shadow-lg transition-all py-6 text-lg font-bold">
                 <Link href="/security/report">
-                  + Buat Laporan Baru 
+                  + Buat Laporan Baru
                 </Link>
               </Button>
             </CardContent>
           </Card>
 
           {/* Recent Reports List */}
-          <Card className="bg-white border-slate-200 shadow-sm flex flex-col h-fit">
+          <Card className={`bg-white border-slate-200 shadow-sm flex flex-col h-fit animate-in slide-in-from-right-4 duration-500`}>
             <CardHeader className="bg-slate-50 border-b border-slate-100 flex flex-row items-center justify-between">
               <CardTitle className="text-slate-900 text-xl flex items-center gap-2">
                 <FileText className="h-5 w-5 text-slate-500" />
@@ -212,7 +212,7 @@ export default async function SecurityDashboardPage() {
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="flex flex-col items-center justify-center py-12 text-center animate-in fade-in duration-500">
                    <div className="bg-slate-100 p-4 rounded-full mb-3">
                       <FileText className="h-8 w-8 text-slate-400" />
                    </div>

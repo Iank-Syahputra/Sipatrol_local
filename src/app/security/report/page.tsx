@@ -230,10 +230,10 @@ export default function CreateReportPage() {
   const isSubmitEnabled = isImageCaptured && location && assignedUnit && category && locationRoom && !isSubmitting;
 
   return (
-    <div className="w-full px-6 py-8 space-y-6">
-      
+    <div className="w-full px-6 py-8 space-y-6 animate-in fade-in duration-500">
+
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border-l-4 border-l-[#00F7FF] shadow-md hover:shadow-lg transition-shadow duration-300">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border-l-4 border-l-[#00F7FF] shadow-md hover:shadow-lg transition-shadow duration-300 animate-in slide-in-from-top-4 duration-700">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Buat Laporan</h1>
           <p className="text-slate-600 font-semibold text-sm mt-1">
@@ -248,29 +248,29 @@ export default function CreateReportPage() {
 
       {unitError && (
         <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-xl shadow-sm flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-          <AlertTriangle className="h-5 w-5 text-red-600" /> 
+          <AlertTriangle className="h-5 w-5 text-red-600" />
           <span className="text-red-700 font-bold">{unitError}</span>
         </div>
       )}
 
       {/* --- FORM CONTAINER --- */}
-      <Card className="bg-white border-0 shadow-xl overflow-hidden border-t-4 border-t-cyan-400">
+      <Card className="bg-white border-0 shadow-xl overflow-hidden border-t-4 border-t-cyan-400 animate-in slide-in-from-bottom-4 duration-700">
         <CardHeader className="border-b border-slate-100 pb-4 bg-white pt-6">
            <CardTitle className="text-xl font-black text-slate-900 flex items-center gap-2">
             <ShieldCheck className="h-6 w-6 text-cyan-600" /> Patrol Form
           </CardTitle>
         </CardHeader>
-        
+
         <CardContent className="p-6 md:p-8 bg-slate-50/30">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-            
+
             {/* === LEFT COLUMN: CAMERA === */}
-            <div className="flex flex-col gap-3 h-full">
+            <div className="flex flex-col gap-3 h-full animate-in slide-in-from-left-4 duration-500">
                <Label className="text-slate-900 font-extrabold text-base flex items-center gap-2">
                  <div className="w-6 h-6 rounded-full bg-slate-900 text-cyan-400 flex items-center justify-center text-xs">1</div>
                  Upload Photo <span className="text-red-500 text-xs"></span>
                </Label>
-               
+
                <div className="flex-1 p-1 rounded-2xl border-2 border-dashed border-cyan-200 bg-white shadow-sm hover:shadow-md hover:border-cyan-400 transition-all duration-300 min-h-[450px] flex flex-col">
                   <div className="flex-1 flex flex-col p-4">
                       {!isImageCaptured && !isCameraActive ? (
@@ -296,12 +296,12 @@ export default function CreateReportPage() {
                             <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                           )}
                          <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                          <Button 
-                            onClick={clearPhoto} 
-                            variant="secondary" 
+                          <Button
+                            onClick={clearPhoto}
+                            variant="secondary"
                             className="font-black shadow-2xl border-2 border-white bg-white text-slate-900 hover:bg-slate-100 transition-all active:scale-95"
                           >
-                            <RotateCcw className="mr-2 h-4 w-4" /> 
+                            <RotateCcw className="mr-2 h-4 w-4" />
                             <span className="tracking-tight">RETAKE PHOTO</span>
                           </Button>
                         </div>
@@ -339,7 +339,7 @@ export default function CreateReportPage() {
                           </>
                         )}
                       </div>
-                      
+
                       {cameraError && (
                           <div className="mt-3 p-3 bg-red-100 text-red-700 text-sm font-bold rounded-lg text-center border border-red-200">
                               {cameraError}
@@ -350,17 +350,17 @@ export default function CreateReportPage() {
             </div>
 
             {/* === RIGHT COLUMN: INPUT FORM === */}
-            <div className="flex flex-col gap-3 h-full">
+            <div className="flex flex-col gap-3 h-full animate-in slide-in-from-right-4 duration-500">
                <Label className="text-slate-900 font-extrabold text-base flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-slate-900 text-cyan-400 flex items-center justify-center text-xs">2</div>
                   Informasi Patroli
                </Label>
-               
+
                <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-lg flex flex-col gap-6 h-full hover:border-cyan-200 transition-colors">
-                  
+
                   {/* Category & Location */}
                   <div className="grid grid-cols-1 gap-5">
-                    <div className="space-y-2">
+                    <div className="space-y-2 animate-in slide-in-from-bottom-2 duration-500">
                       <Label className="text-xs font-black text-slate-700 uppercase tracking-wide">Kategori</Label>
                       <div className="relative group">
                         <Combobox
@@ -371,7 +371,7 @@ export default function CreateReportPage() {
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 animate-in slide-in-from-bottom-4 duration-500">
                       <Label className="text-xs font-black text-slate-700 uppercase tracking-wide">Lokasi Spesifik</Label>
                       <div className="relative group">
                          <Combobox
@@ -385,7 +385,7 @@ export default function CreateReportPage() {
                   </div>
 
                   {/* GPS Section */}
-                  <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 animate-in slide-in-from-bottom-6 duration-500">
                     <div className="flex justify-between items-center">
                       <Label className="text-xs font-black text-slate-700 uppercase tracking-wide">Titik Koordinat Lokasi</Label>
                       {location ? (
@@ -394,7 +394,7 @@ export default function CreateReportPage() {
                           <Badge variant="outline" className="bg-slate-100 text-slate-500 border-slate-200 font-bold">Temukan</Badge>
                       )}
                     </div>
-                    
+
                     <Button
                     type="button"
                     onClick={getLocation}
@@ -405,7 +405,7 @@ export default function CreateReportPage() {
                     {isLocationLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <MapPin className="mr-2 h-5 w-5" />}
                     {location ? 'Update Location' : 'Dapatkan Koordinat'}
                     </Button>
-                    
+
                     {location && (
                         <div className="text-center">
                              <span className="font-mono text-xs font-bold text-slate-500 bg-white px-2 py-1 rounded border border-slate-200">
@@ -416,7 +416,7 @@ export default function CreateReportPage() {
                   </div>
 
                   {/* Notes */}
-                  <div className="space-y-2 flex-1">
+                  <div className="space-y-2 flex-1 animate-in slide-in-from-bottom-8 duration-500">
                     <Label className="text-xs font-black text-slate-700 uppercase tracking-wide">Catatan Hasil Pemeriksaan</Label>
                     <Textarea
                       value={notes}
@@ -427,16 +427,16 @@ export default function CreateReportPage() {
                     />
                   </div>
 
-                  <div className="pt-2 mt-auto">
+                  <div className="pt-2 mt-auto animate-in slide-in-from-bottom-10 duration-500">
                     <Button
                       onClick={submitReport}
                       disabled={!isSubmitEnabled}
                       className={`w-full py-6 text-lg font-black tracking-wide shadow-lg transform transition-all active:scale-[0.98] rounded-xl ${
-                          !isSubmitEnabled 
-                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
-                          : isOnline 
-                              ? 'bg-[#00F7FF] text-slate-900 hover:bg-cyan-400 hover:shadow-cyan-200/50 border-b-4 border-cyan-600 active:border-b-0 active:translate-y-1' 
-                              : 'bg-[#00F7FF] text-slate-900 hover:bg-cyan-400 hover:shadow-cyan-200/50 border-b-4 border-cyan-600 active:border-b-0 active:translate-y-1' 
+                          !isSubmitEnabled
+                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                          : isOnline
+                              ? 'bg-[#00F7FF] text-slate-900 hover:bg-cyan-400 hover:shadow-cyan-200/50 border-b-4 border-cyan-600 active:border-b-0 active:translate-y-1'
+                              : 'bg-[#00F7FF] text-slate-900 hover:bg-cyan-400 hover:shadow-cyan-200/50 border-b-4 border-cyan-600 active:border-b-0 active:translate-y-1'
                       }`}
                     >
                       {isSubmitting ? <><Loader2 className="mr-2 h-6 w-6 animate-spin" /> SENDING DATA...</> : isOnline ? 'Kirim Laporan' : 'SAVE OFFLINE'}

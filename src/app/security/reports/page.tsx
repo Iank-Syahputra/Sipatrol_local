@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from '@/lib/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FileText } from 'lucide-react';
 import ReportList from '@/components/security/report-list';
 
 // Define SearchParams type for Next.js 15
@@ -105,14 +106,21 @@ export default async function MyReportsPage(props: {
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   return (
-    <div className="container mx-auto py-6 max-w-3xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Riwayat Laporan</h1>
-        <p className="text-muted-foreground">Daftar seluruh aktivitas pemantauan harian yang telah Anda selesaikan</p>
+    <div className="w-full px-6 py-8 space-y-8 bg-slate-50 min-h-screen animate-in fade-in duration-500">
+      <div className="bg-white border-l-4 border-l-[#00F7FF] border border-slate-200 p-6 rounded-2xl shadow-sm flex items-center justify-between animate-in slide-in-from-top-4 duration-700">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Riwayat Laporan</h1>
+          <p className="text-slate-500 font-medium text-sm mt-1">
+            Daftar seluruh aktivitas pemantauan harian yang telah Anda selesaikan
+          </p>
+        </div>
+        <div className="bg-cyan-50 p-3 rounded-full hidden md:block">
+            <FileText className="w-8 h-8 text-cyan-600" />
+        </div>
       </div>
 
-      <Card className="bg-white border-slate-200 text-slate-900">
-        <CardHeader>
+      <Card className="bg-white border-slate-200 text-slate-900 animate-in slide-in-from-bottom-4 duration-700">
+        <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
           <CardTitle className="flex justify-between items-center">
             <span>Total Laporan: {totalCount}</span>
             <span className="text-xs font-normal text-zinc-400">
@@ -120,7 +128,7 @@ export default async function MyReportsPage(props: {
             </span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {/* Ensure ReportList component exists and accepts these props */}
           <ReportList
             reports={reports}

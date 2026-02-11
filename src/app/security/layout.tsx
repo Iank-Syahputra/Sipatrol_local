@@ -36,8 +36,12 @@ export default async function SecurityLayout({
 
   // Pass user data to Client Component sidebar
   return (
-    <SecuritySidebar user={userData}>
-      {children}
-    </SecuritySidebar>
+    <div className="animate-in fade-in duration-500">
+      <SecuritySidebar user={userData}>
+        <div className="animate-in slide-in-from-bottom-4 duration-700">
+          {children}
+        </div>
+      </SecuritySidebar>
+    </div>
   );
 }
