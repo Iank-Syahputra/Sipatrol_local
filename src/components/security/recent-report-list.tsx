@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, FileText } from 'lucide-react';
 import ReportDetailsModal from '@/components/report-details-modal';
+import Image from 'next/image';
 
 export default function RecentReportList({ reports }: { reports: any[] }) {
   const [selectedReport, setSelectedReport] = useState<any>(null);
@@ -64,11 +65,13 @@ export default function RecentReportList({ reports }: { reports: any[] }) {
 
             {/* Image Preview */}
             {report.imagePath && (
-              <div className="mt-3">
-                <img
+              <div className="mt-3 relative h-32 w-full">
+                <Image
                   src={report.imagePath}
                   alt="Evidence"
-                  className="w-full h-32 object-cover rounded-md border border-zinc-700"
+                  fill
+                  className="object-cover rounded-md border border-zinc-700"
+                  sizes="(max-width: 768px) 100vw, 33vw"
                 />
               </div>
             )}

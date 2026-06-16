@@ -138,7 +138,7 @@ export default function CreateUserPage() {
     <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen">
 
       {/* Header - Sticky & Responsive */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm">
+      <header className="relative sm:sticky sm:top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Create Security Officer Account</h1>

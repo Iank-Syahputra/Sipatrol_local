@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
+import Image from 'next/image';
 import {
   Download,
   Printer,
@@ -389,10 +390,10 @@ export default function ReportManagementPage() {
 
   return (
     <>
-      <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen animate-in fade-in duration-500">
+      <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen ">
 
         {/* Header - Sticky & Responsive */}
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm animate-in slide-in-from-top-4 duration-700">
+        <header className="relative sm:sticky sm:top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm ">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Manajemen Laporan</h1>
@@ -402,7 +403,7 @@ export default function ReportManagementPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 self-end sm:self-auto">
               {/* Storage Usage Indicator */}
               {storageUsage && (
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 animate-in slide-in-from-right-4 duration-500">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 ">
                   <div className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded border border-slate-200 shadow-sm">
                     Penyimpanan: {storageUsage.currentUsage} / {storageUsage.maxUsage}
                   </div>
@@ -421,7 +422,7 @@ export default function ReportManagementPage() {
                 </div>
               )}
 
-              <div className="flex items-center gap-2 animate-in slide-in-from-right-8 duration-500">
+              <div className="flex items-center gap-2 ">
                 {isSelectionMode ? (
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-slate-700">
@@ -470,18 +471,18 @@ export default function ReportManagementPage() {
           </div>
         </header>
 
-        <div className="flex-1 p-6 overflow-y-auto animate-in slide-in-from-bottom-4 duration-700">
+        <div className="flex-1 p-6 overflow-y-auto ">
           {/* Mobile Filter Toggle */}
           <button
             onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-            className="w-full md:hidden flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-xl mb-4 text-sm font-bold text-slate-700 shadow-sm animate-in slide-in-from-top-4 duration-500"
+            className="w-full md:hidden flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-xl mb-4 text-sm font-bold text-slate-700 shadow-sm "
           >
             <span className="flex items-center gap-2"><Filter className="h-4 w-4 text-amber-600" /> Filter</span>
             <ChevronDown className={`h-4 w-4 transition-transform ${isFilterExpanded ? 'rotate-180' : ''}`} />
           </button>
 
           {/* Filters Area - Light Mode */}
-          <div className={`${isFilterExpanded ? 'block' : 'hidden'} md:block bg-white border border-slate-200 rounded-2xl p-6 mb-8 shadow-sm transition-all animate-in slide-in-from-bottom-4 duration-500`}>
+          <div className={`${isFilterExpanded ? 'block' : 'hidden'} md:block bg-white border border-slate-200 rounded-2xl p-6 mb-8 shadow-sm transition-all `}>
             <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                 <Filter className="h-4 w-4 text-amber-600" /> Opsi Filter
             </h3>
@@ -489,7 +490,7 @@ export default function ReportManagementPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-5">
 
               {/* Search */}
-              <div className="col-span-1 sm:col-span-2 xl:col-span-2 animate-in slide-in-from-left-4 duration-500">
+              <div className="col-span-1 sm:col-span-2 xl:col-span-2 ">
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Cari</label>
                 <div className="relative">
                   <input
@@ -504,19 +505,19 @@ export default function ReportManagementPage() {
               </div>
 
               {/* Units */}
-              <div className="animate-in slide-in-from-left-8 duration-500">
+              <div className="">
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Unit</label>
                 <MultiSelectDropdown options={allUnits} selected={selectedUnits} onChange={setSelectedUnits} placeholder="Semua Unit" />
               </div>
 
               {/* Categories */}
-              <div className="animate-in slide-in-from-right-8 duration-500">
+              <div className="">
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Kategori</label>
                 <MultiSelectDropdown options={allCategories} selected={selectedCategories} onChange={setSelectedCategories} placeholder="Semua Kategori" />
               </div>
 
               {/* Date Range */}
-              <div className="animate-in slide-in-from-right-4 duration-500">
+              <div className="">
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Tanggal Mulai</label>
                 <input
                   type="date"
@@ -525,7 +526,7 @@ export default function ReportManagementPage() {
                   onChange={(e) => setStartDate(e.target.value)}
                 />
               </div>
-              <div className="animate-in slide-in-from-right-2 duration-500">
+              <div className="">
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Tanggal Akhir</label>
                 <input
                   type="date"
@@ -536,7 +537,7 @@ export default function ReportManagementPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="col-span-1 sm:col-span-2 xl:col-span-6 flex flex-col sm:flex-row justify-end gap-3 mt-4 sm:mt-0 pt-4 border-t border-slate-100 xl:border-0 xl:pt-0 animate-in slide-in-from-bottom-4 duration-700">
+              <div className="col-span-1 sm:col-span-2 xl:col-span-6 flex flex-col sm:flex-row justify-end gap-3 mt-4 sm:mt-0 pt-4 border-t border-slate-100 xl:border-0 xl:pt-0 ">
                 <button onClick={handleResetFilters} className="px-6 py-2.5 text-sm font-bold text-slate-600 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 rounded-xl transition-colors flex items-center justify-center gap-2">
                   <RotateCcw className="h-4 w-4" /> Atur Ulang
                 </button>
@@ -548,7 +549,7 @@ export default function ReportManagementPage() {
           </div>
 
           {/* Reports Content */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden animate-in slide-in-from-bottom-8 duration-700">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden ">
             <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <h2 className="font-bold text-slate-900 text-lg flex items-center gap-2">
                   <FileText className="h-5 w-5 text-amber-600" /> Daftar Laporan
@@ -598,7 +599,7 @@ export default function ReportManagementPage() {
                       <td className="px-6 py-4 w-24">
                         <div className="h-14 w-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative shadow-sm">
                           {report.imagePath ? (
-                            <img src={report.imagePath} alt="Evd" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                            <Image src={report.imagePath} alt="Evd" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-300" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center text-slate-400"><ImageIcon size={20} /></div>
                           )}
@@ -661,9 +662,9 @@ export default function ReportManagementPage() {
                     )}
 
                     {/* Image */}
-                    <div className="h-20 w-20 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 shadow-sm">
+                    <div className="h-20 w-20 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 shadow-sm relative">
                        {report.imagePath ? (
-                        <img src={report.imagePath} alt="Evd" className="h-full w-full object-cover" loading="lazy" />
+                        <Image src={report.imagePath} alt="Evd" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center text-slate-400"><ImageIcon size={24} /></div>
                       )}

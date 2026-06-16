@@ -341,13 +341,13 @@ export default function ManageUnitLocationsPage() {
   );
 
   return (
-    <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen animate-in fade-in duration-500">
+    <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen ">
 
       {/* --- HEADER (Light Mode) --- */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur-md px-4 py-3 sm:p-6 animate-in slide-in-from-top-4 duration-700">
+      <header className="relative sm:sticky sm:top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur-md px-4 py-3 sm:p-6 ">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h1 className="text-xl font-bold text-slate-900">Kelola Lokasi Unit</h1>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 self-end sm:self-auto animate-in slide-in-from-right-4 duration-500">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 self-end sm:self-auto ">
             <div className="flex items-center gap-2">
               {isSelectionMode ? (
                 <div className="flex items-center gap-2">
@@ -419,12 +419,12 @@ export default function ManageUnitLocationsPage() {
         </div>
       </header>
 
-      <div className="flex-1 p-4 sm:p-6 space-y-6 animate-in slide-in-from-bottom-4 duration-700">
+      <div className="flex-1 p-4 sm:p-6 space-y-6 ">
 
         {/* --- FILTERS (Sync with Manage Users) --- */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm animate-in slide-in-from-bottom-4 duration-700">
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm ">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-            <div className="md:col-span-5 animate-in slide-in-from-left-4 duration-500">
+            <div className="md:col-span-5 ">
               <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Cari Lokasi</label>
               <div className="relative">
                 <input
@@ -438,12 +438,12 @@ export default function ManageUnitLocationsPage() {
               </div>
             </div>
 
-            <div className="md:col-span-5 animate-in slide-in-from-left-8 duration-500">
+            <div className="md:col-span-5 ">
               <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Filter Unit</label>
               <MultiSelectDropdown options={units} selected={selectedUnits} onChange={(val: any) => { setSelectedUnits(val); setCurrentPage(1); }} placeholder="Semua Unit" />
             </div>
 
-            <div className="md:col-span-2 animate-in slide-in-from-right-4 duration-500">
+            <div className="md:col-span-2 ">
               <button onClick={handleResetFilters} className="w-full py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 font-bold rounded-lg text-sm transition-all shadow-sm">
                 Atur Ulang
               </button>
@@ -460,7 +460,7 @@ export default function ManageUnitLocationsPage() {
               </div>
               {showEditForm ? 'Edit Detail Lokasi' : 'Tambah Lokasi Baru'}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Nama Lokasi</label>
                 <input
@@ -487,7 +487,7 @@ export default function ManageUnitLocationsPage() {
                 </select>
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-5 pt-4 border-t border-slate-100 animate-in slide-in-from-bottom-4 duration-500">
+            <div className="flex justify-end gap-3 mt-5 pt-4 border-t border-slate-100 ">
               <button
                 onClick={() => {
                   setShowAddForm(false);
@@ -514,7 +514,7 @@ export default function ManageUnitLocationsPage() {
         )}
 
         {/* --- DATA LIST (Updated: Total Badge & Light Border) --- */}
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-in slide-in-from-bottom-8 duration-700">
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm ">
           <div className="p-4 border-b border-slate-100 bg-white flex justify-between items-center">
             <h2 className="font-bold text-slate-800">Daftar Lokasi</h2>
             <span className="text-[10px] font-bold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md border border-slate-200 uppercase tracking-tighter">
@@ -743,7 +743,7 @@ export default function ManageUnitLocationsPage() {
 
       {/* Confirmation Dialog (Modal) */}
       {isDeleteConfirmationOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 ">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl scale-100 transform transition-all">
             <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-red-100 rounded-full text-red-600">
@@ -779,7 +779,7 @@ export default function ManageUnitLocationsPage() {
 
       {/* Validation Error Dialog (Modal) */}
       {validationError && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 ">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl scale-100 transform transition-all">
             <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-amber-100 rounded-full text-amber-600">
@@ -806,7 +806,7 @@ export default function ManageUnitLocationsPage() {
 
       {/* Error Dialog (Modal) */}
       {deleteError && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 ">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl scale-100 transform transition-all">
             <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-red-100 rounded-full text-red-600">

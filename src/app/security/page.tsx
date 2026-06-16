@@ -76,7 +76,7 @@ export default async function SecurityDashboardPage() {
   });
 
   // Simulate loading for better UX
-  await new Promise(resolve => setTimeout(resolve, 500));
+
 
   return (
     // Layout Fix: Full width background, light mode forced

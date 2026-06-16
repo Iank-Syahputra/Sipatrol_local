@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText } from 'lucide-react';
 import ReportList from '@/components/security/report-list';
+import { Suspense } from 'react';
 
 // Define SearchParams type for Next.js 15
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -106,7 +107,7 @@ export default async function MyReportsPage(props: {
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   // Simulate loading for better UX
-  await new Promise(resolve => setTimeout(resolve, 500));
+
 
   return (
     <div className="w-full px-6 py-8 space-y-8 bg-slate-50 min-h-screen animate-in fade-in duration-500">
@@ -133,14 +134,16 @@ export default async function MyReportsPage(props: {
         </CardHeader>
         <CardContent className="pt-6">
           {/* Ensure ReportList component exists and accepts these props */}
-          <ReportList
-            reports={reports}
-            totalPages={totalPages}
-            currentPage={currentPage}
-            totalCount={totalCount}
-            initialStartDate={startDate}
-            initialEndDate={endDate}
-          />
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Memuat laporan...</div>}>
+            <ReportList
+              reports={reports}
+              totalPages={totalPages}
+              currentPage={currentPage}
+              totalCount={totalCount}
+              initialStartDate={startDate}
+              initialEndDate={endDate}
+            />
+          </Suspense>
         </CardContent>
       </Card>
     </div>

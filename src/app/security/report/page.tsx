@@ -132,7 +132,7 @@ export default function CreateReportPage() {
     }
     try {
       setIsCameraActive(true);
-      await new Promise(resolve => setTimeout(resolve, 100));
+
       if (!videoRef.current) {
         setIsCameraActive(false);
         return;

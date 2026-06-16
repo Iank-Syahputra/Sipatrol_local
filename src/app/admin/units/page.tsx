@@ -313,16 +313,16 @@ export default function ManageUnitsPage() {
   }
   
   return (
-    <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen animate-in fade-in duration-500">
+    <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen ">
 
       {/* --- HEADER --- */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm animate-in slide-in-from-top-4 duration-700">
+      <header className="relative sm:sticky sm:top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm ">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Kelola Unit</h1>
             <p className="text-xs font-medium text-slate-500 hidden sm:block mt-1">Konfigurasi unit organisasi dan wilayah</p>
           </div>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 self-end sm:self-auto animate-in slide-in-from-right-4 duration-500">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 self-end sm:self-auto ">
             <div className="flex items-center gap-2">
               {isSelectionMode ? (
                 <div className="flex items-center gap-2">
@@ -393,13 +393,13 @@ export default function ManageUnitsPage() {
         </div>
       </header>
 
-      <div className="flex-1 p-6 overflow-y-auto animate-in slide-in-from-bottom-4 duration-700">
+      <div className="flex-1 p-6 overflow-y-auto ">
 
         {/* --- CONTROLS SECTION --- */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-8 shadow-sm animate-in slide-in-from-bottom-4 duration-700">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-8 shadow-sm ">
           <div className="grid grid-cols-1 gap-4">
             {/* Search */}
-            <div className="animate-in slide-in-from-left-4 duration-500">
+            <div className="">
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Cari Unit</label>
               <div className="relative">
                 <input
@@ -424,7 +424,7 @@ export default function ManageUnitsPage() {
               </div>
               {showEditForm ? 'Edit Detail Unit' : 'Tambah Unit Baru'}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Nama Unit</label>
                 <input
@@ -448,7 +448,7 @@ export default function ManageUnitsPage() {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-100 animate-in slide-in-from-bottom-4 duration-500">
+            <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-100 ">
               <button onClick={() => {
                 setShowAddForm(false);
                 setShowEditForm(false);
@@ -465,7 +465,7 @@ export default function ManageUnitsPage() {
         )}
 
         {/* --- DATA LIST --- */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden animate-in slide-in-from-bottom-8 duration-700">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden ">
           <div className="p-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
             <h2 className="font-bold text-slate-900 text-lg flex items-center gap-2">
                 <Building className="h-5 w-5 text-amber-600" /> Daftar Unit
@@ -712,7 +712,7 @@ export default function ManageUnitsPage() {
 
           {/* Confirmation Dialog (Modal) */}
           {isDeleteConfirmationOpen && (
-            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 ">
               <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl scale-100 transform transition-all">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="p-3 bg-red-100 rounded-full text-red-600">
@@ -750,7 +750,7 @@ export default function ManageUnitsPage() {
 
       {/* Error Dialog (Modal) */}
       {deleteError && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 ">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl scale-100 transform transition-all">
             <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-red-100 rounded-full text-red-600">

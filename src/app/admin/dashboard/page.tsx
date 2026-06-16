@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { X, Download } from "lucide-react";
 import * as XLSX from 'xlsx';
-import { Activity, MapPin, Users, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, RotateCcw, BarChart3, TrendingUp, AlertTriangle, LayoutDashboard, Image, Trash2, Camera, ExternalLink } from "lucide-react";
+import { Activity, MapPin, Users, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, RotateCcw, BarChart3, TrendingUp, AlertTriangle, LayoutDashboard, Image as ImageIcon, Trash2, Camera, ExternalLink } from "lucide-react";
 import ReportDetailsModal from '@/components/report-details-modal';
+import Image from 'next/image';
 import {
   PieChart,
   Pie,
@@ -236,13 +237,13 @@ export default function AdminDashboard() {
   return (
     <>
       {/* Main Content - Light Mode Background & Full Width */}
-      <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen animate-in fade-in duration-500">
+      <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen">
         
         {/* Scrollable Content Container */}
-        <div className="w-full px-6 py-8 space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+        <div className="w-full px-6 py-8 space-y-8">
           
           {/* Header Section */}
-          <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-in slide-in-from-top-4 duration-700">
+          <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
                  <div className="p-2 bg-amber-50 rounded-lg border border-amber-100">
@@ -269,12 +270,12 @@ export default function AdminDashboard() {
           </div>
 
           {/* Stats Grid - Responsive */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 animate-in slide-in-from-bottom-4 duration-700">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {stats.map((stat, index) => (
               <Link
                 key={index}
                 href={stat.href}
-                className={`block bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-amber-300 transition-all animate-in slide-in-from-bottom-${index * 2 + 4} duration-500 cursor-pointer`}
+                className="block bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-amber-300 transition-all cursor-pointer"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -290,7 +291,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="grid grid-cols-2 gap-2 sm:gap-0 sm:flex sm:border-b sm:border-slate-200 bg-slate-100/50 p-1 sm:p-0 rounded-xl sm:rounded-none animate-in slide-in-from-bottom-4 duration-700">
+          <div className="grid grid-cols-2 gap-2 sm:gap-0 sm:flex sm:border-b sm:border-slate-200 bg-slate-100/50 p-1 sm:p-0 rounded-xl sm:rounded-none">
             <button
               className={`px-6 py-3 text-center text-sm font-bold rounded-lg sm:rounded-none sm:rounded-t-lg transition-all ${
                 activeTab === 'live'
@@ -320,7 +321,7 @@ export default function AdminDashboard() {
           {/* Tab Content */}
           {activeTab === 'live' ? (
             /* Live Feed Section */
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden animate-in slide-in-from-bottom-8 duration-700">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
               <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                   <Activity className="h-5 w-5 text-amber-600" />
@@ -337,7 +338,7 @@ export default function AdminDashboard() {
                 {(dashboardData?.recentReports || []).map((report: any, index: number) => (
                   <div
                     key={report?.id}
-                    className={`p-4 bg-white rounded-xl border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all cursor-pointer group animate-in slide-in-from-bottom-${index * 2 + 4} duration-500`}
+                    className="p-4 bg-white rounded-xl border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all cursor-pointer group"
                     onClick={() => handleViewReport(report)}
                   >
                     <div className="flex flex-col sm:flex-row items-start gap-4">
@@ -345,10 +346,12 @@ export default function AdminDashboard() {
                       <div className="flex-shrink-0 w-full sm:w-auto">
                         {report?.imagePath ? (
                           <div className="relative w-full sm:w-28 aspect-video sm:aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 shadow-sm">
-                            <img
+                            <Image
                               src={report.imagePath}
                               alt="Evidence"
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              fill
+                              sizes="(max-width: 768px) 100vw, 33vw"
+                              className="object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                             <div className="absolute inset-0 bg-amber-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                               <Eye className="h-8 w-8 text-white drop-shadow-md" />
@@ -415,9 +418,9 @@ export default function AdminDashboard() {
             </div>
           ) : (
             /* Statistics & Analysis Tab */
-            <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-700">
+            <div className="space-y-8">
               {/* Filters */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm animate-in slide-in-from-bottom-4 duration-700">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
                   <Filter className="h-5 w-5 text-amber-600" />
                   Parameter Filter Data
@@ -464,7 +467,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Global Overview */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm animate-in slide-in-from-bottom-8 duration-700">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
                   <CircleGauge className="h-5 w-5 text-amber-600" />
                   Akumulasi Kepatuhan HSE 
@@ -537,7 +540,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Unit Ranking */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm animate-in slide-in-from-bottom-8 duration-700">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
                   <TrendingUp className="h-5 w-5 text-amber-600" />
                   Top Performing Units (HSE Compliance)
@@ -575,7 +578,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Unit Breakdown */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm animate-in slide-in-from-bottom-8 duration-700">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-4">
                   <Shield className="h-5 w-5 text-amber-600" />
                   Distribusi Kinerja Unit
@@ -660,7 +663,7 @@ export default function AdminDashboard() {
       </div>
 
       {isModalOpen && selectedReport && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm ">
           <div
             className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl scale-100 transform transition-all"
             onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
@@ -685,12 +688,14 @@ export default function AdminDashboard() {
                     <Camera className="w-4 h-4 text-amber-500" />
                     Bukti Foto
                   </h4>
-                  <div className="bg-slate-100 border border-slate-200 rounded-2xl w-full h-64 flex items-center justify-center overflow-hidden shadow-inner">
+                  <div className="bg-slate-100 border border-slate-200 rounded-2xl w-full h-64 flex items-center justify-center overflow-hidden shadow-inner relative">
                     {selectedReport.imagePath ? (
-                      <img
+                      <Image
                         src={selectedReport.imagePath}
                         alt="Bukti laporan"
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 50vw"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                           const fallback = e.currentTarget.parentElement?.querySelector('.fallback-content');
@@ -805,7 +810,7 @@ export default function AdminDashboard() {
 
       {/* Modal untuk menampilkan laporan per unit */}
       {showUnitReports && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 ">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-6xl w-full shadow-2xl scale-100 transform transition-all max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
               <div>

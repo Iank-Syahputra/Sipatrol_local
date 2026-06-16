@@ -210,9 +210,9 @@ export default function CategoryManagementPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen animate-in fade-in duration-500">
+    <div className="flex-1 flex flex-col w-full bg-slate-50 text-slate-900 min-h-screen ">
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm animate-in slide-in-from-top-4 duration-700">
+      <header className="relative sm:sticky sm:top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-sm ">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Manajemen Kategori</h1>
@@ -228,7 +228,7 @@ export default function CategoryManagementPage() {
         </div>
       </header>
 
-      <div className="flex-1 p-6 animate-in slide-in-from-bottom-4 duration-700">
+      <div className="flex-1 p-6 ">
         {error && (
           <Alert variant="destructive" className="mb-6 bg-red-50 border-red-200 text-red-600">
             <AlertTriangle className="h-4 w-4" />

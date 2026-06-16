@@ -1,32 +1,29 @@
 import { redirect } from 'next/navigation';
-import { isAdmin, getAllUnits, getLatestReports } from '@/lib/sipatrol-db';
+import { getAllUnits, getLatestReports } from '@/lib/sipatrol-db';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, MapPin, Camera, Users, Building } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
 export default async function AdminDashboardPage() {
-  // Check if user is admin
-  const userIsAdmin = await isAdmin();
-  if (!userIsAdmin) {
-    redirect('/');
-  }
-
-  // Fetch data
-  const latestReports = await getLatestReports(5);
-  const units = await getAllUnits();
+  // Fetch data in parallel
+  const [latestReports, units] = await Promise.all([
+    getLatestReports(5),
+    getAllUnits()
+  ]);
 
   return (
-    <div className="container mx-auto py-10 animate-in fade-in duration-500">
-      <div className="mb-8 animate-in slide-in-from-top-4 duration-700">
+    <div className="container mx-auto py-10">
+      <div className="mb-8">
         <h1 className="text-3xl font-bold">Dasbor Admin</h1>
         <p className="text-muted-foreground">Monitor laporan keamanan dan kelola unit</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-in slide-in-from-bottom-4 duration-700">
-        <Card className="animate-in slide-in-from-left-8 duration-500">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Unit</CardTitle>
             <Building className="h-4 w-4 text-muted-foreground" />
@@ -37,7 +34,7 @@ export default async function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="animate-in slide-in-from-left-4 duration-500">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Laporan Terbaru</CardTitle>
             <Camera className="h-4 w-4 text-muted-foreground" />
@@ -48,7 +45,7 @@ export default async function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="animate-in slide-in-from-right-4 duration-500">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Patroli Aktif</CardTitle>
             <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -59,7 +56,7 @@ export default async function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="animate-in slide-in-from-right-8 duration-500">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Petugas Keamanan</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -72,8 +69,8 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Live Feed Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in slide-in-from-bottom-8 duration-700">
-        <Card className="animate-in slide-in-from-left-4 duration-500">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
@@ -86,7 +83,7 @@ export default async function AdminDashboardPage() {
                 {latestReports.map((report, index) => (
                   <div
                     key={report.id}
-                    className={`border rounded-lg p-4 hover:bg-accent transition-colors animate-in slide-in-from-left-${index * 2} duration-500`}
+                    className="border rounded-lg p-4 hover:bg-accent transition-colors"
                   >
                     <div className="flex justify-between items-start">
                       <div>
@@ -116,11 +113,13 @@ export default async function AdminDashboardPage() {
                     )}
 
                     {report.image_path && (
-                      <div className="mt-2">
-                        <img
+                      <div className="mt-2 relative w-full h-40">
+                        <Image
                           src={report.image_path}
                           alt="Bukti laporan"
-                          className="w-full max-h-40 object-cover rounded-md"
+                          fill
+                          className="object-cover rounded-md"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         />
                       </div>
                     )}
@@ -128,13 +127,13 @@ export default async function AdminDashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-4 animate-in fade-in duration-500">Tidak ada laporan terbaru</p>
+              <p className="text-muted-foreground text-center py-4">Tidak ada laporan terbaru</p>
             )}
           </CardContent>
         </Card>
 
         {/* Units Management */}
-        <Card className="animate-in slide-in-from-right-4 duration-500">
+        <Card>
           <CardHeader>
             <CardTitle>Manajemen Unit</CardTitle>
           </CardHeader>
@@ -143,7 +142,7 @@ export default async function AdminDashboardPage() {
               {units.map((unit, index) => (
                 <div
                   key={unit.id}
-                  className={`flex justify-between items-center border-b pb-2 last:border-0 last:pb-0 animate-in slide-in-from-right-${index * 2} duration-500`}
+                  className="flex justify-between items-center border-b pb-2 last:border-0 last:pb-0"
                 >
                   <div>
                     <h3 className="font-medium">{unit.name}</h3>
@@ -156,7 +155,7 @@ export default async function AdminDashboardPage() {
               ))}
             </div>
 
-            <Button className="w-full mt-4 animate-in slide-in-from-bottom-4 duration-700" asChild>
+            <Button className="w-full mt-4" asChild>
               <Link href="/admin/units/new">Tambah Unit Baru</Link>
             </Button>
           </CardContent>

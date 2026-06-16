@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Calendar, Filter, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import ReportDetailsModal from '@/components/report-details-modal';
+import Image from 'next/image';
 
 interface ReportListProps {
   reports: any[];
@@ -163,11 +164,12 @@ export default function ReportList({
 
               {report.imagePath && (
                 <div className="relative w-full h-40 bg-slate-100 rounded-xl overflow-hidden border border-slate-100 shadow-inner mb-4">
-                  <img
+                  <Image
                     src={report.imagePath}
                     alt="Evidence"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                 </div>
               )}
