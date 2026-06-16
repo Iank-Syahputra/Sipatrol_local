@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { X, Download } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { Activity, MapPin, Users, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, RotateCcw, BarChart3, TrendingUp, AlertTriangle, LayoutDashboard, Image, Trash2, Camera, ExternalLink } from "lucide-react";
@@ -219,9 +220,9 @@ export default function AdminDashboard() {
 
   // TECHNICAL COPYWRITING UPDATES
   const stats = [
-    { title: "Jumlah Personel", value: dashboardData?.totalUsers?.toString() || "0", icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-    { title: "Laporan Masuk", value: dashboardData?.totalReports?.toString() || "0", icon: FileText, color: "text-amber-600", bg: "bg-amber-50" },
-    { title: "Unit Operasional", value: dashboardData?.totalUnits?.toString() || "0", icon: Building, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { title: "Jumlah Personel", value: dashboardData?.totalUsers?.toString() || "0", icon: Users, color: "text-blue-600", bg: "bg-blue-50", href: "/admin/users" },
+    { title: "Laporan Masuk", value: dashboardData?.totalReports?.toString() || "0", icon: FileText, color: "text-amber-600", bg: "bg-amber-50", href: "/admin/reports" },
+    { title: "Unit Operasional", value: dashboardData?.totalUnits?.toString() || "0", icon: Building, color: "text-emerald-600", bg: "bg-emerald-50", href: "/admin/units" },
   ];
 
   const globalChartData = [
@@ -270,7 +271,11 @@ export default function AdminDashboard() {
           {/* Stats Grid - Responsive */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 animate-in slide-in-from-bottom-4 duration-700">
             {stats.map((stat, index) => (
-              <div key={index} className={`bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow animate-in slide-in-from-bottom-${index * 2 + 4} duration-500`}>
+              <Link
+                key={index}
+                href={stat.href}
+                className={`block bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-amber-300 transition-all animate-in slide-in-from-bottom-${index * 2 + 4} duration-500 cursor-pointer`}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">{stat.title}</p>
@@ -280,7 +285,7 @@ export default function AdminDashboard() {
                     <stat.icon className={`h-6 w-6 ${stat.color}`} />
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
 

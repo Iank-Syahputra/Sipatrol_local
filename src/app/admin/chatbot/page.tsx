@@ -10,6 +10,7 @@ interface Message {
   content: string;
   role: 'user' | 'assistant';
   timestamp: Date;
+  isStreaming?: boolean;
 }
 
 export default function AdminChatbotPage() {
@@ -49,8 +50,18 @@ export default function AdminChatbotPage() {
     setInputValue('');
     setIsLoading(true);
 
+    // Add placeholder for assistant response (loading state)
+    const assistantMessageId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, {
+      id: assistantMessageId,
+      content: '',
+      role: 'assistant',
+      timestamp: new Date(),
+      isStreaming: true
+    }]);
+
     try {
-      // Call the API
+      // Call the API (non-streaming JSON response)
       const response = await fetch('/api/chat/assistant', {
         method: 'POST',
         headers: {
@@ -59,34 +70,36 @@ export default function AdminChatbotPage() {
         body: JSON.stringify({ message: inputValue }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API Error:', errorData);
-        throw new Error(`Failed to get response from assistant: ${errorData.error || 'Unknown error'}`);
-      }
-
       const data = await response.json();
 
-      // Add assistant message
-      const assistantMessage: Message = {
-        id: Date.now().toString(),
-        content: data.response,
-        role: 'assistant',
-        timestamp: new Date(),
-      };
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to get response');
+      }
 
-      setMessages(prev => [...prev, assistantMessage]);
+      // Update the message with full response
+      setMessages(prev => prev.map(msg => 
+        msg.id === assistantMessageId 
+          ? { 
+              ...msg, 
+              content: data.response || 'Maaf, saya tidak dapat memproses pertanyaan Anda.',
+              isStreaming: false
+            }
+          : msg
+      ));
+
     } catch (error) {
       console.error('Error getting assistant response:', error);
 
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        content: 'Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi.',
-        role: 'assistant',
-        timestamp: new Date(),
-      };
-
-      setMessages(prev => [...prev, errorMessage]);
+      // Update the streaming message with error
+      setMessages(prev => prev.map(msg => 
+        msg.id === assistantMessageId 
+          ? { 
+              ...msg, 
+              content: 'Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi.',
+              isStreaming: false
+            }
+          : msg
+      ));
     } finally {
       setIsLoading(false);
     }

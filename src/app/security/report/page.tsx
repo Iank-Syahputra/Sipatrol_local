@@ -27,7 +27,7 @@ const LoadingScreen = () => (
 export default function CreateReportPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const { addOfflineReport } = useOfflineReports();
+  const { addOfflineReport, triggerSync } = useOfflineReports(); // Added triggerSync
   const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [notes, setNotes] = useState('');
@@ -49,17 +49,29 @@ export default function CreateReportPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // --- STATE & EFFECTS (Sama seperti sebelumnya) ---
+  // --- ONLINE/OFFLINE DETECTION WITH AUTO-SYNC ---
   useEffect(() => {
-    setIsOnline(navigator.onLine);
-    const handleStatusChange = () => setIsOnline(navigator.onLine);
-    window.addEventListener('online', handleStatusChange);
-    window.addEventListener('offline', handleStatusChange);
-    return () => {
-      window.removeEventListener('online', handleStatusChange);
-      window.removeEventListener('offline', handleStatusChange);
+    const handleOnline = async () => {
+      setIsOnline(true);
+      console.log('[Network] Device is back online. Triggering auto-sync...');
+      // Auto-sync when back online
+      await triggerSync();
     };
-  }, []);
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+      console.log('[Network] Device is offline');
+    };
+
+    setIsOnline(navigator.onLine);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [triggerSync]);
 
   useEffect(() => {
     const fetchData = async () => {

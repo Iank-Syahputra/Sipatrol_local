@@ -1,25 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Groq from 'groq-sdk';
+import { generateText } from 'ai';
+import { createGroq } from '@ai-sdk/groq';
 import { executeReadOnlyQuery } from '@/lib/db-readonly';
+
 const AI_MODEL = "llama-3.3-70b-versatile";
 
-// Log environment variables (be careful not to expose sensitive data in production)
-console.log('GROQ_API_KEY exists:', !!process.env.GROQ_API_KEY);
-console.log('READ_ONLY_DATABASE_URL exists:', !!process.env.READ_ONLY_DATABASE_URL);
+// Initialize Groq client through AI SDK
+let groq: ReturnType<typeof createGroq>;
 
-// Initialize Groq client with error handling
-let groq: Groq;
 try {
   if (!process.env.GROQ_API_KEY) {
     console.error('GROQ_API_KEY is not set in environment variables');
     throw new Error('GROQ_API_KEY is not set in environment variables');
   }
-  groq = new Groq({
+  groq = createGroq({
     apiKey: process.env.GROQ_API_KEY,
   });
 } catch (error) {
   console.error('Failed to initialize Groq client:', error);
-  // We'll handle this in the POST function instead of crashing the module
 }
 
 // Define the database schema for the AI to understand
@@ -70,7 +68,6 @@ Database Schema for SiPatrol (Security Patrol Management):
    - created_at (DateTime)
 `;
 
-// Define business rules for the AI
 const BUSINESS_RULES = `
 Business Rules for SiPatrol Analysis:
 
@@ -84,227 +81,116 @@ Business Rules for SiPatrol Analysis:
    - "Safe" / "Aman" = notes LIKE '%aman%' OR notes LIKE '%kondusif%'
 
 3. Data Limits:
-   - Always query specific columns, avoid SELECT * if possible
+   - Always query specific columns, avoid SELECT *
    - Always add LIMIT 10 for list-based queries to prevent token overflow
 `;
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if required environment variables are set
-    if (!process.env.GROQ_API_KEY) {
-      console.error('GROQ_API_KEY is not set in environment variables');
-      return NextResponse.json(
-        { error: 'GROQ_API_KEY is not set in environment variables' },
-        { status: 500 }
-      );
+    if (!process.env.GROQ_API_KEY || !process.env.READ_ONLY_DATABASE_URL) {
+      return NextResponse.json({ error: 'Missing environment variables' }, { status: 500 });
     }
 
-    if (!process.env.READ_ONLY_DATABASE_URL) {
-      console.error('READ_ONLY_DATABASE_URL is not set in environment variables');
-      return NextResponse.json(
-        { error: 'READ_ONLY_DATABASE_URL is not set in environment variables' },
-        { status: 500 }
-      );
-    }
-
-    // Re-initialize groq client if needed
     if (!groq) {
-      try {
-        groq = new Groq({
-          apiKey: process.env.GROQ_API_KEY,
-        });
-      } catch (error) {
-        console.error('Failed to initialize Groq client in POST handler:', error);
-        return NextResponse.json(
-          { error: 'Failed to initialize AI service' },
-          { status: 500 }
-        );
-      }
+      groq = createGroq({ apiKey: process.env.GROQ_API_KEY });
     }
 
     const { message } = await request.json();
 
     if (!message) {
-      return NextResponse.json(
-        { error: 'Message is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
     console.log('Processing message:', message);
 
-    // Step 1: Use LLM to translate natural language to SQL query with robust cleaning
-    const systemPromptSQL = `You are an expert SQL developer. Your job is to convert natural language questions into accurate MySQL SELECT queries based on the provided schema and business rules. Only provide the SQL query without any additional text or explanation. Pay close attention to proper SQL syntax, especially JOIN clauses and WHERE conditions.
+    // Step 1: Generate SQL query
+    const systemPromptSQL = `You are an expert SQL developer. Convert natural language questions into MySQL SELECT queries. Only provide SQL without explanation.
 
 ${DATABASE_SCHEMA}
 
-${BUSINESS_RULES}`;
+${BUSINESS_RULES}
 
-    const lastMessage = `Convert the following natural language question into a valid MySQL SELECT query:
+Rules:
+- Only SELECT queries (no INSERT, UPDATE, DELETE)
+- Use proper JOIN syntax
+- Use LIMIT 10 for lists
+- Select only necessary columns`;
 
-Question: "${message}"
-
-Important guidelines:
-1. Only generate SELECT queries (no INSERT, UPDATE, DELETE, etc.)
-2. Use proper JOIN syntax: "JOIN table_name alias ON left_table.column = right_table.column"
-3. Use appropriate JOINs to connect related tables (units, profiles, reports, report_categories, unit_locations)
-4. Apply the time definitions and safety classifications as specified in the business rules
-5. Use LIMIT 10 for list-based queries to prevent token overflow
-6. Select only the necessary columns, avoid SELECT *
-7. Format the query properly with correct syntax
-8. Do NOT repeat column names in JOIN conditions (e.g., avoid "ON r.category_id = rc.d = rc.id")
-9. Use correct LIKE syntax: "column LIKE '%keyword%'"
-10. Use proper WHERE clause syntax
-
-Provide only the SQL query without any additional explanation:
-
-MySQL Query:`;
-
-    // 1. Request to Groq
-    const completion = await groq.chat.completions.create({
+    const sqlResult = await generateText({
+      model: groq(AI_MODEL),
       messages: [
-        { role: "system", content: systemPromptSQL },
-        { role: "user", content: lastMessage }
+        { role: 'system', content: systemPromptSQL },
+        { role: 'user', content: `Convert to SQL: "${message}"` }
       ],
-      model: AI_MODEL,
-      temperature: 0, 
+      temperature: 0,
     });
 
-    const rawOutput = completion.choices[0]?.message?.content || "";
-    console.log("🤖 Raw AI Output:", rawOutput); 
+    const rawOutput = sqlResult.text;
+    console.log('Raw SQL output:', rawOutput);
 
-    // --- SMART SQL CLEANING ---
-    // A. Remove Markdown
-    let cleanSQL = rawOutput.replace(/```sql/gi, '').replace(/```/g, '');
-
-    // B. Find the first "SELECT" keyword (ignoring case)
+    // Clean SQL
+    let cleanSQL = rawOutput.replace(/```sql/gi, '').replace(/```/g, '').trim();
     const selectMatch = cleanSQL.match(/\bSELECT\b/i);
-    
-    if (!selectMatch || selectMatch.index === undefined) {
-      console.error("❌ SQL Error: No SELECT keyword found in output.");
-      return NextResponse.json({ 
-        role: 'assistant', 
-        content: "Maaf, saya gagal membuat query database yang valid. Mohon ulangi pertanyaan." 
-      });
+
+    if (!selectMatch) {
+      return NextResponse.json({ error: 'Failed to generate SQL query' }, { status: 500 });
     }
 
-    // C. Extract everything starting from SELECT
-    cleanSQL = cleanSQL.substring(selectMatch.index).trim();
-    
-    console.log("🧹 Final Executed SQL:", cleanSQL);
+    cleanSQL = cleanSQL.substring(selectMatch.index!).trim();
+    console.log('Clean SQL:', cleanSQL);
 
-    // --- EXECUTE ---
+    // Step 2: Execute query
     let queryResult;
     try {
       queryResult = await executeReadOnlyQuery(cleanSQL);
-      console.log('Query result:', queryResult);
-    } catch (queryError) {
-      console.error('Query execution error:', queryError);
-      return NextResponse.json(
-        { error: 'Error executing database query: ' + (queryError as Error).message },
-        { status: 500 }
-      );
+    } catch (error) {
+      console.error('Query execution error:', error);
+      return NextResponse.json({ error: 'Error executing query: ' + (error as Error).message }, { status: 500 });
     }
 
-    // Step 3: Use LLM to generate natural language response from query results
-    let response;
-    try {
-      // Set a timeout for response generation to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Response generation timeout')), 15000); // 15 second timeout
-      });
-      
-      const responsePromise = generateNaturalLanguageResponse(message, cleanSQL, queryResult);
-      response = await Promise.race([responsePromise, timeoutPromise]) as string;
-    } catch (responseError) {
-      console.error('Error generating natural language response:', responseError);
-      return NextResponse.json(
-        { error: 'Error generating response: ' + (responseError as Error).message },
-        { status: 500 }
-      );
-    }
+    // Step 3: Generate natural language response
+    const prompt = `
+Anda adalah Asisten Cerdas SiPatrol untuk Dashboard HSE. Jelaskan data dengan bahasa natural dan profesional.
 
-    return NextResponse.json({
-      success: true,
-      response,
-      query: cleanSQL,
-      data: queryResult
-    });
-  } catch (error) {
-    console.error('Dashboard assistant error:', error);
-    return NextResponse.json(
-      { error: 'An error occurred processing your request: ' + (error as Error).message },
-      { status: 500 }
-    );
-  }
-}
+Pertanyaan: "${message}"
+SQL Query: ${cleanSQL}
+Data Hasil: ${JSON.stringify(queryResult, null, 2)}
 
+Aturan:
+1. Langsung jawab inti, hindari basa-basi robotik
+2. Gunakan bold untuk: **Nama Pelapor**, **Unit**, **Lokasi**, **Kategori**, **Waktu**
+3. Gunakan emoji K3 yang relevan (⚠️, 🛡️, 📝, ✅)
+4. Jika data kosong, jelaskan dengan sopan
+5. Format dalam paragraf terstruktur, bukan data mentah
+6. Jangan sebut ID/UUID yang abstrak
 
-async function generateNaturalLanguageResponse(
-  originalQuestion: string,
-  sqlQuery: string,
-  queryResult: any[]
-): Promise<string> {
-  // Deteksi jika hasil kosong untuk penyesuaian nada bicara
-  const isDataEmpty = !queryResult || queryResult.length === 0;
+Jawaban:`;
 
-  const prompt = `
-    Anda adalah Asisten Cerdas untuk Dashboard HSE (Health, Safety, Environment) bernama "SiPatrol".
-    Tugas Anda adalah menjelaskan data keamanan kepada pengguna dengan bahasa yang **natural, mengalir, dan profesional**, layaknya seorang rekan kerja ahli K3, bukan robot.
-
-    --- KONTEKS ---
-    Pertanyaan User: "${originalQuestion}"
-    Data Temuan (JSON): ${JSON.stringify(queryResult, null, 2)}
-    
-    --- ATURAN GAYA BAHASA (PENTING) ---
-    1. **HINDARI BASA-BASI ROBOTIK**: Jangan memulai kalimat dengan "Berdasarkan hasil analisis database...", "Query yang dijalankan adalah...", atau "Saya adalah analis...". Langsung jawab intinya.
-    2. **KONTEKS SAPAAN**: Jika user hanya menyapa (contoh: "hai", "selamat pagi", "halo"), balas dengan ramah dan tawarkan bantuan terkait data patroli. JANGAN membahas data kosong jika user hanya menyapa.
-    3. **NARASI MENGALIR**: Ubah data JSON menjadi kalimat paragraf yang enak dibaca.
-    4. **JANGAN SEBUT ID/UUID**: User tidak mengerti kode acak (misal: "e4885..."). Gunakan Nama Pelapor,Unit atau Lokasi sebagai identitas.
-    5. **PENJELASAN SEBAB-AKIBAT**: Jika ada kolom 'notes', jelaskan itu sebagai penyebab atau kondisi yang terjadi. Gunakan kata penghubung seperti "dikarenakan", "dengan temuan", atau "catatan lapangan menyebutkan".
-
-    --- FORMATTING ---
-    - Gunakan **Bold** hanya untuk: **Nama Pelapor atau petugas**, **Nama Unit**, **Lokasi**, **Kategori Laporan**, dan **Waktu/Tanggal**.
-    - Gunakan Emoji K3 yang relevan (seperti ⚠️, 🛡️, 📝, ✅) di awal paragraf untuk visualisasi cepat, tapi jangan berlebihan.
-
-    --- SKENARIO JAWABAN ---
-    
-    [SKENARIO 1: DATA DITEMUKAN]
-    Contoh gaya bicara: 
-    paparkan dengan paragraf terstruktur 
-    "⚠️ Terdapat laporan terbaru kategori **Unsafe Condition** dari unit **UP KENDARI** yang dilaporkan oleh **Nama_Petugas**. Laporan ini dibuat pada **5 Februari 2026** di lokasi **Area Turbin**. Petugas mencatat adanya tumpahan oli yang berpotensi bahaya slip..."
-
-    [SKENARIO 2: DATA KOSONG]
-    Contoh gaya bicara:
-    "✅ Tidak ditemukan laporan aneh atau insiden yang sesuai dengan kriteria pencarian Anda dalam periode ini. Sepertinya kondisi di lapangan relatif aman terkendali."
-
-    [SKENARIO 3: USER BERTANYA "KENAPA"]
-    Jelaskan alasan berdasarkan kolom 'notes'. Jika notes tidak jelas, katakan apa adanya dengan sopan.
-
-    Silakan jawab pertanyaan user sekarang dengan gaya bahasa di atas:
-  `;
-  try {
-    const completion = await groq.chat.completions.create({
+    const responseResult = await generateText({
+      model: groq(AI_MODEL),
       messages: [
         {
-          role: "system",
-          content: `Anda adalah seorang Analis Data Keamanan profesional yang memberikan jawaban dalam Bahasa Indonesia. Berikan jawaban yang informatif, ringkas, dan kontekstual berdasarkan data yang tersedia. Gunakan format markdown untuk mencetak tebal hanya elemen penting berikut: nama pelapor, nama unit, kategori laporan, nama lokasi, dan waktu/tanggal. Hindari menyebut ID yang abstrak, sebutkan nama pelapor atau nama unit yang relevan. Gunakan terminology HSE (Kesehatan, Keselamatan, Lingkungan) yang sesuai. Format jawaban dalam bentuk paragraf yang terstruktur, bukan hanya data mentah.`
+          role: 'system',
+          content: 'Anda adalah analis data keamanan profesional. Berikan jawaban informatif dalam Bahasa Indonesia dengan format markdown yang terstruktur.'
         },
         {
-          role: "user",
+          role: 'user',
           content: prompt
         }
       ],
-      model: AI_MODEL,
       temperature: 0.3,
-      max_tokens: 1000,
-      top_p: 1,
-      stream: false,
+      maxTokens: 1000,
     });
 
-    return completion.choices[0]?.message?.content?.trim() || 'Tidak dapat menghasilkan jawaban saat ini.';
+    return NextResponse.json({
+      success: true,
+      response: responseResult.text,
+      query: cleanSQL,
+      data: queryResult
+    });
+
   } catch (error) {
-    console.error('Error generating natural language response:', error);
-    return 'Tidak dapat menghasilkan jawaban saat ini. Silakan coba lagi.';
+    console.error('Chatbot error:', error);
+    return NextResponse.json({ error: 'Error: ' + (error as Error).message }, { status: 500 });
   }
 }

@@ -11,10 +11,10 @@ import { PatrolMap } from '@/components/patrol-map';
 export default async function PatrolMapPage({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams: Promise<{
     dateFrom?: string;
     dateTo?: string;
-  };
+  }>;
 }) {
   // Check if user is admin
   const userIsAdmin = await isAdmin();
@@ -22,9 +22,10 @@ export default async function PatrolMapPage({
     redirect('/');
   }
 
-  // Parse search params
-  const dateFrom = searchParams?.dateFrom || undefined;
-  const dateTo = searchParams?.dateTo || undefined;
+  // Parse search params (Next.js 15: searchParams is now a Promise)
+  const params = await searchParams;
+  const dateFrom = params?.dateFrom || undefined;
+  const dateTo = params?.dateTo || undefined;
 
   // Fetch reports with location data
   const reports = await getReportsByFilters(undefined, dateFrom, dateTo);

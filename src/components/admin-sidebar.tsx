@@ -25,6 +25,7 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
     { href: '/admin/dashboard', label: 'Umpan Langsung', icon: Activity },
     { href: '/admin/chatbot', label: 'Asisten AI', icon: MessageSquare },
     { href: '/admin/reports', label: 'Manajemen Laporan', icon: FileText },
+    { href: '/admin/categories', label: 'Kelola Kategori', icon: LayoutDashboard },
     { href: '/admin/units', label: 'Kelola Unit', icon: Building },
     { href: '/admin/unit-locations', label: 'Kelola Lokasi', icon: MapPin },
     { href: '/admin/users', label: 'Kelola Pengguna', icon: User },
