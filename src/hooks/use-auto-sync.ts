@@ -37,28 +37,20 @@ export function useAutoSync() {
 
       for (const report of offlineReports) {
         try {
-          // Convert Base64 Image balik ke File
-          const res = await fetch(report.imageData);
-          const blob = await res.blob();
-          const imageFile = new File([blob], "offline_evidence.jpg", { type: "image/jpeg" });
-
-          const formData = new FormData();
-          formData.append('image', imageFile);
-          formData.append('notes', report.notes || '');
-          formData.append('latitude', String(report.latitude || ''));
-          formData.append('longitude', String(report.longitude || ''));
-          formData.append('unitId', report.unitId);
-          formData.append('userId', session?.user?.id as string ?? report.userId);
-          formData.append('categoryId', report.categoryId || '');
-          formData.append('locationId', report.locationId || '');
-          // Pastikan field ini sesuai dengan yang diminta backend (capturedAt vs captured_at)
-          formData.append('capturedAt', report.capturedAt);
-          formData.append('is_offline_submission', 'true');
-
-          // Kirim ke API
-          const response = await fetch('/api/reports', {
+          const response = await fetch('/api/reports/sync', {
             method: 'POST',
-            body: formData,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              imageData: report.imageData,
+              notes: report.notes || '',
+              latitude: report.latitude,
+              longitude: report.longitude,
+              unitId: report.unitId,
+              userId: session?.user?.id as string ?? report.userId,
+              categoryId: report.categoryId || '',
+              locationId: report.locationId || '',
+              capturedAt: report.capturedAt,
+            }),
           });
 
           if (response.ok) {

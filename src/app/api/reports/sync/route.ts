@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma';
 import { writeFile } from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { authOptions } from '../../auth/[...nextauth]/route';
 
 export async function POST(request: NextRequest) {
   try {
     // Verify the user is authenticated using NextAuth
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
