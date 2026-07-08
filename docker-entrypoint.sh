@@ -21,7 +21,7 @@ for i in $(seq 1 30); do
 done
 
 echo "Menjalankan migrasi Prisma..."
-npx prisma migrate deploy
+node node_modules/prisma/build/index.js migrate deploy
 
 echo "Memulai Next.js server..."
 exec node server.js
