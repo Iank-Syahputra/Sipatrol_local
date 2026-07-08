@@ -20,8 +20,8 @@ for i in $(seq 1 30); do
   sleep 2
 done
 
-echo "Menjalankan migrasi Prisma..."
-node node_modules/prisma/build/index.js migrate deploy
+echo "Menjalankan sinkronisasi database..."
+node node_modules/prisma/build/index.js db push --accept-data-loss
 
 echo "Memulai Next.js server..."
 exec node server.js
