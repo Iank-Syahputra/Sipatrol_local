@@ -3,6 +3,7 @@ node_modules
 .gitignore
 .env*
 !.env.docker
+!.env
 .next
 npm-debug.log*
 *.md
