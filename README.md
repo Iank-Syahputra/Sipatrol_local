@@ -1,186 +1,159 @@
-[![CodeGuide](/codeguide-backdrop.svg)](https://codeguide.dev)
+# SiPatrol (Security Monitoring System)
 
-# CodeGuide Starter Kit
-
-A modern web application starter template built with Next.js 15, featuring authentication, database integration, AI capabilities, and dark mode support.
+Sistem pelaporan patroli keamanan digital untuk **PLN Nusantara Power UP Kendari**. Aplikasi web berbasis PWA yang menghubungkan petugas lapangan (*Security*) dengan pusat kendali (*Admin*).
 
 ## Tech Stack
 
 - **Framework:** [Next.js 15](https://nextjs.org/) (App Router)
 - **Language:** TypeScript
-- **Authentication:** [Clerk](https://clerk.com/)
-- **Database:** [Supabase](https://supabase.com/)
+- **Authentication:** [NextAuth v4](https://next-auth.js.org/) (Credentials Provider + bcrypt)
+- **Database:** MySQL via [Prisma ORM](https://www.prisma.io/)
 - **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
-- **UI Components:** [shadcn/ui](https://ui.shadcn.com/)
-- **AI Integration:** [Vercel AI SDK](https://sdk.vercel.ai/)
-- **Theme System:** [next-themes](https://github.com/pacocoursey/next-themes)
+- **UI Components:** [shadcn/ui](https://ui.shadcn.com/) (New York style)
+- **AI Integration:** [Vercel AI SDK](https://sdk.vercel.ai/) (Groq, OpenAI, Anthropic)
+- **PWA / Offline:** [Serwist](https://serwist.pages.dev/)
+- **Maps:** [Leaflet](https://leafletjs.com/) / [react-leaflet](https://react-leaflet.js.org/)
+- **Theme:** [next-themes](https://github.com/pacocoursey/next-themes)
+- **Validation:** [Zod](https://zod.dev/) + react-hook-form
+
+## Fitur Utama
+
+### Modul Security (Petugas Lapangan)
+- 🔐 Autentikasi sesi dengan NextAuth
+- 📸 Pengambilan foto *real-time* via kamera (anti-fraud, gallery disabled)
+- 📍 Geo-Tagging otomatis (Lat/Lng) menggunakan Leaflet
+- 📡 Mode offline — laporan disimpan lokal & sinkronisasi otomatis saat online (Serwist PWA)
+- 📋 Riwayat laporan pribadi (Pending / Verified)
+
+### Modul Admin (Pusat Kendali)
+- 📊 **Live Feed** — 5 laporan terbaru secara real-time
+- 🏢 **Manajemen Unit** — CRUD master data unit
+- 👥 **Manajemen Pengguna** — Kelola akun & penempatan Security
+- 🔍 **Filter Lanjutan** — Filter laporan berdasarkan Unit, Rentang Tanggal, & Nama Petugas
+- 📑 **Ekspor Excel** — Export data laporan ke format XLSX
+- 🤖 **AI Chat** — Tanya jawab data laporan dengan AI (Groq)
+
+### Keamanan
+- Role-based access control (Admin / Security)
+- Middleware proteksi route
+- Password di-hash dengan bcryptjs
+- Session token terenkripsi (JWT)
 
 ## Prerequisites
 
-Before you begin, ensure you have the following:
-- Node.js 18+ installed
-- A [Clerk](https://clerk.com/) account for authentication
-- A [Supabase](https://supabase.com/) account for database
-- Optional: [OpenAI](https://platform.openai.com/) or [Anthropic](https://console.anthropic.com/) API key for AI features
-- Generated project documents from [CodeGuide](https://codeguide.dev/) for best development experience
+- Node.js 18+
+- MySQL server (atau XAMPP / Laragon)
+- Akun [Groq](https://console.groq.com/keys) untuk fitur AI (opsional)
 
 ## Getting Started
 
-1. **Clone the repository**
+1. **Clone repositori**
    ```bash
    git clone <repository-url>
-   cd codeguide-starter-kit
+   cd sipatrol
    ```
 
 2. **Install dependencies**
    ```bash
    npm install
-   # or
-   yarn install
-   # or
-   pnpm install
    ```
 
-3. **Environment Variables Setup**
-   - Copy the `.env.example` file to `.env.local`:
+3. **Setup environment variables**
+   - Salin `.env.example` ke `.env.local`:
      ```bash
      cp .env.example .env.local
      ```
-   - Fill in the environment variables in `.env.local` (see Configuration section below)
+   - Isi konfigurasi database MySQL dan API key
 
-4. **Start the development server**
+4. **Setup database**
    ```bash
-   npm run dev
-   # or
-   yarn dev
-   # or
-   pnpm dev
+   npx prisma migrate dev
+   npx prisma db seed
    ```
 
-5. **Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.**
+5. **Jalankan development server**
+   ```bash
+   npm run dev
+   ```
 
-The homepage includes a setup dashboard with direct links to configure each service.
-
-## Configuration
-
-### Clerk Setup
-1. Go to [Clerk Dashboard](https://dashboard.clerk.com/)
-2. Create a new application
-3. Go to API Keys
-4. Copy the `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`
-
-### Supabase Setup
-1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
-2. Create a new project
-3. Go to Authentication → Integrations → Add Clerk (for third-party auth)
-4. Go to Project Settings > API
-5. Copy the `Project URL` as `NEXT_PUBLIC_SUPABASE_URL`
-6. Copy the `anon` public key as `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-
-### AI Integration Setup (Optional)
-1. Go to [OpenAI Platform](https://platform.openai.com/) or [Anthropic Console](https://console.anthropic.com/)
-2. Create an API key
-3. Add to your environment variables
+6. Buka [http://localhost:3000](http://localhost:3000)
 
 ## Environment Variables
 
-Create a `.env.local` file in the root directory with the following variables:
-
 ```env
-# Clerk Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_publishable_key
-CLERK_SECRET_KEY=your_secret_key
+# Database MySQL
+DATABASE_URL="mysql://root:password@localhost:3306/sipatrol_db"
 
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+# AI Read-Only Database (user ai_reader)
+READ_ONLY_DATABASE_URL="mysql://ai_reader:password@localhost:3306/sipatrol_db"
 
-# AI Integration (Optional)
-OPENAI_API_KEY=your_openai_api_key
-ANTHROPIC_API_KEY=your_anthropic_api_key
+# Groq AI API Key (https://console.groq.com/keys)
+GROQ_API_KEY="gsk_xxxxxxxxxxxxxxxx"
+
+# Model AI (default: llama-3.3-70b-versatile)
+AI_MODEL_NAME="llama-3.3-70b-versatile"
+
+# NextAuth Secret (generate: openssl rand -base64 32)
+NEXTAUTH_SECRET="string_acak_rahasia"
+NEXTAUTH_URL="http://localhost:3000"
 ```
-
-## Features
-
-- 🔐 Authentication with Clerk (middleware protection)
-- 🗄️ Supabase Database with third-party auth integration
-- 🤖 AI Chat Interface with OpenAI/Anthropic support
-- 🎨 40+ shadcn/ui components (New York style)
-- 🌙 Dark mode with system preference detection
-- 🎯 Built-in setup dashboard with service status
-- 🚀 App Router with Server Components
-- 🔒 Row Level Security examples with Clerk user IDs
-- 📱 Responsive design with TailwindCSS v4
-- 🎨 Custom fonts (Geist Sans, Geist Mono, Parkinsans)
 
 ## Project Structure
 
 ```
-codeguide-starter-kit/
+sipatrol/
+├── prisma/
+│   ├── schema.prisma          # Database schema
+│   └── seed.ts                # Data awal (unit, user default)
 ├── src/
-│   ├── app/                    # Next.js app router pages
-│   │   ├── api/chat/          # AI chat API endpoint
-│   │   ├── globals.css        # Global styles with dark mode
-│   │   ├── layout.tsx         # Root layout with providers
-│   │   └── page.tsx           # Hero + setup dashboard
-│   ├── components/            # React components
-│   │   ├── ui/                # shadcn/ui components (40+)
-│   │   ├── chat.tsx           # AI chat interface
-│   │   ├── theme-provider.tsx # Theme context
-│   │   └── theme-toggle.tsx   # Dark mode toggle
-│   ├── lib/                   # Utility functions
-│   │   ├── supabase.ts        # Supabase client with Clerk auth
+│   ├── app/
+│   │   ├── admin/             # Halaman admin (dashboard, units, users, reports)
+│   │   ├── api/               # REST API routes
+│   │   │   ├── auth/[...nextauth]/  # NextAuth handler
+│   │   │   ├── admin/         # Admin API (units, users, reports, stats)
+│   │   │   ├── reports/       # Report CRUD + sync
+│   │   │   └── chat/          # AI Chat API
+│   │   ├── login/             # Halaman login
+│   │   ├── security/          # Halaman security (dashboard, report form, history)
+│   │   ├── globals.css        # Global styles + dark mode
+│   │   ├── layout.tsx         # Root layout
+│   │   └── page.tsx           # Landing page
+│   ├── components/
+│   │   ├── ui/                # shadcn/ui components
+│   │   ├── admin-sidebar.tsx
+│   │   ├── security-sidebar.tsx
+│   │   ├── report-form.tsx    # Form laporan + kamera
+│   │   ├── patrol-map.tsx     # Leaflet map component
+│   │   └── chat.tsx           # AI Chat interface
+│   ├── hooks/
+│   │   └── use-auto-sync.ts   # Offline sync hook
+│   ├── lib/
+│   │   ├── prisma.ts          # Prisma client
+│   │   ├── sipatrol-db.ts     # Query helpers
 │   │   ├── user.ts            # User utilities
-│   │   ├── utils.ts           # General utilities
-│   │   └── env-check.ts       # Environment validation
-│   └── middleware.ts          # Clerk route protection
-├── supabase/
-│   └── migrations/            # Database migrations with RLS examples
-├── CLAUDE.md                  # AI coding agent documentation
-├── SUPABASE_CLERK_SETUP.md   # Integration setup guide
-└── components.json            # shadcn/ui configuration
+│   │   └── utils.ts           # General utilities
+│   └── middleware.ts          # Route protection
+├── types/
+│   └── next-auth.d.ts         # NextAuth type extensions
+├── .env.example
+└── components.json
 ```
 
-## Database Integration
+## Role Default
 
-This starter includes modern Clerk + Supabase integration:
+Setelah `npx prisma db seed`, akun default:
 
-- **Third-party auth** (not deprecated JWT templates)
-- **Row Level Security** policies using `auth.jwt() ->> 'sub'` for Clerk user IDs
-- **Example migrations** with various RLS patterns (user-owned, public/private, collaboration)
-- **Server-side client** with automatic Clerk token handling
+| Role     | Username    | Password     |
+| -------- | ----------- | ------------ |
+| Admin    | admin       | admin123     |
+| Security | security1   | security123  |
 
-## AI Coding Agent Integration
+> **Catatan:** Ganti password default segera setelah pertama login.
 
-This starter is optimized for AI coding agents:
+## Sinkronisasi Offline
 
-- **`CLAUDE.md`** - Comprehensive project context and patterns
-- **Setup guides** with detailed integration steps
-- **Example migrations** with RLS policy templates
-- **Clear file structure** and naming conventions
-- **TypeScript integration** with proper type definitions
+Aplikasi menggunakan **Serwist** (Service Worker) untuk menyimpan laporan secara lokal saat tidak ada koneksi internet. Laporan akan otomatis dikirim (*sync*) ketika perangkat kembali online.
 
-## Documentation Setup
+## Lisensi
 
-To implement the generated documentation from CodeGuide:
-
-1. Create a `documentation` folder in the root directory:
-   ```bash
-   mkdir documentation
-   ```
-
-2. Place all generated markdown files from CodeGuide in this directory:
-   ```bash
-   # Example structure
-   documentation/
-   ├── project_requirements_document.md             
-   ├── app_flow_document.md
-   ├── frontend_guideline_document.md
-   └── backend_structure_document.md
-   ```
-
-3. These documentation files will be automatically tracked by git and can be used as a reference for your project's features and implementation details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+MIT
