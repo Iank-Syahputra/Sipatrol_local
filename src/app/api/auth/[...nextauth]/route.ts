@@ -4,22 +4,6 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
-  // Tambahkan ini supaya support localhost http
-  // ---------------------------------------------
-  useSecureCookies: process.env.NODE_ENV === "production", 
-  cookies: {
-    sessionToken: {
-      name: "next-auth.session-token", // Paksa nama cookie yang konsisten
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production", // False jika di localhost
-      },
-    },
-  },
-  // ---------------------------------------------
-
   providers: [
     CredentialsProvider({
       name: "Credentials",
