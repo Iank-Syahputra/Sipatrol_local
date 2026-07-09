@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -58,7 +58,8 @@ export default function LoginForm() {
         if (callbackUrl) {
            router.push(callbackUrl);
         } else {
-           if (username === 'admin') {
+           const session = await getSession();
+           if (session?.user?.role === 'admin') {
              router.push('/admin/dashboard');
            } else {
              router.push('/security');

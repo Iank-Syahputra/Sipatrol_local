@@ -27,15 +27,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 4. Logic: If ALREADY logged in but trying to access Login
-  if (isLoginRoute && token) {
-    if (token.role === 'admin') {
-      return NextResponse.redirect(new URL('/admin/dashboard', req.url));
-    } else {
-      return NextResponse.redirect(new URL('/security', req.url));
-    }
-  }
-
   // 5. Logic: Role Protection
   if (isAdminRoute && token?.role !== 'admin') {
     return NextResponse.redirect(new URL('/security', req.url));
