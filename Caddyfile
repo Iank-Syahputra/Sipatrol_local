@@ -1,4 +1,4 @@
 10.7.166.7 {
-  tls internal
+  tls self_signed
   reverse_proxy app:3000
 }
