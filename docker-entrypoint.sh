@@ -23,5 +23,8 @@ done
 echo "Menjalankan sinkronisasi database..."
 node node_modules/prisma/build/index.js db push --accept-data-loss
 
+echo "Menjalankan seed data..."
+node prisma/seed.js
+
 echo "Memulai Next.js server..."
 exec node server.js

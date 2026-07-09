@@ -11,6 +11,7 @@ RUN apt-get update -y && apt-get install -y openssl
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npx prisma generate
 RUN npm run build
+RUN npx tsc prisma/seed.ts --module commonjs --esModuleInterop true --skipLibCheck true --outDir prisma
 
 FROM node:20-bullseye-slim AS runner
 WORKDIR /app
