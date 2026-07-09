@@ -170,10 +170,10 @@ export const useOfflineReports = () => {
       }
     };
 
-    navigator.serviceWorker.addEventListener('message', handleMessage);
+    navigator.serviceWorker?.addEventListener('message', handleMessage);
 
     return () => {
-      navigator.serviceWorker.removeEventListener('message', handleMessage);
+      navigator.serviceWorker?.removeEventListener('message', handleMessage);
     };
   }, []);
 
