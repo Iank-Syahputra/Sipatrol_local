@@ -5,15 +5,12 @@ echo "Menunggu MySQL siap..."
 
 for i in $(seq 1 30); do
   if node -e "
-    const mysql = require('mysql2/promise');
-    mysql.createConnection({
-      host: '${DATABASE_HOST:-localhost}',
-      port: 3306,
-      user: '${DATABASE_USER:-root}',
-      password: '${DATABASE_PASSWORD:-}',
-    }).then(c => { c.end(); process.exit(0); }).catch(() => process.exit(1));
+    require('net').createConnection({host:'${DATABASE_HOST:-localhost}',port:3306})
+      .on('connect',function(){process.exit(0)})
+      .on('error',function(){process.exit(1)});
   " 2>/dev/null; then
     echo "MySQL siap!"
+    sleep 2
     break
   fi
   echo "Menunggu database... ($i/30)"
