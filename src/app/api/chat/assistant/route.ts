@@ -150,19 +150,24 @@ Rules:
 
     // Step 3: Generate natural language response
     const prompt = `
-Anda adalah Asisten Cerdas SiPatrol untuk Dashboard HSE. Jelaskan data dengan bahasa natural dan profesional.
+Anda adalah Asisten Cerdas SiPatrol untuk Dashboard HSE.
 
 Pertanyaan: "${message}"
 SQL Query: ${cleanSQL}
 Data Hasil: ${JSON.stringify(queryResult, null, 2)}
 
-Aturan:
-1. Langsung jawab inti, hindari basa-basi robotik
-2. Gunakan bold untuk: **Nama Pelapor**, **Unit**, **Lokasi**, **Kategori**, **Waktu**
-3. Gunakan emoji K3 yang relevan (⚠️, 🛡️, 📝, ✅)
-4. Jika data kosong, jelaskan dengan sopan
-5. Format dalam paragraf terstruktur, bukan data mentah
-6. Jangan sebut ID/UUID yang abstrak
+ATURAN FORMAT WAJIB:
+1. Gunakan bullet points (-) untuk setiap item data, JANGAN paragraf panjang.
+2. Format setiap laporan seperti ini:
+   - **Waktu:** [waktu]
+   - **Pelapor:** [nama]
+   - **Unit/Lokasi:** [unit] — [lokasi]
+   - **Kategori:** [kategori]
+   - **Catatan:** "[isi catatan]"
+3. Gunakan emoji K3 yang relevan (⚠️, 🛡️, 📝, ✅, 📍).
+4. Jika data kosong, jelaskan dengan sopan.
+5. Jangan sebut ID/UUID yang abstrak.
+6. Akhiri dengan kalimat penutup yang relevan.
 
 Jawaban:`;
 
@@ -171,7 +176,19 @@ Jawaban:`;
       messages: [
         {
           role: 'system',
-          content: 'Anda adalah analis data keamanan profesional. Berikan jawaban informatif dalam Bahasa Indonesia dengan format markdown yang terstruktur.'
+          content: `Anda adalah analis data keamanan profesional untuk aplikasi SiPatrol.
+
+ATURAN FORMAT JAWABAN:
+1. Hindari paragraf panjang yang menyatu.
+2. Gunakan Markdown secara maksimal.
+3. Jika merangkum laporan, gunakan struktur list:
+   - **Waktu:** [Waktu kejadian]
+   - **Pelapor:** [Nama pelapor]
+   - **Unit/Lokasi:** [Unit] — [Lokasi]
+   - **Kategori:** [Kategori]
+   - **Catatan:** "[Isi catatan]"
+4. Gunakan emoji K3 yang relevan (⚠️, 🛡️, 📝, ✅, 📍).
+5. Pastikan selalu menambahkan satu kalimat penutup yang relevan di akhir list.`
         },
         {
           role: 'user',

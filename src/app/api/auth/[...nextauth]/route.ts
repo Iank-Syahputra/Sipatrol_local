@@ -15,7 +15,7 @@ export const authOptions: NextAuthOptions = {
         const loginRole = (credentials?.loginRole as string) || '';
 
         if (!credentials?.username || !credentials?.password) {
-          throw new Error("CredentialsSignin");
+          throw new Error("InvalidPassword");
         }
 
         const cleanUsername = credentials.username.trim();
@@ -25,15 +25,15 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
-          throw new Error("CredentialsSignin");
+          throw new Error("UserNotFound");
         }
 
         if (user.role === 'admin' && loginRole !== 'admin') {
-          throw new Error("CredentialsSignin");
+          throw new Error("WrongRole");
         }
 
         if (user.role === 'security' && loginRole !== 'officer') {
-          throw new Error("CredentialsSignin");
+          throw new Error("WrongRole");
         }
 
         let isValid = false;
@@ -48,7 +48,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (!isValid) {
-          throw new Error("CredentialsSignin");
+          throw new Error("InvalidPassword");
         }
 
         return {

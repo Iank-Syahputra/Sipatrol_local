@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { signIn } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -36,15 +37,15 @@ export default function LoginForm() {
     label: isOfficer ? "Petugas Patroli" : "Administrator"
   };
 
+  const errorMessages: Record<string, string> = {
+    UserNotFound: 'Username tidak ditemukan.',
+    WrongRole: 'Akun tidak sesuai dengan halaman login ini.',
+    InvalidPassword: 'Password salah.',
+  };
+
   useEffect(() => {
-    if (errorParam === 'CredentialsSignin') {
-      const savedRole = sessionStorage.getItem('loginRole');
-      sessionStorage.removeItem('loginRole');
-      if (savedRole && !window.location.search.includes('role=')) {
-        window.location.href = `/login?role=${savedRole}&error=${errorParam}`;
-        return;
-      }
-      setError('Nama pengguna atau kata sandi salah.');
+    if (errorParam && errorMessages[errorParam]) {
+      setError(errorMessages[errorParam]);
     }
   }, [errorParam]);
 
@@ -54,32 +55,19 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const csrfRes = await fetch('/api/auth/csrf');
-      const { csrfToken } = await csrfRes.json();
-
-      sessionStorage.setItem('loginRole', paramsRole || '');
-
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `/api/auth/callback/credentials?callbackUrl=/check-auth`;
-
-      const inputs = {
-        csrfToken,
+      const result = await signIn('credentials', {
+        redirect: false,
         username,
         password,
         loginRole: paramsRole || '',
-      };
+      });
 
-      for (const [name, value] of Object.entries(inputs)) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = name;
-        input.value = value;
-        form.appendChild(input);
+      if (result?.error) {
+        setError(errorMessages[result.error] || 'Nama pengguna atau kata sandi salah.');
+        setLoading(false);
+      } else if (result?.ok) {
+        window.location.href = '/check-auth';
       }
-
-      document.body.appendChild(form);
-      form.submit();
     } catch (err) {
       setError('Terjadi kesalahan sistem.');
       setLoading(false);

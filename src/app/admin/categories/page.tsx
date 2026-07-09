@@ -252,8 +252,8 @@ export default function CategoryManagementPage() {
               </div>
             ) : (
               <Table>
-                <TableHeader>
-                  <TableRow>
+                <TableHeader className="bg-slate-50 border-b border-slate-200">
+                  <TableRow className="[&>th]:text-xs [&>th]:font-bold [&>th]:uppercase [&>th]:text-slate-500 [&>th]:tracking-wider hover:bg-transparent">
                     <TableHead className="w-20">Warna</TableHead>
                     <TableHead>Nama Kategori</TableHead>
                     <TableHead>Dibuat</TableHead>
