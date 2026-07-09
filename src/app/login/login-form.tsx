@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn, getSession } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -13,9 +12,7 @@ import { AlertCircle, Loader2, ArrowLeft, Shield, Lock, Zap, Eye, EyeOff } from 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl');
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -23,6 +20,7 @@ export default function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const paramsRole = searchParams.get('role');
+  const errorParam = searchParams.get('error');
 
   const isOfficer = paramsRole === 'officer';
 
@@ -38,35 +36,50 @@ export default function LoginForm() {
     label: isOfficer ? "Petugas Patroli" : "Administrator"
   };
 
+  useEffect(() => {
+    if (errorParam === 'CredentialsSignin') {
+      const savedRole = sessionStorage.getItem('loginRole');
+      sessionStorage.removeItem('loginRole');
+      if (savedRole && !window.location.search.includes('role=')) {
+        window.location.href = `/login?role=${savedRole}&error=${errorParam}`;
+        return;
+      }
+      setError('Nama pengguna atau kata sandi salah.');
+    }
+  }, [errorParam]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      const result = await signIn('credentials', {
-        redirect: false,
+      const csrfRes = await fetch('/api/auth/csrf');
+      const { csrfToken } = await csrfRes.json();
+
+      sessionStorage.setItem('loginRole', paramsRole || '');
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/api/auth/callback/credentials?callbackUrl=/check-auth`;
+
+      const inputs = {
+        csrfToken,
         username,
         password,
-      });
+        loginRole: paramsRole || '',
+      };
 
-      if (result?.error) {
-        setError('Nama pengguna atau kata sandi salah.');
-        setLoading(false);
-      } else if (result?.ok) {
-        console.log('Login successful, redirecting...');
-        if (callbackUrl) {
-           router.push(callbackUrl);
-        } else {
-           const session = await getSession();
-           if (session?.user?.role === 'admin') {
-             router.push('/admin/dashboard');
-           } else {
-             router.push('/security');
-           }
-        }
-        router.refresh();
+      for (const [name, value] of Object.entries(inputs)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
       }
+
+      document.body.appendChild(form);
+      form.submit();
     } catch (err) {
       setError('Terjadi kesalahan sistem.');
       setLoading(false);

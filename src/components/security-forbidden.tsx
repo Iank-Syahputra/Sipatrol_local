@@ -1,0 +1,31 @@
+"use client";
+
+import { signOut } from 'next-auth/react';
+import { ShieldAlert, LogOut } from "lucide-react";
+
+export default function SecurityForbidden() {
+  return (
+    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4 text-center">
+      <div className="bg-zinc-900 border border-cyan-900/50 p-8 rounded-2xl max-w-md w-full shadow-2xl shadow-cyan-900/10">
+        
+        <div className="w-16 h-16 bg-cyan-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-cyan-500/20">
+          <ShieldAlert className="w-8 h-8 text-cyan-500" />
+        </div>
+        
+        <h2 className="text-xl font-bold text-white mb-2">Akses Ditolak</h2>
+        <p className="text-cyan-400 font-medium mb-6">
+          Maaf akun anda tidak terdaftar sebagai petugas security.
+        </p>
+        
+        <button
+          onClick={() => signOut({ callbackUrl: '/login' })}
+          className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+        >
+          <LogOut className="w-4 h-4" />
+          Keluar & Coba Akun Lain
+        </button>
+        
+      </div>
+    </div>
+  );
+}

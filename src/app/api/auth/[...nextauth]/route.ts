@@ -4,12 +4,6 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
-  useSecureCookies: false,
-  cookies: {
-    sessionToken: {
-      name: "next-auth.session-token",
-    },
-  },
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -18,8 +12,10 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        const loginRole = (credentials?.loginRole as string) || '';
+
         if (!credentials?.username || !credentials?.password) {
-          throw new Error("Username dan Password wajib diisi");
+          throw new Error("CredentialsSignin");
         }
 
         const cleanUsername = credentials.username.trim();
@@ -29,7 +25,15 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
-          throw new Error("User tidak ditemukan");
+          throw new Error("CredentialsSignin");
+        }
+
+        if (user.role === 'admin' && loginRole !== 'admin') {
+          throw new Error("CredentialsSignin");
+        }
+
+        if (user.role === 'security' && loginRole !== 'officer') {
+          throw new Error("CredentialsSignin");
         }
 
         let isValid = false;
@@ -44,7 +48,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (!isValid) {
-          throw new Error("Password salah");
+          throw new Error("CredentialsSignin");
         }
 
         return {
