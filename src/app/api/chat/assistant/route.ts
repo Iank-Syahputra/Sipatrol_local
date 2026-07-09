@@ -112,9 +112,14 @@ ${BUSINESS_RULES}
 
 Rules:
 - Only SELECT queries (no INSERT, UPDATE, DELETE)
-- Use proper JOIN syntax
-- Use LIMIT 10 for lists
-- Select only necessary columns`;
+- WAJIB gunakan JOIN untuk mengambil nama dari tabel relasi. Jangan pernah mengembalikan UUID/ID!
+  Contoh JOIN yang WAJIB ada:
+  - LEFT JOIN profiles p ON reports.user_id = p.id (pilih p.full_name AS nama_pelapor)
+  - LEFT JOIN units u ON reports.unit_id = u.id (pilih u.name AS nama_unit)
+  - LEFT JOIN unit_locations l ON reports.location_id = l.id (pilih l.name AS nama_lokasi)
+  - LEFT JOIN report_categories c ON reports.category_id = c.id (pilih c.name AS nama_kategori)
+- Kolom yang HARUS ada di SELECT: captured_at, nama_pelapor, nama_unit, nama_lokasi, nama_kategori, notes
+- Use LIMIT 10 for lists`;
 
     const sqlResult = await generateText({
       model: groq(AI_MODEL),
@@ -150,24 +155,20 @@ Rules:
 
     // Step 3: Generate natural language response
     const prompt = `
-Anda adalah Asisten Cerdas SiPatrol untuk Dashboard HSE.
+Anda adalah Asisten Cerdas SiPatrol untuk Dashboard HSE. Jelaskan data dengan bahasa natural dan profesional menggunakan format Markdown.
 
 Pertanyaan: "${message}"
-SQL Query: ${cleanSQL}
-Data Hasil: ${JSON.stringify(queryResult, null, 2)}
+Data Hasil Database: ${JSON.stringify(queryResult, null, 2)}
 
-ATURAN FORMAT WAJIB:
-1. Gunakan bullet points (-) untuk setiap item data, JANGAN paragraf panjang.
-2. Format setiap laporan seperti ini:
-   - **Waktu:** [waktu]
-   - **Pelapor:** [nama]
-   - **Unit/Lokasi:** [unit] — [lokasi]
-   - **Kategori:** [kategori]
-   - **Catatan:** "[isi catatan]"
-3. Gunakan emoji K3 yang relevan (⚠️, 🛡️, 📝, ✅, 📍).
-4. Jika data kosong, jelaskan dengan sopan.
-5. Jangan sebut ID/UUID yang abstrak.
-6. Akhiri dengan kalimat penutup yang relevan.
+Aturan Format Wajib:
+Jika memberikan detail laporan, gunakan struktur list seperti ini:
+- **Waktu:** [nilai dari captured_at]
+- **Pelapor:** [nilai dari nama_pelapor]
+- **Unit / Lokasi:** [nilai dari nama_unit] — [nilai dari nama_lokasi]
+- **Kategori:** [nilai dari nama_kategori]
+- **Catatan:** "[nilai dari notes]"
+
+Gunakan emoji K3 yang relevan (⚠️, 🛡️, 📝, ✅, 📍). Berikan satu kalimat kesimpulan di akhir. Jika nama tidak ada di data, baru tulis "Tidak diketahui", namun utamakan mengambil data dari JSON di atas.
 
 Jawaban:`;
 
@@ -178,17 +179,18 @@ Jawaban:`;
           role: 'system',
           content: `Anda adalah analis data keamanan profesional untuk aplikasi SiPatrol.
 
-ATURAN FORMAT JAWABAN:
-1. Hindari paragraf panjang yang menyatu.
-2. Gunakan Markdown secara maksimal.
-3. Jika merangkum laporan, gunakan struktur list:
-   - **Waktu:** [Waktu kejadian]
-   - **Pelapor:** [Nama pelapor]
-   - **Unit/Lokasi:** [Unit] — [Lokasi]
-   - **Kategori:** [Kategori]
-   - **Catatan:** "[Isi catatan]"
-4. Gunakan emoji K3 yang relevan (⚠️, 🛡️, 📝, ✅, 📍).
-5. Pastikan selalu menambahkan satu kalimat penutup yang relevan di akhir list.`
+ATURAN FORMAT:
+1. Jawab dengan data NYATA dari field "Data Hasil" di bawah. JANGAN gunakan teks placeholder.
+2. Gunakan bullet points (-). Hindari paragraf panjang.
+3. Format laporan:
+   - **Waktu:** <nilai dari captured_at>
+   - **Pelapor:** <nilai dari nama_pelapor>
+   - **Unit/Lokasi:** <nilai dari nama_unit> — <nilai dari nama_lokasi>
+   - **Kategori:** <nilai dari nama_kategori>
+   - **Catatan:** "<nilai dari notes>"
+4. JANGAN output teks seperti "[nama]" atau "[waktu]". Ekstrak nilai ASLI dari data.
+5. Gunakan emoji K3 yang relevan (⚠️, 🛡️, 📝, ✅, 📍).
+6. Akhiri dengan kalimat penutup yang relevan.`
         },
         {
           role: 'user',
