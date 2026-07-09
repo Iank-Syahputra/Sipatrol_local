@@ -44,26 +44,9 @@ services:
     networks:
       - sipatrol-network
 
-  caddy:
-    image: caddy:alpine
-    container_name: sipatrol-caddy
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - ./certs:/etc/caddy/certs
-      - caddy_data:/data
-    depends_on:
-      - app
-    networks:
-      - sipatrol-network
-
 volumes:
   mysql_data:
   uploads_data:
-  caddy_data:
 
 networks:
   sipatrol-network:
