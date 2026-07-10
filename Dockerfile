@@ -36,7 +36,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --chmod=755 docker-entrypoint.sh /docker-entrypoint.sh
 
 # Install sharp untuk image optimization Next.js
-RUN npm install sharp@0.33.5
+RUN npm install --include=optional sharp@0.33.5
 
 USER nextjs
 EXPOSE 3000
