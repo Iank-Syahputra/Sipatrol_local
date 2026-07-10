@@ -346,12 +346,10 @@ export default function AdminDashboard() {
                       <div className="flex-shrink-0 w-full sm:w-auto">
                         {report?.imagePath ? (
                           <div className="relative w-full sm:w-28 aspect-video sm:aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 shadow-sm">
-                            <Image
+                            <img
                               src={report.imagePath}
                               alt="Evidence"
-                              fill
-                              sizes="(max-width: 768px) 100vw, 33vw"
-                              className="object-cover group-hover:scale-105 transition-transform duration-500"
+                              className="object-cover group-hover:scale-105 transition-transform duration-500 w-full h-full"
                             />
                             <div className="absolute inset-0 bg-amber-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                               <Eye className="h-8 w-8 text-white drop-shadow-md" />
@@ -690,12 +688,10 @@ export default function AdminDashboard() {
                   </h4>
                   <div className="bg-slate-100 border border-slate-200 rounded-2xl w-full h-64 flex items-center justify-center overflow-hidden shadow-inner relative">
                     {selectedReport.imagePath ? (
-                      <Image
+                      <img
                         src={selectedReport.imagePath}
                         alt="Bukti laporan"
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-cover w-full h-full"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                           const fallback = e.currentTarget.parentElement?.querySelector('.fallback-content');

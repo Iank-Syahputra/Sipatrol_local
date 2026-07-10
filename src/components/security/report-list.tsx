@@ -164,12 +164,10 @@ export default function ReportList({
 
               {report.imagePath && (
                 <div className="relative w-full h-40 bg-slate-100 rounded-xl overflow-hidden border border-slate-100 shadow-inner mb-4">
-                  <Image
+                  <img
                     src={report.imagePath}
                     alt="Evidence"
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105 w-full h-full"
                   />
                 </div>
               )}

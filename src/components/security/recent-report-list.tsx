@@ -66,12 +66,10 @@ export default function RecentReportList({ reports }: { reports: any[] }) {
             {/* Image Preview */}
             {report.imagePath && (
               <div className="mt-3 relative h-32 w-full">
-                <Image
+                <img
                   src={report.imagePath}
                   alt="Evidence"
-                  fill
-                  className="object-cover rounded-md border border-zinc-700"
-                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover rounded-md border border-zinc-700 w-full h-full"
                 />
               </div>
             )}
