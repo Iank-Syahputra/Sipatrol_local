@@ -1,4 +1,11 @@
 services:
+  fix-volume-permissions:
+    image: alpine
+    container_name: sipatrol-fix-perms
+    volumes:
+      - uploads_data:/app/public/uploads
+    command: sh -c "mkdir -p /app/public/uploads/evidence && chown -R 1001:1001 /app/public/uploads"
+
   db:
     image: mariadb:10
     container_name: sipatrol-db
@@ -39,6 +46,8 @@ services:
     volumes:
       - uploads_data:/app/public/uploads
     depends_on:
+      fix-volume-permissions:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
     networks:
