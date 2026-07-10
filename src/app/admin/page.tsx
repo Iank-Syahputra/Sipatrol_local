@@ -5,8 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Clock, MapPin, Camera, Users, Building } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import Image from 'next/image';
-
 export default async function AdminDashboardPage() {
   // Fetch data in parallel
   const [latestReports, units] = await Promise.all([
@@ -114,12 +112,10 @@ export default async function AdminDashboardPage() {
 
                     {report.image_path && (
                       <div className="mt-2 relative w-full h-40">
-                        <Image
+                        <img
                           src={report.image_path}
                           alt="Bukti laporan"
-                          fill
-                          className="object-cover rounded-md"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="object-cover rounded-md w-full h-full"
                         />
                       </div>
                     )}

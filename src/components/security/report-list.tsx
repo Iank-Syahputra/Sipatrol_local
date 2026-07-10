@@ -5,7 +5,6 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Calendar, Filter, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import ReportDetailsModal from '@/components/report-details-modal';
-import Image from 'next/image';
 
 interface ReportListProps {
   reports: any[];

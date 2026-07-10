@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -77,12 +76,10 @@ export default function LoginForm() {
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-slate-50">
       <div className="absolute inset-0 z-0">
-         <Image
+         <img
             src="/image.jpeg"
             alt="Background Facility"
-            fill
-            className="object-cover"
-            priority
+            className="object-cover w-full h-full"
          />
          <div className="absolute inset-0 bg-white/80 backdrop-blur-[4px]" />
          <div className={`absolute inset-0 ${theme.overlay} mix-blend-multiply`} />

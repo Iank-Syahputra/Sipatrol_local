@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, FileText } from 'lucide-react';
 import ReportDetailsModal from '@/components/report-details-modal';
-import Image from 'next/image';
 
 export default function RecentReportList({ reports }: { reports: any[] }) {
   const [selectedReport, setSelectedReport] = useState<any>(null);

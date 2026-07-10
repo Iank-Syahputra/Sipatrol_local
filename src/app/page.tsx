@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Shield, Activity, Map, WifiOff, ChevronRight, Lock, Server, Zap } from "lucide-react";
 
@@ -56,12 +55,10 @@ export default function HomeMobileLightBg() {
 
       {/* --- BACKGROUND --- */}
       <div className={`absolute inset-0 z-0 transition-opacity duration-1000 ${isMounted ? 'opacity-100' : 'opacity-0'}`}>
-        <Image
+        <img
           src="/image.jpeg"
           alt="Facility Background"
-          fill
-          className="object-cover"
-          priority
+          className="object-cover w-full h-full"
         />
         <div className="absolute inset-0 bg-slate-50/90 backdrop-blur-[3px]" />
         <div className={`absolute inset-0 bg-[radial-gradient(at_top_center,var(--tw-gradient-stops))] from-transparent via-transparent to-transparent transition-all duration-1000 delay-300 pointer-events-none

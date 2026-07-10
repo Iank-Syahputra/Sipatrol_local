@@ -6,7 +6,6 @@ import { X, Download } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { Activity, MapPin, Users, CircleGauge, Clock, Shield, Eye, Search, Filter, FileText, Building, RotateCcw, BarChart3, TrendingUp, AlertTriangle, LayoutDashboard, Image as ImageIcon, Trash2, Camera, ExternalLink } from "lucide-react";
 import ReportDetailsModal from '@/components/report-details-modal';
-import Image from 'next/image';
 import {
   PieChart,
   Pie,
@@ -853,7 +852,7 @@ export default function AdminDashboard() {
                                 {report.imagePath ? (
                                   <img src={report.imagePath} alt="Evd" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
                                 ) : (
-                                  <div className="h-full w-full flex items-center justify-center text-slate-400"><Image size={20} /></div>
+                                  <div className="h-full w-full flex items-center justify-center text-slate-400"><ImageIcon size={20} /></div>
                                 )}
                               </div>
                             </td>

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
-import Image from 'next/image';
 import {
   Download,
   Printer,
