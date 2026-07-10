@@ -45,8 +45,8 @@ async function validateImageForAntiFraud(image: File): Promise<{ valid: boolean;
   }
 
   // 2. Check file size - camera photos are typically > 100KB
-  // Minimum 50KB to filter out suspiciously small files
-  const MIN_FILE_SIZE = 50 * 1024; // 50KB
+  // Minimum 10KB to allow lower-resolution camera captures
+  const MIN_FILE_SIZE = 10 * 1024; // 10KB
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   
   if (image.size < MIN_FILE_SIZE) {

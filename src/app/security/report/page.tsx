@@ -163,7 +163,7 @@ export default function CreateReportPage() {
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = canvas.toDataURL('image/jpeg');
+      const imageData = canvas.toDataURL('image/jpeg', 0.95);
       fetch(imageData).then(res => res.blob()).then(blob => {
         const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
         setImageFile(file);
