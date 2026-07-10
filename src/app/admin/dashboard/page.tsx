@@ -346,7 +346,7 @@ export default function AdminDashboard() {
                         {report?.imagePath ? (
                           <div className="relative w-full sm:w-28 aspect-video sm:aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 shadow-sm">
                             <img
-                              src={report.imagePath}
+                              src={report.imagePath?.replace('/uploads/', '/api/files/')}
                               alt="Evidence"
                               className="object-cover group-hover:scale-105 transition-transform duration-500 w-full h-full"
                             />
@@ -688,7 +688,7 @@ export default function AdminDashboard() {
                   <div className="bg-slate-100 border border-slate-200 rounded-2xl w-full h-64 flex items-center justify-center overflow-hidden shadow-inner relative">
                     {selectedReport.imagePath ? (
                       <img
-                        src={selectedReport.imagePath}
+                        src={selectedReport.imagePath?.replace('/uploads/', '/api/files/')}
                         alt="Bukti laporan"
                         className="object-cover w-full h-full"
                         onError={(e) => {
@@ -850,7 +850,7 @@ export default function AdminDashboard() {
                             <td className="px-6 py-4 w-24">
                               <div className="h-14 w-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative shadow-sm">
                                 {report.imagePath ? (
-                                  <img src={report.imagePath} alt="Evd" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                                  <img src={report.imagePath?.replace('/uploads/', '/api/files/')} alt="Evd" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
                                 ) : (
                                   <div className="h-full w-full flex items-center justify-center text-slate-400"><ImageIcon size={20} /></div>
                                 )}

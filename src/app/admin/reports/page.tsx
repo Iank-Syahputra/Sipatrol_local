@@ -598,7 +598,7 @@ export default function ReportManagementPage() {
                       <td className="px-6 py-4 w-24">
                         <div className="h-14 w-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative shadow-sm">
                           {report.imagePath ? (
-                            <img src={report.imagePath} alt="Evd" className="object-cover group-hover:scale-105 transition-transform duration-300 w-full h-full" />
+                            <img src={report.imagePath?.replace('/uploads/', '/api/files/')} alt="Evd" className="object-cover group-hover:scale-105 transition-transform duration-300 w-full h-full" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center text-slate-400"><ImageIcon size={20} /></div>
                           )}
@@ -663,7 +663,7 @@ export default function ReportManagementPage() {
                     {/* Image */}
                     <div className="h-20 w-20 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 shadow-sm relative">
                        {report.imagePath ? (
-                         <img src={report.imagePath} alt="Evd" className="object-cover w-full h-full" />
+                         <img src={report.imagePath?.replace('/uploads/', '/api/files/')} alt="Evd" className="object-cover w-full h-full" />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center text-slate-400"><ImageIcon size={24} /></div>
                       )}

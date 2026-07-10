@@ -164,7 +164,7 @@ export default function ReportList({
               {report.imagePath && (
                 <div className="relative w-full h-40 bg-slate-100 rounded-xl overflow-hidden border border-slate-100 shadow-inner mb-4">
                   <img
-                    src={report.imagePath}
+                    src={report.imagePath?.replace('/uploads/', '/api/files/')}
                     alt="Evidence"
                     className="object-cover transition-transform duration-500 group-hover:scale-105 w-full h-full"
                   />

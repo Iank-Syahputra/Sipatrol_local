@@ -66,7 +66,7 @@ export default function RecentReportList({ reports }: { reports: any[] }) {
             {report.imagePath && (
               <div className="mt-3 relative h-32 w-full">
                 <img
-                  src={report.imagePath}
+                  src={report.imagePath?.replace('/uploads/', '/api/files/')}
                   alt="Evidence"
                   className="object-cover rounded-md border border-zinc-700 w-full h-full"
                 />

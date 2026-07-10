@@ -61,7 +61,7 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
               <div className="bg-slate-100 border border-slate-200 rounded-2xl w-full h-64 flex items-center justify-center overflow-hidden shadow-inner">
                 {report.image_path || report.imagePath || report.imageData || report.photo_url ? (
                   <img
-                    src={report.image_path || report.imagePath || report.imageData || report.photo_url}
+                    src={(report.image_path || report.imagePath || report.imageData || report.photo_url)?.replace('/uploads/', '/api/files/')}
                     alt="Report evidence"
                     className="w-full h-full object-cover"
                     onError={(e) => {

@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       // Save image to local storage
       await writeFile(filePath, imageBuffer);
 
-      imagePath = `/uploads/evidence/${fileName}`;
+      imagePath = `/api/files/evidence/${fileName}`;
     }
 
     // Insert the report into the database using Prisma

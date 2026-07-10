@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
       data: {
         userId: userId, // Use the session user ID, not from form (Prisma model field name)
         unitId: validationResult.data.unitId, // Prisma model field name
-        imagePath: `/uploads/evidence/${fileName}`, // Store relative path for serving from Next.js (Prisma model field name)
+        imagePath: `/api/files/evidence/${fileName}`, // Store path for serving via API route (Prisma model field name)
         notes: validationResult.data.notes,
         latitude: validationResult.data.latitude,
         longitude: validationResult.data.longitude,

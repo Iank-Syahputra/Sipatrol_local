@@ -113,7 +113,7 @@ export default async function AdminDashboardPage() {
                     {report.image_path && (
                       <div className="mt-2 relative w-full h-40">
                         <img
-                          src={report.image_path}
+                          src={report.image_path?.replace('/uploads/', '/api/files/')}
                           alt="Bukti laporan"
                           className="object-cover rounded-md w-full h-full"
                         />
