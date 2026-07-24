@@ -262,7 +262,7 @@ export async function getLatestReports(limit: number = 5): Promise<Report[]> {
     const reports = await prisma.report.findMany({
       take: limit,
       orderBy: {
-        captured_at: 'desc'
+        capturedAt: 'desc'
       },
       include: {
         user: {
@@ -330,7 +330,7 @@ export async function getReportsByFilters(
     const reports = await prisma.report.findMany({
       where: whereClause,
       orderBy: {
-        captured_at: 'desc'
+        capturedAt: 'desc'
       },
       include: {
         user: {

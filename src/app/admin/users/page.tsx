@@ -20,6 +20,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 // --- REUSABLE MULTI-SELECT COMPONENT (Light Mode) ---
 const MultiSelectDropdown = ({ options, selected, onChange, placeholder }: any) => {
@@ -76,6 +77,7 @@ export default function ManageUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
 
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{id: string, name: string} | null>(null);
@@ -330,7 +332,12 @@ export default function ManageUsersPage() {
                           <Link href={`/admin/users/${user.id}/edit`} className="p-2 bg-white border border-slate-200 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg text-slate-400 transition-all shadow-sm">
                             <Edit size={16} />
                           </Link>
-                          <button onClick={() => handleDeleteUser(user.id, user.full_name)} className="p-2 bg-white border border-slate-200 hover:border-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg text-slate-400 transition-all shadow-sm">
+                          <button
+                            onClick={() => handleDeleteUser(user.id, user.full_name)}
+                            disabled={user.id === session?.user?.id}
+                            title={user.id === session?.user?.id ? 'Tidak dapat menghapus akun sendiri' : ''}
+                            className="p-2 bg-white border border-slate-200 hover:border-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg text-slate-400 transition-all shadow-sm disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-slate-200 disabled:hover:text-slate-400 disabled:hover:bg-white"
+                          >
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -388,7 +395,9 @@ export default function ManageUsersPage() {
                     </Link>
                     <button
                       onClick={() => handleDeleteUser(user.id, user.full_name)}
-                      className="flex-1 py-2 bg-white border border-slate-200 hover:bg-red-50 hover:border-red-200 rounded-lg text-xs font-bold text-red-600 flex items-center justify-center gap-2 transition-colors shadow-sm"
+                      disabled={user.id === session?.user?.id}
+                      title={user.id === session?.user?.id ? 'Tidak dapat menghapus akun sendiri' : ''}
+                      className="flex-1 py-2 bg-white border border-slate-200 hover:bg-red-50 hover:border-red-200 rounded-lg text-xs font-bold text-red-600 flex items-center justify-center gap-2 transition-colors shadow-sm disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-slate-200"
                     >
                       <Trash2 size={14} /> Hapus
                     </button>

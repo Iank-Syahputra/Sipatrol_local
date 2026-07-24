@@ -68,7 +68,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: Create New User (Security Officer)
+// POST: Create New User (Admin or Security Officer)
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'admin') {
@@ -77,11 +77,16 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { fullName, username, password, phoneNumber, unitId } = body;
+    const { fullName, username, password, phoneNumber, unitId, role } = body;
+    const userRole = role === 'admin' ? 'admin' : 'security';
 
     // 1. Basic Validation
-    if (!fullName || !username || !password || !unitId) {
+    if (!fullName || !username || !password) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    if (userRole === 'security' && !unitId) {
+      return NextResponse.json({ error: "Unit is required for security officers" }, { status: 400 });
     }
 
     // 2. Check if username exists
@@ -101,10 +106,10 @@ export async function POST(request: Request) {
       data: {
         fullName,
         username,
-        password: hashedPassword, // Store hashed password
+        password: hashedPassword,
         phoneNumber,
-        role: 'security', // Default role for created users
-        assignedUnitId: unitId
+        role: userRole,
+        assignedUnitId: userRole === 'security' ? unitId : null
       }
     });
 
